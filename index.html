@@ -273,6 +273,17 @@
     display:grid;place-items:center;
   }
   .video iframe{width:100%;height:100%;border:0;display:block}
+  /* прозрачный слой поверх ролика: касание = пауза, обвязка YouTube не всплывает */
+  .vshield{
+    position:absolute;inset:0;width:100%;height:100%;
+    background:transparent;border:0;padding:0;
+    display:grid;place-items:center;
+    transition:background .18s;
+  }
+  .vshield .vplay{font-size:60px;color:var(--cream);opacity:0;transition:opacity .18s;
+    text-shadow:0 4px 14px rgba(0,0,0,.6)}
+  .vshield.paused{background:#0E0A22}
+  .vshield.paused .vplay{opacity:1}
   .video .play{
     display:flex;flex-direction:column;align-items:center;gap:8px;
     width:100%;height:100%;justify-content:center;
@@ -1108,10 +1119,12 @@ function videoCfg(t){
   return (S.vids && S.vids[t.title]) || t.vid || null;
 }
 function ytEmbed(c, autoplay){
-  /* loop+playlist — ролики по 20-30 секунд, пусть крутятся по кругу,
-     пока ребёнок повторяет, и не приходится жать «ещё раз» */
+  /* controls=0 убирает полосу и кнопки; loop+playlist крутит короткий ролик
+     по кругу, поэтому не появляется финальный экран «Другие видео».
+     enablejsapi нужен, чтобы ставить на паузу своей кнопкой. */
   let u = "https://www.youtube.com/embed/" + c.id +
-          "?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&loop=1&playlist=" + c.id;
+          "?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3" +
+          "&controls=0&disablekb=1&fs=0&enablejsapi=1&loop=1&playlist=" + c.id;
   if(autoplay) u += "&autoplay=1";
   if(c.start) u += "&start=" + c.start;
   if(c.end) u += "&end=" + c.end;
@@ -1149,8 +1162,24 @@ function wireDemo(t){
   if(!p) return;
   p.onclick = () => {
     if(window.speechSynthesis) speechSynthesis.cancel();
-    $("#vidBox").innerHTML = `<iframe src="${ytEmbed(videoCfg(t), true)}"
-      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    $("#vidBox").innerHTML =
+      `<iframe id="ytFrame" src="${ytEmbed(videoCfg(t), true)}"
+         allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+       <button class="vshield" id="vshield"><span class="vplay">▶</span></button>`;
+    /* Слой поверх плеера: ловит касания, чтобы ребёнок не вызвал меню YouTube.
+       На паузе он становится непрозрачным и прячет всё, что рисует YouTube. */
+    let playing = true;
+    const shield = $("#vshield");
+    shield.onclick = () => {
+      playing = !playing;
+      shield.classList.toggle("paused", !playing);
+      const f = document.getElementById("ytFrame");
+      try{
+        f.contentWindow.postMessage(JSON.stringify({
+          event:"command", func: playing ? "playVideo" : "pauseVideo", args:[]
+        }), "*");
+      }catch(e){}
+    };
   };
 }
 
