@@ -143,6 +143,13 @@
   .scene canvas{width:100%;height:100%;display:block}
   .scene.holding{transform:scale(.988)}
 
+  /* значок упражнения: раскрашивается, пока идёт занятие */
+  .emblem{
+    width:min(46vw,180px);aspect-ratio:1;
+    background:var(--card);border-radius:24px;overflow:hidden;flex:none;
+  }
+  .emblem canvas{width:100%;height:100%;display:block}
+
   .dots{display:flex;gap:8px;justify-content:center}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
   .dots i.on{background:var(--accent)}
@@ -303,16 +310,16 @@ const PLAN = {
   ]},
 
   artic:{ name:"Язычок", tasks:[
-    {type:"reps", title:"Улыбка и хоботок", reps:8, vid:V.lyagushka,
+    {type:"follow", title:"Улыбка и хоботок", emblem:"frogeleph", dur:45, vid:V.lyagushka,
      tip:"Чередуем: широкая улыбка с сомкнутыми зубами — губы вперёд трубочкой. Челюсть неподвижна, работают только губы. В ролике их зовут лягушка и слоник."},
-    {type:"wait", title:"Блинчик",   sec:8, reps:2, vid:V.blinchik,  tip:"Широкий язык спокойно лежит на нижней губе и не дрожит. Дрожит — расслабляем «тестом»."},
-    {type:"reps", title:"Тесто",     reps:6,        vid:V.testo,     tip:"Шлёпаем губами «пя-пя-пя», потом покусываем «та-та-та». Упражнение расслабляет язык."},
-    {type:"reps", title:"Качели",    reps:8,        vid:V.kacheli,   tip:"Рот открыт всё время, работает только язык — нижняя челюсть не помогает."},
-    {type:"reps", title:"Часики",    reps:8,        vid:V.chasiki,   tip:"Язык узкий, тянется к уголкам губ. Челюсть неподвижна."},
-    {type:"wait", title:"Чашка",     sec:6, reps:2, vid:V.chashka,   tip:"Широкий язык во рту, края подняты. Готовит верхний подъём для Ш и Р."},
-    {type:"wait", title:"Парус",     sec:6, reps:2, vid:V.parus,     tip:"Кончик упирается в бугорки за верхними зубами, а не в сами зубы. Рот открыт."},
-    {type:"wait", title:"Грибок",    sec:6, reps:2, vid:V.gribok,    tip:"Язык присосан к нёбу, рот открывается шире. Растягивает подъязычную связку."},
-    {type:"reps", title:"Лошадка",   reps:10,       vid:V.loshadka,  tip:"Цокаем медленно и звонко. Нижняя челюсть стоит на месте."}
+    {type:"follow", title:"Блинчик",  emblem:"pancake",  dur:35, vid:V.blinchik,  tip:"Широкий язык спокойно лежит на нижней губе и не дрожит. Дрожит — расслабляем «тестом»."},
+    {type:"follow", title:"Тесто",    emblem:"dough",    dur:35, vid:V.testo,     tip:"Шлёпаем губами «пя-пя-пя», потом покусываем «та-та-та». Упражнение расслабляет язык."},
+    {type:"follow", title:"Качели",   emblem:"swing",    dur:40, vid:V.kacheli,   tip:"Рот открыт всё время, работает только язык — нижняя челюсть не помогает."},
+    {type:"follow", title:"Часики",   emblem:"clock",    dur:45, vid:V.chasiki,   tip:"Язык узкий, тянется к уголкам губ. Челюсть неподвижна."},
+    {type:"follow", title:"Чашка",    emblem:"cup",      dur:35, vid:V.chashka,   tip:"Широкий язык во рту, края подняты. Готовит верхний подъём для Ш и Р."},
+    {type:"follow", title:"Парус",    emblem:"sail",     dur:35, vid:V.parus,     tip:"Кончик упирается в бугорки за верхними зубами, а не в сами зубы. Рот открыт."},
+    {type:"follow", title:"Грибок",   emblem:"mushroom", dur:35, vid:V.gribok,    tip:"Язык присосан к нёбу, рот открывается шире. Растягивает подъязычную связку."},
+    {type:"follow", title:"Лошадка",  emblem:"horse",    dur:40, vid:V.loshadka,  tip:"Цокаем медленно и звонко. Нижняя челюсть стоит на месте."}
   ]},
 
   finger:{ name:"Пальчики", tasks:[
@@ -738,6 +745,208 @@ function bubT(ctx,w,h,p,on,now,st,cel){
   if(st.bubs.length>60) st.bubs.splice(0,20);
 }
 
+/* ============================================================
+   ЗНАЧКИ УПРАЖНЕНИЙ
+   Ребёнок не читает, поэтому имя упражнения несёт картинка.
+   Контур на месте с самого начала, цвет поднимается снизу —
+   как в раскраске. Заполнилась целиком, значит поупражнялись.
+   ============================================================ */
+function inBox(ctx,w,h,fn){                 // рисуем в квадрате 200×200
+  const s=Math.min(w,h)/200;
+  ctx.save(); ctx.translate(w/2-100*s,h/2-100*s); ctx.scale(s,s);
+  fn(); ctx.restore();
+}
+const GREY="#E4E1DA";
+function outline(ctx,lw){ ctx.strokeStyle=INK; ctx.lineWidth=lw||3.5; ctx.lineJoin="round"; ctx.lineCap="round"; }
+/* обведённая линия: сначала тёмная потолще, сверху цветная — иначе
+   контур ложится посередине штриха и выглядит как трещина */
+function inked(ctx,width,color,path){
+  ctx.lineCap="round"; ctx.lineJoin="round";
+  ctx.strokeStyle=INK;   ctx.lineWidth=width+7; path(); ctx.stroke();
+  ctx.strokeStyle=color; ctx.lineWidth=width;   path(); ctx.stroke();
+}
+
+const EM={
+  /* лягушка и слоник — улыбка и хоботок */
+  frogeleph(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.fillStyle=F("#7CC167");                        // лягушка
+    ctx.beginPath(); ctx.arc(54,116,38,0,7); ctx.fill(); ctx.stroke();
+    [[36,80],[70,80]].forEach(([x,y])=>{
+      ctx.fillStyle=F("#7CC167"); ctx.beginPath(); ctx.arc(x,y,15,0,7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(x,y+1,5.5,0,7); ctx.fill();
+    });
+    outline(ctx,3); ctx.beginPath(); ctx.arc(54,118,22,.25,Math.PI-.25); ctx.stroke();
+    ctx.fillStyle=F("#93A9BE"); outline(ctx);          // ухо позади головы
+    ctx.beginPath(); ctx.ellipse(129,97,20,26,-.1,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#A8BCCF"); ctx.beginPath();       // голова и хобот одним силуэтом
+    ctx.moveTo(128,74);
+    ctx.quadraticCurveTo(162,66,177,92);
+    ctx.quadraticCurveTo(185,110,179,128);
+    ctx.quadraticCurveTo(191,152,179,172);
+    ctx.quadraticCurveTo(173,186,187,190);
+    ctx.quadraticCurveTo(163,198,159,176);
+    ctx.quadraticCurveTo(163,152,155,134);
+    ctx.quadraticCurveTo(132,138,124,114);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(163,100,5,0,7); ctx.fill();
+  },
+  /* блинчик */
+  pancake(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.fillStyle=F("#FFFFFF");                        // тарелка
+    ctx.beginPath(); ctx.ellipse(100,158,76,17,0,0,7); ctx.fill(); ctx.stroke();
+    [[142,60],[126,56],[110,52]].forEach(([y,rx],i)=>{
+      ctx.fillStyle=F(["#E8B366","#EFBE71","#F4C87E"][i]);
+      ctx.beginPath(); ctx.ellipse(100,y,rx,15,0,0,7); ctx.fill(); ctx.stroke();
+    });
+    ctx.fillStyle=F("#FFD86B");                        // масло
+    ctx.beginPath(); ctx.roundRect?ctx.roundRect(88,86,26,16,5):ctx.rect(88,86,26,16);
+    ctx.fill(); ctx.stroke();
+  },
+  /* тесто */
+  dough(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.fillStyle=F("#F4E4CC");                        // ком теста
+    ctx.beginPath(); ctx.ellipse(100,112,52,38,0,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#C97B5A"); ctx.beginPath();       // миска
+    ctx.moveTo(38,120); ctx.quadraticCurveTo(100,196,162,120);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#FFFFFF");                        // мука
+    [[62,70,6],[136,64,5],[100,52,4]].forEach(([x,y,r])=>{
+      ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.stroke();
+    });
+  },
+  /* качели */
+  swing(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx,4);
+    ctx.beginPath(); ctx.moveTo(26,38); ctx.lineTo(174,38); ctx.stroke();
+    outline(ctx,3);
+    ctx.beginPath(); ctx.moveTo(64,38); ctx.lineTo(60,138); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(136,38); ctx.lineTo(140,138); ctx.stroke();
+    ctx.fillStyle=F("#C98A5A");
+    ctx.beginPath();
+    ctx.roundRect?ctx.roundRect(50,136,100,20,7):ctx.rect(50,136,100,20);
+    ctx.fill(); outline(ctx,3.5); ctx.stroke();
+  },
+  /* часики */
+  clock(ctx,pale){
+    const F=c=>pale?GREY:c;
+    ctx.fillStyle=F("#5E9BD6"); outline(ctx,4);
+    ctx.beginPath(); ctx.arc(100,104,70,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#FFFFFF");
+    ctx.beginPath(); ctx.arc(100,104,54,0,7); ctx.fill(); ctx.stroke();
+    outline(ctx,3);
+    for(let i=0;i<12;i++){
+      const a=i*Math.PI/6;
+      ctx.beginPath();
+      ctx.moveTo(100+Math.cos(a)*46,104+Math.sin(a)*46);
+      ctx.lineTo(100+Math.cos(a)*40,104+Math.sin(a)*40); ctx.stroke();
+    }
+    outline(ctx,5);
+    ctx.beginPath(); ctx.moveTo(100,104); ctx.lineTo(66,104); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(100,104); ctx.lineTo(134,104); ctx.stroke();
+    ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(100,104,6,0,7); ctx.fill();
+  },
+  /* чашка */
+  cup(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.strokeStyle=INK; ctx.lineWidth=4;              // пар
+    [78,122].forEach(x=>{
+      ctx.beginPath(); ctx.moveTo(x,58);
+      ctx.bezierCurveTo(x-12,42,x+12,34,x,18); ctx.stroke();
+    });
+    outline(ctx);
+    ctx.fillStyle=F("#FFFFFF");                        // блюдце
+    ctx.beginPath(); ctx.ellipse(100,166,72,14,0,0,7); ctx.fill(); ctx.stroke();
+    inked(ctx,10,F("#FF8FA3"),()=>{ ctx.beginPath(); ctx.arc(146,116,22,-1.1,1.1); });
+    ctx.fillStyle=F("#FF8FA3"); ctx.beginPath();       // чашка
+    ctx.moveTo(52,84); ctx.lineTo(148,84);
+    ctx.quadraticCurveTo(142,156,100,156);
+    ctx.quadraticCurveTo(58,156,52,84); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#FFFFFF");
+    ctx.beginPath(); ctx.ellipse(100,84,48,12,0,0,7); ctx.fill(); ctx.stroke();
+  },
+  /* парус */
+  sail(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx,4);
+    ctx.beginPath(); ctx.moveTo(92,26); ctx.lineTo(92,168); ctx.stroke();
+    const sail=()=>{ ctx.beginPath(); ctx.moveTo(98,32);
+      ctx.quadraticCurveTo(158,96,166,158); ctx.lineTo(98,158); ctx.closePath(); };
+    ctx.fillStyle=F("#FFFFFF"); sail(); ctx.fill();
+    ctx.save(); sail(); ctx.clip();                    // полосы, чтобы раскраска читалась
+    ctx.fillStyle=F("#FF4D6D");
+    ctx.fillRect(90,70,90,17); ctx.fillRect(90,112,90,17);
+    ctx.restore();
+    outline(ctx); sail(); ctx.stroke();
+    ctx.fillStyle=F("#FF4D6D"); ctx.beginPath();       // вымпел
+    ctx.moveTo(92,26); ctx.lineTo(48,36); ctx.lineTo(92,48); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle=F("#7FB2D9"); ctx.lineWidth=5;     // вода
+    ctx.beginPath(); ctx.moveTo(24,176);
+    for(let x=24;x<=176;x+=19) ctx.quadraticCurveTo(x+9,168,x+19,176);
+    ctx.stroke();
+  },
+  /* грибок */
+  mushroom(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.fillStyle=F("#F5EBDA"); ctx.beginPath();       // ножка
+    ctx.moveTo(80,104); ctx.lineTo(120,104);
+    ctx.quadraticCurveTo(126,168,100,170);
+    ctx.quadraticCurveTo(74,168,80,104); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#E24B4B"); ctx.beginPath();       // шляпка
+    ctx.moveTo(24,108); ctx.quadraticCurveTo(100,10,176,108);
+    ctx.quadraticCurveTo(100,128,24,108); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#FFFFFF");
+    [[62,88,11],[104,72,13],[142,94,9]].forEach(([x,y,r])=>{
+      ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+    });
+  },
+  /* лошадка */
+  horse(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.fillStyle=F("#C98A5A");                        // туловище
+    ctx.beginPath(); ctx.ellipse(96,110,52,30,0,0,7); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.translate(146,88); ctx.rotate(-.5); // голова
+    ctx.fillStyle=F("#C98A5A"); ctx.beginPath();
+    ctx.roundRect?ctx.roundRect(-16,-34,32,58,13):ctx.rect(-16,-34,32,58);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle=F("#C98A5A"); ctx.beginPath();       // ушко
+    ctx.moveTo(-6,-34); ctx.lineTo(0,-50); ctx.lineTo(10,-32); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(6,-16,4.5,0,7); ctx.fill();
+    ctx.restore();
+    outline(ctx,7); ctx.strokeStyle=F("#6B4A32");      // грива
+    ctx.beginPath(); ctx.moveTo(120,74); ctx.quadraticCurveTo(112,96,96,102); ctx.stroke();
+    inked(ctx,9,F("#C98A5A"),()=>{                     // ножки
+      ctx.beginPath(); ctx.moveTo(74,134); ctx.lineTo(70,156);
+      ctx.moveTo(118,134); ctx.lineTo(122,156);
+    });
+    inked(ctx,9,F("#E8C07A"),()=>{                     // полозья
+      ctx.beginPath(); ctx.moveTo(28,158); ctx.quadraticCurveTo(96,192,168,158);
+    });
+  }
+};
+
+function drawEmblem(ctx,w,h,kind,p,bounce){
+  ctx.clearRect(0,0,w,h);
+  const fn=EM[kind]; if(!fn) return;
+  const s=1+.11*Math.sin((bounce||0)*Math.PI);
+  ctx.save(); ctx.translate(w/2,h/2); ctx.scale(s,s); ctx.translate(-w/2,-h/2);
+  inBox(ctx,w,h,()=>fn(ctx,true));                     // контур и серая заливка
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,h*(1-p),w,h*p+1); ctx.clip();
+  inBox(ctx,w,h,()=>fn(ctx,false));                    // цвет поднимается снизу
+  ctx.restore();
+  ctx.restore();
+}
+
 /* ---------- задания ---------- */
 const stage = () => $("#stage");
 function finish(ms){
@@ -747,7 +956,48 @@ function finish(ms){
 function runTask(){
   cleanup();
   const t = RUN.block.tasks[RUN.i];
-  ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho, tiles:tTiles, words:tWords})[t.type](t);
+  ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho,
+    tiles:tTiles, words:tWords, follow:tFollow})[t.type](t);
+}
+
+/* повторяем за роликом: картинка раскрашивается сама, счёта нет */
+function tFollow(t){
+  let prog=0, last=0, over=false;
+  stage().innerHTML = `<div class="title">${t.title}</div>
+    ${t.vid?videoBlock(t.vid):""}
+    <div class="emblem" id="emb"><canvas id="ec"></canvas></div>`;
+  if(t.vid) wireVideo(t.vid);
+
+  const cv=$("#ec");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const at=(p,b)=>drawEmblem(ctx,cw,ch,t.emblem,p,b);
+  at(0,0);
+
+  const refit=()=>{ f=fitCanvas(cv); ctx=f.ctx; cw=f.w; ch=f.h;
+                    at(Math.min(1,prog/(t.dur*1000)),0); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>removeEventListener("resize",refit));
+
+  const id=setInterval(()=>{
+    const now=performance.now();
+    const dt=now-(last||now); last=now;
+    if(over) return;
+    prog+=dt;
+    const p=Math.min(1,prog/(t.dur*1000));
+    at(p,0);
+    if(p>=1){
+      over=true;
+      const t0=performance.now();
+      const bid=setInterval(()=>{                     // короткий подскок на радостях
+        const k=(performance.now()-t0)/700;
+        at(1, k>=1?0:1-k);
+        if(k>=1) clearInterval(bid);
+      },33);
+      CLEAN.push(()=>clearInterval(bid));
+      finish(1500);
+    }
+  },33);
+  CLEAN.push(()=>clearInterval(id));
 }
 
 /* держать и дуть/тянуть */
