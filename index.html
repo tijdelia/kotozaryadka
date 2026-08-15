@@ -1,0 +1,1653 @@
+<title>Котозарядка</title>
+
+<!--
+  КОТОЗАРЯДКА — домашний логопедический тренажёр в виде игры.
+  Всё содержимое занятий лежит ниже в объекте PLAN (ищи "ЗДЕСЬ МЕНЯЕМ ЗАДАНИЯ").
+  Файл самодостаточный: ни картинок, ни шрифтов, ни интернета не нужно.
+-->
+
+<style>
+  :root{
+    --night:#191140;
+    --night-2:#26195C;
+    --night-3:#332271;
+    --cream:#FFF3DC;
+    --cream-dim:#BFB2D8;
+    --star:#FFC53D;
+    --breath:#FF7A6B;
+    --win:#4FE0B5;
+    --vowel:#56C7FF;
+    --finger:#C77DFF;
+    --sound:#FF9F1C;
+    --r:28px;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--night);
+    color:var(--cream);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    font-weight:600;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:manipulation;
+  }
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;font-weight:800}
+  button:focus-visible{outline:4px solid var(--star);outline-offset:3px;border-radius:12px}
+
+  #app{
+    position:relative;
+    height:100dvh;
+    width:100%;
+    max-width:900px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    background:
+      radial-gradient(120% 60% at 50% -10%, #3A2585 0%, transparent 60%),
+      radial-gradient(90% 50% at 100% 110%, #4A1F63 0%, transparent 60%),
+      var(--night);
+  }
+  .stars-bg{position:absolute;inset:0;pointer-events:none;opacity:.5}
+
+  /* ---------- общие элементы ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:10px;
+    padding:14px 16px 6px;
+    position:relative;z-index:3;
+  }
+  .score{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.08);
+    border:2px solid rgba(255,197,61,.35);
+    border-radius:999px;
+    padding:8px 16px 8px 12px;
+    font-size:clamp(18px,4.6vw,24px);
+    font-weight:900;
+    font-variant-numeric:tabular-nums;
+  }
+  .score b{color:var(--star)}
+  .spacer{flex:1}
+  .icon-btn{
+    width:56px;height:56px;border-radius:20px;
+    background:rgba(255,255,255,.08);
+    display:grid;place-items:center;
+    font-size:26px;
+    border:2px solid rgba(255,255,255,.12);
+  }
+  .icon-btn:active{transform:scale(.92)}
+
+  .screen{flex:1;min-height:0;display:none;flex-direction:column;position:relative;z-index:2}
+  .screen.on{display:flex}
+
+  /* ---------- ГЛАВНЫЙ ЭКРАН ---------- */
+  .hello{
+    text-align:center;padding:0 20px 4px;
+  }
+  .hello h1{
+    font-size:clamp(26px,7vw,44px);
+    font-weight:900;
+    letter-spacing:-.02em;
+    text-wrap:balance;
+    line-height:1.05;
+  }
+  .hello p{font-size:clamp(14px,3.4vw,17px);color:var(--cream-dim);font-weight:600;margin-top:6px}
+
+  .trail{
+    flex:1;min-height:0;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:clamp(8px,2.2vw,18px);
+    padding:clamp(10px,3vw,20px);
+    grid-auto-rows:1fr;
+    align-content:stretch;
+  }
+  .station{
+    position:relative;
+    border-radius:var(--r);
+    background:var(--night-2);
+    border:3px solid rgba(255,255,255,.10);
+    padding:clamp(8px,2vw,14px) 8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    min-height:clamp(96px,15vh,150px);
+    box-shadow:0 8px 0 rgba(0,0,0,.28);
+    transition:transform .12s;
+  }
+  .station:active{transform:translateY(4px);box-shadow:0 4px 0 rgba(0,0,0,.28)}
+  .station .em{font-size:clamp(38px,11vw,76px);line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
+  .station .nm{font-size:clamp(13px,3.4vw,20px);font-weight:900;text-align:center;line-height:1.15}
+  .station .dots{display:flex;gap:4px;margin-top:2px}
+  .station .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
+  .station .dots i.done{background:var(--star)}
+  .station.done{border-color:var(--win)}
+  .station .medal{position:absolute;top:-10px;right:-8px;font-size:30px;transform:rotate(12deg)}
+  .station[data-c="breath"]{background:linear-gradient(180deg,#4A2551,#2B1745)}
+  .station[data-c="artic"]{background:linear-gradient(180deg,#4C3A1F,#2B1F45)}
+  .station[data-c="finger"]{background:linear-gradient(180deg,#402060,#251545)}
+  .station[data-c="vowel"]{background:linear-gradient(180deg,#1D3F63,#1B1748)}
+  .station[data-c="sound"]{background:linear-gradient(180deg,#5A3218,#2A1A45)}
+  .station[data-c="dice"]{background:linear-gradient(180deg,#1F4F42,#17253F)}
+
+  /* ---------- КОТ ---------- */
+  .cat-row{display:flex;align-items:flex-end;gap:10px;padding:6px clamp(12px,3vw,20px) clamp(10px,2.5vh,18px)}
+  .cat{font-size:clamp(44px,11vw,64px);line-height:1;animation:bob 2.4s ease-in-out infinite;flex:none}
+  .cat-svg{width:clamp(56px,14vw,92px);height:auto;display:block}
+  .cat-svg .fur{fill:#FFFDF7;stroke:#14121F;stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+  .cat-svg .ear-in{fill:#FFC2CF;stroke:none}
+  .cat-svg .eye{fill:#14121F}
+  .cat-svg .nose{fill:#FFC2CF;stroke:#14121F;stroke-width:3;stroke-linejoin:round}
+  .cat-svg .whisk path{stroke:#14121F;stroke-width:4;stroke-linecap:round;fill:none}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+  .bubble{
+    flex:1;
+    background:var(--cream);color:#2A1B4E;
+    border-radius:22px 22px 22px 6px;
+    padding:12px 16px;
+    font-size:clamp(15px,3.8vw,20px);
+    font-weight:800;
+    line-height:1.25;
+    text-wrap:balance;
+    box-shadow:0 6px 0 rgba(0,0,0,.25);
+  }
+
+  /* ---------- РАННЕР ЗАДАНИЙ ---------- */
+  .progress{display:flex;gap:6px;padding:0 16px 8px}
+  .progress i{flex:1;height:8px;border-radius:99px;background:rgba(255,255,255,.15)}
+  .progress i.on{background:var(--star)}
+  .stage{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    /* safe: если контент выше экрана, прижимаем к верху, а не срезаем заголовок */
+    justify-content:safe center;
+    gap:clamp(8px,2vh,16px);
+    padding:clamp(8px,2vw,18px);
+    text-align:center;
+    overflow-y:auto;
+  }
+  /* без этого на низком экране (планшет в альбомной) блоки сжимаются и наезжают друг на друга */
+  .stage > *{flex:none}
+  .task-title{font-size:clamp(22px,6vw,36px);font-weight:900;letter-spacing:-.01em;text-wrap:balance}
+  .task-how{font-size:clamp(14px,3.6vw,19px);color:var(--cream-dim);font-weight:600;max-width:34ch;text-wrap:balance;line-height:1.35}
+  .big-em{font-size:min(clamp(70px,22vw,170px),15vh);line-height:1;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45))}
+
+  .go{
+    background:var(--win);color:#0C2E25;
+    border-radius:999px;
+    padding:clamp(14px,3.4vh,20px) clamp(28px,8vw,54px);
+    font-size:clamp(20px,5.4vw,28px);
+    font-weight:900;
+    box-shadow:0 8px 0 #2A8A6E;
+    min-height:72px;
+  }
+  .go:active{transform:translateY(5px);box-shadow:0 3px 0 #2A8A6E}
+  .go.ghost{background:rgba(255,255,255,.10);color:var(--cream);box-shadow:0 8px 0 rgba(0,0,0,.3)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+
+  /* ---------- ЖИВАЯ МОРДОЧКА: кот показывает упражнение ---------- */
+  .face{width:min(clamp(160px,44vw,280px),27vh);height:auto;display:block}
+  /* белый кот в контурном стиле: жирная чёрная линия, белая заливка */
+  .face .fur{fill:#FFFDF7;stroke:#14121F;stroke-width:5;stroke-linejoin:round}
+  .face .ear-in{fill:#FFC2CF;stroke:none}
+  .face .eye{fill:#14121F}
+  .face .glint{fill:#fff}
+  .face .nose{fill:#FFC2CF;stroke:#14121F;stroke-width:3.5;stroke-linejoin:round}
+  .face .whisk path{stroke:#14121F;stroke-width:4;stroke-linecap:round;fill:none}
+  .face .lips{fill:#4A1226;stroke:#14121F;stroke-width:5}
+  .face .teeth rect{fill:#FFFDF7;stroke:#14121F;stroke-width:2}
+  .face .t-closed,.face .t-line{opacity:0}
+  .face .t-line{stroke:#14121F;stroke-width:3;stroke-linecap:round}
+  .face .lip-bite{fill:#FFC2CF;stroke:#14121F;stroke-width:3;opacity:0}
+  .face .tongue ellipse,.face .tongue path{fill:#FF7E95;stroke:#14121F;stroke-width:4;opacity:0}
+  .face .mouth,.face .tongue,.face .teeth,.face .lip-bite{transition:transform .32s ease,opacity .25s}
+  .face .mouth{transform-box:fill-box;transform-origin:center}
+  .face .tongue{transform-box:fill-box;transform-origin:50% 0}
+
+  .face[data-pose="rest"]     .mouth{transform:scaleY(.22)}
+  .face[data-pose="rest"]     .teeth{opacity:0}
+  .face[data-pose="smile"]    .mouth{transform:scale(1.18,.4)}
+  .face[data-pose="smile"]    .t-closed,.face[data-pose="smile"] .t-line{opacity:1}
+  .face[data-pose="tube"]     .mouth{transform:scale(.4,.62)}
+  .face[data-pose="tube"]     .teeth{opacity:0}
+  .face[data-pose="bite"]     .mouth{transform:scale(1,.5)}
+  .face[data-pose="bite"]     .t-closed{opacity:1}
+  .face[data-pose="bite"]     .lip-bite{opacity:1}
+  .face[data-pose="wide"]     .t-wide{opacity:1}
+  .face[data-pose="wide"]     .tongue{transform:translateY(16px)}
+  .face[data-pose="needle"]   .t-narrow{opacity:1}
+  .face[data-pose="needle"]   .tongue{transform:translateY(18px)}
+  .face[data-pose="up"]       .t-narrow{opacity:1}
+  .face[data-pose="up"]       .tongue{transform:translateY(-52px)}
+  .face[data-pose="down"]     .t-narrow{opacity:1}
+  .face[data-pose="down"]     .tongue{transform:translateY(34px)}
+  .face[data-pose="left"]     .t-narrow{opacity:1}
+  .face[data-pose="left"]     .tongue{transform:translate(-34px,4px) rotate(-22deg)}
+  .face[data-pose="right"]    .t-narrow{opacity:1}
+  .face[data-pose="right"]    .tongue{transform:translate(34px,4px) rotate(22deg)}
+  .face[data-pose="cup"]      .t-cup{opacity:1}
+  .face[data-pose="cup"]      .tongue{transform:translateY(2px)}
+  .face[data-pose="mushroom"] .t-wide{opacity:1}
+  .face[data-pose="mushroom"] .tongue{transform:translateY(-26px) scaleY(.72)}
+  .face[data-pose="mushroom"] .mouth{transform:scale(1,1.1)}
+  .face[data-pose="lick"]     .t-wide{opacity:1}
+  .face[data-pose="lick"]     .tongue{transform:translateY(-38px) scaleY(.8)}
+
+  .face-btn{
+    background:radial-gradient(circle at 42% 30%, #6B4BD6, #3A2585);
+    border:5px solid rgba(255,255,255,.18);
+    border-radius:40px;padding:10px 14px;
+    box-shadow:0 10px 0 rgba(0,0,0,.32);
+    display:grid;place-items:center;
+  }
+  .face-btn:active{transform:translateY(5px);box-shadow:0 5px 0 rgba(0,0,0,.32)}
+  .face-wrap{display:grid;place-items:center}
+
+  /* экран с видео и шагами: ужимаем таймер, кнопки и заголовок */
+  .stage.compact{gap:8px;justify-content:safe start;padding-top:4px}
+  .stage.compact .task-title{font-size:clamp(19px,5vw,27px)}
+  .stage.compact .task-how{display:none}
+  .stage.compact .ring{width:min(126px,19vh);height:min(126px,19vh)}
+  .stage.compact .ring .num{font-size:clamp(38px,9vw,52px)}
+  .stage.compact .ring .track,.stage.compact .ring .fill{stroke-width:16}
+  .stage.compact .tapper{width:min(124px,19vh);height:min(124px,19vh);font-size:clamp(40px,10vw,56px)}
+  .stage.compact .go{min-height:58px;padding:12px 30px;font-size:clamp(17px,4.4vw,22px)}
+  .stage.compact .counter{font-size:clamp(20px,5vw,28px)}
+  .stage.compact .blow{height:clamp(110px,18vh,170px)}
+  .stage.compact .blow .mover{font-size:clamp(44px,11vw,76px)}
+  .stage.compact .hold-btn{min-height:60px;padding:14px 30px}
+
+  /* ---------- ВИДЕО-ОБРАЗЕЦ ---------- */
+  .video{
+    width:min(94vw,560px);
+    aspect-ratio:16/9;
+    max-height:34vh;
+    border-radius:20px;
+    overflow:hidden;
+    background:#0E0A22;
+    border:3px solid rgba(255,255,255,.14);
+    position:relative;
+    display:grid;place-items:center;
+  }
+  .video iframe{width:100%;height:100%;border:0;display:block}
+  .video .play{
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    width:100%;height:100%;justify-content:center;
+  }
+  .video .play .pbtn{
+    width:74px;height:74px;border-radius:50%;
+    background:var(--star);color:#3A2A00;
+    display:grid;place-items:center;font-size:32px;
+    box-shadow:0 6px 0 #B88A16;
+  }
+  .video .play span{font-size:15px;font-weight:900;color:var(--cream-dim)}
+  .video .play:active .pbtn{transform:translateY(4px);box-shadow:0 2px 0 #B88A16}
+  .video .nolink{padding:16px;text-align:center;font-size:14px;font-weight:700;color:var(--cream-dim);line-height:1.4}
+  .video .nolink a{color:var(--star);word-break:break-all}
+
+  /* ---------- ПОШАГОВАЯ ИНСТРУКЦИЯ ---------- */
+  .steps{
+    display:flex;flex-direction:column;gap:5px;
+    width:min(94vw,560px);text-align:left;
+  }
+  .steps li{
+    display:flex;gap:10px;align-items:flex-start;
+    background:rgba(255,255,255,.05);
+    border-radius:14px;padding:8px 12px;
+    font-size:clamp(14px,3.5vw,17px);font-weight:700;line-height:1.3;
+    list-style:none;
+  }
+  .steps li b{
+    flex:none;width:24px;height:24px;border-radius:50%;
+    background:var(--star);color:#3A2A00;
+    display:grid;place-items:center;font-size:14px;font-weight:900;
+  }
+  .check{
+    width:min(94vw,560px);
+    background:rgba(255,197,61,.10);
+    border-left:4px solid var(--star);
+    border-radius:0 14px 14px 0;
+    padding:9px 12px;text-align:left;
+    font-size:clamp(12.5px,3.2vw,15px);font-weight:600;color:#EFE3C9;line-height:1.4;
+  }
+  .check b{color:var(--star)}
+
+  /* ---------- НАГРАДА: КОТ САЙМОН ---------- */
+  .simon{width:min(94vw,640px);aspect-ratio:16/9;max-height:48vh;border-radius:20px;overflow:hidden;background:#000;border:3px solid rgba(255,255,255,.16)}
+  .simon iframe{width:100%;height:100%;border:0;display:block}
+
+  /* счётчик повторов */
+  .tapper{
+    width:min(clamp(170px,52vw,260px),32vh);height:min(clamp(170px,52vw,260px),32vh);
+    border-radius:50%;
+    background:radial-gradient(circle at 40% 32%, #6B4BD6, #3A2585);
+    border:6px solid rgba(255,255,255,.18);
+    display:grid;place-items:center;
+    box-shadow:0 12px 0 rgba(0,0,0,.32);
+    font-size:clamp(56px,17vw,96px);
+  }
+  .tapper:active{transform:translateY(6px);box-shadow:0 6px 0 rgba(0,0,0,.32)}
+  .counter{font-size:clamp(26px,7vw,40px);font-weight:900;font-variant-numeric:tabular-nums}
+  .counter small{color:var(--cream-dim);font-size:.6em}
+
+  /* кольцо-таймер */
+  .ring{position:relative;width:min(clamp(170px,52vw,250px),30vh);height:min(clamp(170px,52vw,250px),30vh);display:grid;place-items:center}
+  .ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+  .ring .track{fill:none;stroke:rgba(255,255,255,.14);stroke-width:14}
+  .ring .fill{fill:none;stroke:var(--star);stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .1s linear}
+  .ring .num{font-size:clamp(52px,15vw,84px);font-weight:900;font-variant-numeric:tabular-nums}
+
+  /* дыхание */
+  .blow{
+    width:min(88vw,520px);
+    height:clamp(150px,32vh,300px);
+    border-radius:var(--r);
+    background:rgba(255,255,255,.06);
+    border:3px solid rgba(255,255,255,.12);
+    position:relative;overflow:hidden;
+    display:grid;place-items:center;
+  }
+  .blow .mover{font-size:clamp(52px,15vw,116px);position:relative;transition:transform .08s linear}
+  .blow .flame{position:absolute;top:18%;left:50%;font-size:clamp(30px,9vw,52px);transform-origin:bottom center}
+  .bar{width:min(88vw,520px);height:20px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+  .bar i{display:block;height:100%;width:0%;background:var(--breath);border-radius:99px;transition:width .08s linear}
+  .hold-btn{
+    background:var(--breath);color:#3A0F0A;
+    border-radius:999px;padding:18px 40px;font-size:clamp(19px,5vw,26px);font-weight:900;
+    box-shadow:0 8px 0 #B14A3F;min-height:76px;width:min(88vw,520px);
+  }
+  .hold-btn.pressed{transform:translateY(5px);box-shadow:0 3px 0 #B14A3F}
+
+  /* гласные */
+  .vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(92vw,520px)}
+  .vkey{
+    background:var(--night-2);border:3px solid rgba(86,199,255,.35);border-radius:22px;
+    padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    box-shadow:0 6px 0 rgba(0,0,0,.3);min-height:92px;justify-content:center;
+  }
+  .vkey .l{font-size:clamp(26px,7vw,38px);font-weight:900;color:var(--vowel)}
+  .vkey .f{font-size:clamp(24px,6.5vw,34px)}
+  .vkey:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+  .vkey.lit{background:var(--vowel);border-color:#fff}
+  .vkey.lit .l{color:#08283C}
+
+  /* дорожка */
+  .track-wrap{width:min(92vw,560px)}
+  .track{
+    position:relative;height:clamp(76px,16vh,110px);
+    border-radius:99px;background:rgba(255,255,255,.08);
+    border:3px dashed rgba(86,199,255,.4);
+    overflow:hidden;
+  }
+  .track .glow{position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,#1D3F63,var(--vowel));opacity:.55}
+  .track .knob{
+    position:absolute;top:50%;left:0;transform:translate(0,-50%);
+    font-size:clamp(38px,10vw,56px);
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));
+  }
+  .track .finish{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:clamp(28px,7vw,40px);opacity:.8}
+
+  /* карточки слов */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(94vw,620px)}
+  .wcard{
+    position:relative;
+    background:var(--night-2);border:3px solid rgba(255,159,28,.3);border-radius:20px;
+    min-height:clamp(70px,14vh,110px);display:grid;place-items:center;font-size:clamp(30px,8vw,52px);
+    box-shadow:0 5px 0 rgba(0,0,0,.3);
+  }
+  .wcard:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+  .wcard.done{background:#1F4F42;border-color:var(--win);opacity:.75}
+  .wcard.done::after{content:"✓";position:absolute;font-size:20px}
+  .word-big{font-size:clamp(34px,9vw,56px);font-weight:900;letter-spacing:.02em}
+  .saybeads{display:flex;gap:14px}
+  .saybeads i{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16)}
+  .saybeads i.on{background:var(--star)}
+
+  /* слоги-бусины */
+  .syl{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:min(94vw,560px)}
+  .syl button{
+    background:var(--night-2);border:3px solid rgba(255,159,28,.35);border-radius:20px;
+    padding:14px 18px;font-size:clamp(22px,6vw,32px);font-weight:900;box-shadow:0 5px 0 rgba(0,0,0,.3);
+    min-width:88px;min-height:72px;
+  }
+  .syl button.done{background:var(--sound);color:#33190A;border-color:#fff}
+  .syl button:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+
+  /* сортировка звука */
+  .buckets{display:flex;gap:14px;width:min(94vw,560px)}
+  .bucket{
+    flex:1;background:var(--night-2);border:3px solid rgba(255,255,255,.15);border-radius:24px;
+    padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-size:clamp(14px,3.6vw,18px);font-weight:900;box-shadow:0 6px 0 rgba(0,0,0,.3);min-height:120px;justify-content:center;
+  }
+  .bucket .be{font-size:clamp(32px,8vw,44px)}
+  .bucket:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.3)}
+  .bucket.right{background:#1F4F42;border-color:var(--win)}
+  .bucket.wrong{background:#5A2436;border-color:#FF7A6B}
+
+  /* стишок */
+  .rhyme{display:flex;flex-direction:column;gap:10px;width:min(94vw,560px)}
+  .rline{
+    background:rgba(255,255,255,.06);border-radius:18px;padding:12px 14px;
+    font-size:clamp(15px,4vw,21px);font-weight:800;opacity:.35;transition:.2s;
+    border:2px solid transparent;
+  }
+  .rline.now{opacity:1;background:var(--night-3);border-color:var(--finger)}
+  .rline small{display:block;font-size:.72em;font-weight:700;color:var(--finger);margin-top:3px}
+  .rline.past{opacity:.5}
+
+  /* награда */
+  .reward{position:absolute;inset:0;background:rgba(12,7,32,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:20;padding:20px;text-align:center}
+  .reward.on{display:flex}
+  .reward .medal-big{font-size:clamp(90px,26vw,160px);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes pop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+  .reward h2{font-size:clamp(26px,7vw,42px);font-weight:900}
+  .confetti{position:absolute;pointer-events:none;font-size:26px;z-index:30;will-change:transform,opacity}
+
+  /* коллекция */
+  .stickers{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:min(94vw,560px)}
+  .stickers span{font-size:clamp(26px,6vw,34px);filter:drop-shadow(0 3px 5px rgba(0,0,0,.4))}
+  .stickers .empty{font-size:15px;color:var(--cream-dim);font-weight:600}
+
+  /* родительский экран */
+  .parent{overflow-y:auto;padding:0 18px 30px;font-weight:500}
+  .parent h2{font-size:24px;font-weight:900;margin:18px 0 8px}
+  .parent h3{font-size:16px;font-weight:900;margin:16px 0 6px;color:var(--star);text-transform:uppercase;letter-spacing:.06em}
+  .parent p,.parent li{font-size:15.5px;line-height:1.55;color:#E4DAF4}
+  .parent ul{padding-left:20px;display:flex;flex-direction:column;gap:6px;margin:6px 0}
+  .parent .note{background:rgba(255,122,107,.12);border-left:4px solid var(--breath);border-radius:0 14px 14px 0;padding:12px 14px;margin:10px 0}
+  .toggles{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+  .toggle{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border-radius:16px;padding:12px 14px;font-weight:800;font-size:16px;width:100%;text-align:left}
+  .toggle .sw{margin-left:auto;width:52px;height:30px;border-radius:99px;background:rgba(255,255,255,.2);position:relative;flex:none}
+  .toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--cream);transition:.18s}
+  .toggle.on .sw{background:var(--win)}
+  .toggle.on .sw::after{left:25px}
+
+  .vrow{display:grid;grid-template-columns:1fr;gap:5px;background:rgba(255,255,255,.05);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+  .vrow label{font-size:15px;font-weight:900}
+  .vrow input{
+    background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.16);border-radius:10px;
+    padding:9px 11px;color:var(--cream);font:inherit;font-size:14px;font-weight:600;width:100%;
+  }
+  .vrow input:focus{outline:none;border-color:var(--star)}
+  .vrow input[type="number"]{max-width:110px}
+
+  .hint{font-size:13px;color:var(--cream-dim);font-weight:600}
+  .press-hint{position:absolute;bottom:8px;right:16px;font-size:11px;color:rgba(255,255,255,.28);font-weight:600}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  }
+</style>
+
+<div id="app">
+  <canvas class="stars-bg" id="starsBg"></canvas>
+
+  <!-- ================= ГЛАВНЫЙ ЭКРАН ================= -->
+  <div class="screen on" id="scr-home">
+    <div class="topbar">
+      <div class="score">⭐ <b id="starCount">0</b></div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="btnSound" title="Голос кота">🔊</button>
+      <button class="icon-btn" id="btnParent" title="Родителям">👨‍👩‍👦</button>
+    </div>
+
+    <div class="hello">
+      <h1 id="helloTitle">Привет! Я кот Мур 🐱</h1>
+      <p id="helloSub">Выбирай, во что играем</p>
+    </div>
+
+    <div class="trail" id="trail"></div>
+
+    <div class="cat-row">
+      <div class="cat">🐱</div>
+      <div class="bubble" id="homeBubble">Нажимай на любой кружок — там весело!</div>
+    </div>
+    <div class="press-hint">👨‍👩‍👦 — держать 2 сек</div>
+  </div>
+
+  <!-- ================= РАННЕР ================= -->
+  <div class="screen" id="scr-run">
+    <div class="topbar">
+      <button class="icon-btn" id="btnHome">🏠</button>
+      <div class="score">⭐ <b id="starCount2">0</b></div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="btnSkip" title="Пропустить">⏭️</button>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div class="stage" id="stage"></div>
+    <div class="cat-row">
+      <div class="cat" id="runCat">🐱</div>
+      <div class="bubble" id="runBubble">…</div>
+    </div>
+    <div class="reward" id="reward">
+      <div class="medal-big" id="rewardMedal">🏅</div>
+      <h2 id="rewardText">Ура!</h2>
+      <div id="simonBox"></div>
+      <div class="row">
+        <button class="go" id="simonBtn">🐱 Кот Саймон</button>
+        <button class="go ghost" id="rewardBtn">Дальше 👉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= РОДИТЕЛЯМ ================= -->
+  <div class="screen parent" id="scr-parent">
+    <div class="topbar" style="padding-left:0;padding-right:0">
+      <button class="icon-btn" id="btnBack2">⬅️</button>
+      <div class="spacer"></div>
+      <div class="score">🏅 <b id="medalCount">0</b></div>
+    </div>
+
+    <h2>Для родителей</h2>
+    <p>Ребёнок сам нажимает всё, кроме этого экрана. Вы сидите рядом, показываете образец и хвалите. Ваша задача — не проверять, а играть вместе.</p>
+
+    <h3>Как проходит занятие</h3>
+    <ul>
+      <li><b>10–15 минут</b> в день, лучше два коротких подхода, чем один длинный.</li>
+      <li><b>Артикуляционную гимнастику — перед зеркалом.</b> Посадите ребёнка так, чтобы он видел своё лицо и ваше.</li>
+      <li>Устал или заскучал — жмите 🏠 и заканчивайте на успехе, пока ещё интересно.</li>
+      <li>Не получается звук — не заставляйте. Пропускаем ⏭️ и говорим логопеду.</li>
+    </ul>
+
+    <div class="note">
+      <b>Дыхание — осторожно.</b> Вдох носом, плечи не поднимаются, щёки не надуваются. Не больше 3–4 выдохов подряд, между заданиями — пауза. Если ребёнок побледнел, закружилась голова — сразу останавливаемся. Весь дыхательный блок — не дольше 5–7 минут.
+    </div>
+
+    <h3>Сегодня занимаемся</h3>
+    <div class="toggles" id="toggles"></div>
+
+    <h3>Про звук В</h3>
+    <p>В — губно-зубной: нижняя губа прижимается к верхним зубам, между ними узкая щель, голос включён. Самый простой путь: тянем <b>ФФФФ</b> и, не прерывая выдоха, «включаем моторчик» — добавляем голос, получается <b>ВВВВ</b>. Ладонь ребёнка на вашем горле, вторая — на своём: он должен почувствовать разницу «горлышко молчит / горлышко дрожит».</p>
+
+    <h3>Коллекция наклеек</h3>
+    <div class="stickers" id="stickers"></div>
+
+    <h3>Микрофон (по желанию)</h3>
+    <p>Если включить, кот будет реагировать на настоящее дутьё и голос: свеча гаснет, когда ребёнок правда дует. Работает не во всех браузерах — если не спросит разрешение, просто играем пальцем: держим кнопку, пока дуем.</p>
+    <div class="toggles"><button class="toggle" id="micToggle">🎤 Реагировать на дутьё и голос <span class="sw"></span></button></div>
+
+    <h3>Кот показывает движения</h3>
+    <p>В блоке «Язычок» кот не просто говорит — он показывает: открывает рот, поднимает и опускает язык, ходит им по уголкам. В упражнениях с повторами ребёнок нажимает прямо на кота, и тот делает следующее движение. Зеркало всё равно нужно: кот — образец, а ребёнок должен видеть свой язык.</p>
+
+    <h3>Видео к упражнениям</h3>
+    <p>В каждом упражнении есть кнопка ▶ — ролик с живым показом. По умолчанию везде стоит один общий ролик, потому что <b>я не могу проверить, на какой секунде показано именно «Блинчик»</b>. Посмотрите ролик один раз, засеките секунду начала нужного упражнения и впишите её здесь — дальше кнопка ▶ будет открывать сразу нужное место.</p>
+    <p class="hint">Ссылку можно вставить любую с YouTube. Пусто = общий ролик.</p>
+    <div id="vidEditor"></div>
+
+    <h3>Проверенные ролики</h3>
+    <p class="hint">Существуют и открываются — проверял. Но что именно и на какой секунде внутри, не смотрел.</p>
+    <ul>
+      <li>Логопед Настасья Сетун, основные упражнения: <a href="https://www.youtube.com/watch?v=SlhcaH7xNvU" target="_blank" rel="noopener">youtube.com/watch?v=SlhcaH7xNvU</a></li>
+      <li>Она же, гимнастика для малышей: <a href="https://www.youtube.com/watch?v=iMsgHhzodQU" target="_blank" rel="noopener">youtube.com/watch?v=iMsgHhzodQU</a></li>
+      <li>«Формула речи»: <a href="https://www.youtube.com/watch?v=hP9Pvzs-ToE" target="_blank" rel="noopener">youtube.com/watch?v=hP9Pvzs-ToE</a></li>
+      <li>Кот Саймон, официальный плейлист: <a href="https://www.youtube.com/playlist?list=PLagyxbJHFyL0X2obmssjdABSByaZC0CYg" target="_blank" rel="noopener">чёрно-белые короткие серии</a></li>
+    </ul>
+
+    <h3>Как добавить задания к следующему уроку</h3>
+    <p>Всё содержимое лежит в начале скрипта этого файла в объекте <code>PLAN</code> — там понятные блоки со стишками, словами и слогами. Дописывайте свои после каждого урока с логопедом.</p>
+
+    <h3>Кнопка «Сбросить»</h3>
+    <p class="hint">Обнулит звёзды и наклейки — если ребёнок захочет начать коллекцию заново.</p>
+    <button class="go ghost" id="btnReset" style="margin-top:10px">Сбросить прогресс</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ЗДЕСЬ МЕНЯЕМ ЗАДАНИЯ
+   Каждая станция — блок занятия. Внутри tasks — задания подряд.
+   Типы заданий:
+     hold  — держать кнопку и дуть/тянуть звук (sec — сколько секунд, reps — сколько раз)
+     ring  — статическая поза, держим под счёт (sec, reps)
+     reps  — повторы с нажатием (reps)
+     rhyme — пальчиковый стишок (lines: [текст, движение])
+     echo  — «повторяй за котом»: кот показывает гласные, ребёнок повторяет
+     path  — тянем гласную, ведя пальцем по дорожке
+     syl   — слоги: нажал бусину — сказал слог
+     words — карточки слов: нажал — сказал слово 3 раза
+     sort  — где спрятался звук: в начале или в серединке
+     say   — чистоговорка, повторить N раз
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   ВИДЕО. Ролик показывает упражнение живым человеком.
+   id — то, что в ссылке после v=  (youtube.com/watch?v=XXXXXXX)
+   start/end — секунды, с какой по какую играть.
+   Проще всего: посмотрите ролик, засеките нужный кусок и
+   впишите сюда. Или прямо в приложении: 👨‍👩‍👦 → «Видео к упражнениям».
+   ------------------------------------------------------------ */
+const VIDEO_DEFAULT = {id:"SlhcaH7xNvU", start:0};   // Логопед Настасья Сетун, основные упражнения
+const VIDEO_LIB = [
+  {id:"SlhcaH7xNvU", name:"Основные упражнения — Настасья Сетун"},
+  {id:"iMsgHhzodQU", name:"Артикуляционная гимнастика для малышей"},
+  {id:"hP9Pvzs-ToE", name:"Формула речи — гимнастика для детей"},
+  {id:"_0VD56NL_8Q", name:"Логозавр — гимнастика для звука Р"}
+];
+/* официальный канал Simon's Cat, чёрно-белые короткие серии */
+const SIMON_PLAYLIST = "PLagyxbJHFyL0X2obmssjdABSByaZC0CYg";
+
+const PLAN = {
+  breath: {
+    name:"Ветерок", emoji:"🌬️", color:"breath", medal:"🎐",
+    intro:"Дуем! Вдох носиком, плечи не поднимаем, щёки не надуваем.",
+    tasks:[
+      {type:"hold", title:"Задуй свечку", how:"Вдохни носом. Держи кнопку и дуй ровно — пока свечка не погаснет.", em:"🕯️", sec:3, reps:3, scene:"candle"},
+      {type:"hold", title:"Надуй шарик", how:"Долгий-предолгий выдох. Шарик растёт, пока ты дуешь.", em:"🎈", sec:5, reps:3, scene:"balloon"},
+      {type:"hold", title:"Кораблик плывёт", how:"Дуй ровно и плавно — кораблик поплывёт к берегу.", em:"⛵", sec:6, reps:2, scene:"boat"},
+      {type:"hold", title:"Змейка шипит", how:"Тяни С-С-С-С, пока хватает воздуха.", em:"🐍", sec:5, reps:2, scene:"snake", voice:"с-с-с-с-с"},
+      {type:"hold", title:"Ветер: ВВВВ", how:"Прикуси нижнюю губку и тяни В-В-В-В. Ветер качает дерево!", em:"🌳", sec:4, reps:3, scene:"wind", voice:"в-в-в-в-в"}
+    ]
+  },
+  artic: {
+    name:"Язычок", emoji:"👅", color:"artic", medal:"🏅",
+    intro:"Садись к зеркалу! Смотри на своё лицо и повторяй за мной.",
+    tasks:[
+      {type:"ring", title:"Заборчик", how:"Улыбнись широко-широко, зубки сомкнуты и видны. Держи!", em:"😁", sec:8, reps:2, anim:["smile"],
+        steps:["Сомкни зубки","Растяни губы в широкую улыбку","Видно и верхние, и нижние зубки","Держи под счёт"],
+        check:"Улыбка без напряжения, подбородок неподвижен. Зубы именно сомкнуты, а не приоткрыты."},
+      {type:"ring", title:"Хоботок", how:"Вытяни губы вперёд трубочкой, как слоник. Держи!", em:"🐘", sec:8, reps:2, anim:["tube"],
+        steps:["Сомкни губы","Вытяни их вперёд трубочкой","Тяни как можно дальше","Держи, не отпуская"],
+        check:"Зубы сомкнуты, работают только губы. Нижняя челюсть вперёд не выдвигается."},
+      {type:"reps", title:"Заборчик — Хоботок", how:"Меняй: улыбка — трубочка, улыбка — трубочка.", em:"🔁", reps:8, anim:["smile","tube"],
+        steps:["Улыбка — зубки видно","Хоботок — губы вперёд","Меняй медленно и чётко","Нажимай на каждую смену"],
+        check:"Важна чёткость каждой позы, а не скорость. Между позами — короткая остановка."},
+      {type:"ring", title:"Прячем губку", how:"Верхними зубками легонько прикуси нижнюю губу и держи. Это секрет звука В!", em:"🙊", sec:5, reps:3, anim:["bite"],
+        steps:["Приоткрой рот","Верхними зубками накрой нижнюю губу","Легонько прикуси","Держи и запомни это место"],
+        check:"Верхние зубы стоят на нижней губе, не кусают больно. Именно отсюда родится звук В."},
+      {type:"ring", title:"Блинчик", how:"Широкий спокойный язычок лежит на нижней губе. Не дрожит!", em:"😛", sec:8, reps:2, anim:["wide"],
+        steps:["Улыбнись","Приоткрой рот","Положи широкий язык на нижнюю губу","Держи — язык спокойный"],
+        check:"Язык широкий и расслабленный. Дрожит или сворачивается — пусть пошлёпает губами «пя-пя-пя» и повторит."},
+      {type:"reps", title:"Качели", how:"Язычок тянется к носику — потом к подбородку.", em:"↕️", reps:8, anim:["up","down"],
+        steps:["Открой рот","Тяни кончик языка к носику","Теперь к подбородку","Рот не закрывай"],
+        check:"Рот открыт всё время, работает только язык — нижняя челюсть ему не помогает."},
+      {type:"reps", title:"Часики", how:"Острый язычок в правый уголок — в левый. Тик-так!", em:"⏰", reps:8, anim:["right","left"],
+        steps:["Открой рот, язык узкий","Кончик — в правый уголок","Теперь в левый","Тик-так, не спеша"],
+        check:"Язык узкий и не опирается на губу. Голова и челюсть неподвижны."},
+      {type:"reps", title:"Лошадка", how:"Цокай язычком: цок-цок-цок! Громко и медленно.", em:"🐴", reps:10, anim:["mushroom","rest"],
+        steps:["Улыбнись, открой рот","Присоси язык к нёбу","Щёлкни — цок!","Медленно и звонко"],
+        check:"Цокает только язык. Если прыгает нижняя челюсть — придержите её пальцем."},
+      {type:"ring", title:"Грибок", how:"Присоси весь язык к нёбу и открой рот. Держи грибок!", em:"🍄", sec:6, reps:2, anim:["mushroom"],
+        steps:["Улыбнись, покажи зубки","Присоси весь язык к нёбу","Медленно открывай рот","Держи — под языком натянется ниточка"],
+        check:"Язык прилипает всей плоскостью, а не одним кончиком. Уздечка под языком должна натянуться."},
+      {type:"ring", title:"Чашечка", how:"Широкий язычок — как чашечка: краешки подняты вверх. Держи!", em:"🥣", sec:6, reps:2, anim:["cup"],
+        steps:["Открой рот","Высунь широкий язык","Подними краешки и кончик","Получилась чашечка — держи"],
+        check:"Приподняты все края, середина — ложбинкой. Язык не опирается на зубы."},
+      {type:"reps", title:"Вкусное варенье", how:"Оближи верхнюю губу широким язычком сверху вниз. Ням!", em:"😋", reps:6, anim:["lick","wide"],
+        steps:["Приоткрой рот","Широким языком достань до верхней губы","Оближи её сверху вниз","Как будто слизываешь варенье"],
+        check:"Язык широкий, движение строго сверху вниз, а не из стороны в сторону. Челюсть неподвижна."}
+    ]
+  },
+  finger: {
+    name:"Пальчики", emoji:"🖐️", color:"finger", medal:"🎖️",
+    intro:"Разомнём пальчики — от них речь становится крепче!",
+    tasks:[
+      {type:"rhyme", title:"Замок", em:"🔒", lines:[
+        ["На двери висит замок.","пальцы в замок"],
+        ["Кто открыть его бы смог?","тянем руки в стороны, не расцепляя"],
+        ["Постучали,","стучим основаниями ладоней"],
+        ["покрутили,","крутим кистями"],
+        ["Потянули","тянем"],
+        ["и открыли!","расцепили руки"]
+      ]},
+      {type:"rhyme", title:"Апельсин", em:"🍊", lines:[
+        ["Мы делили апельсин,","катаем «мячик» в ладонях"],
+        ["Много нас, а он один.","показываем пальцы, потом один"],
+        ["Эта долька — для ежа,","загибаем мизинец"],
+        ["Эта долька — для стрижа,","безымянный"],
+        ["Эта долька — для утят,","средний"],
+        ["Эта долька — для котят,","указательный"],
+        ["Эта долька — для бобра,","большой"],
+        ["А для ВОЛКА — кожура!","грозим пальцем — тянем В-В-ВОЛК"]
+      ]},
+      {type:"rhyme", title:"Паучок", em:"🕷️", lines:[
+        ["Паучок ходил по ветке,","пальцы бегут по руке вверх"],
+        ["А за ним ходили детки.","пальцы другой руки бегут следом"],
+        ["Дождик с неба вдруг полил,","кисти вниз, шевелим пальцами"],
+        ["Паучков на землю смыл.","хлопаем ладонями по коленям"],
+        ["Солнце стало пригревать,","руки кружком над головой"],
+        ["Паучок ползёт опять.","пальцы снова бегут вверх"]
+      ]},
+      {type:"reps", title:"Кулак — ребро — ладонь", how:"Три позы подряд, по очереди: кулак, ребро, ладошка. Нажимай на каждый круг.", em:"✊", reps:6, faces:["✊","🤚","🖐️"]}
+    ]
+  },
+  vowel: {
+    name:"Гласные", emoji:"🅰️", color:"vowel", medal:"🎵",
+    intro:"Гласные поются! Тянем долго-долго, на одном выдохе.",
+    tasks:[
+      {type:"path", title:"Тяни А-А-А", how:"Веди пальчик по дорожке и тяни А-А-А, пока едешь. Не спеши!", letter:"А", face:"😮"},
+      {type:"path", title:"Тяни У-У-У", how:"Губы трубочкой. Веди и тяни У-У-У.", letter:"У", face:"😗"},
+      {type:"path", title:"Тяни И-И-И", how:"Губы в улыбке. Веди и тяни И-И-И.", letter:"И", face:"😁"},
+      {type:"echo", title:"Эхо кота", how:"Смотри, что я загадаю, — и повтори ГОЛОСОМ, а потом нажми так же.", rounds:4},
+      {type:"echo", title:"Эхо кота: сложнее", how:"Теперь длиннее! Слушай, повторяй вслух и нажимай.", rounds:3, start:3}
+    ]
+  },
+  sound: {
+    name:"Звук В", emoji:"🔤", color:"sound", medal:"🏆",
+    intro:"Главный звук сегодня — В! Нижняя губка прячется под верхние зубки.",
+    tasks:[
+      {type:"ring", title:"Готовим губку", how:"Прикуси нижнюю губу верхними зубками. Держим — и запоминаем это место!", em:"🙊", sec:5, reps:2, anim:["bite"],
+        steps:["Приоткрой рот","Верхними зубками накрой нижнюю губу","Легонько прикуси","Держи и запомни это место"],
+        check:"Верхние зубы стоят на нижней губе. Из этого положения получится В."},
+      {type:"hold", title:"Заводим моторчик", how:"Тяни ФФФФ… а теперь включи голос: ВВВВ! Машинка поехала.", em:"🚗", sec:4, reps:3, scene:"car", voice:"в-в-в-в-в",
+        steps:["Прикуси нижнюю губку","Тяни ФФФФ — воздух шипит","Не переставая, включи голос","Получилось ВВВВ — моторчик!"],
+        check:"Положите руку ребёнка себе на горло: на Ф тихо, на В дрожит. Пусть проверит и на своём горле."},
+      {type:"syl", title:"Слоги-бусинки", how:"Нажимай бусинку и говори слог вслух.", items:["ВА","ВО","ВУ","ВЫ","АВА","ОВО","УВУ","ЫВЫ"]},
+      {type:"words", title:"Слова со звуком В", how:"Нажми картинку и скажи слово три раза.", items:[
+        ["💧","ВОДА"],["🌬️","ВЕТЕР"],["🐺","ВОЛК"],["🍴","ВИЛКА"],
+        ["🛁","ВАННА"],["🚁","ВЕРТОЛЁТ"],["🐦‍⬛","ВОРОНА"],["🚃","ВАГОН"]
+      ]},
+      {type:"sort", title:"Где спрятался В?", how:"Слушай слово. В прячется в начале или в серединке?", items:[
+        ["🐄","КОРОВА","mid"],["💧","ВОДА","start"],["🦉","СОВА","mid"],["🐺","ВОЛК","start"],
+        ["🛋️","ДИВАН","mid"],["🍴","ВИЛКА","start"],["🥕","МОРКОВЬ","mid"],["🌬️","ВЕТЕР","start"]
+      ]},
+      {type:"say", title:"Чистоговорки", how:"Повтори за мной три раза.", items:[
+        "Ва-ва-ва — вот высокая трава.",
+        "Вы-вы-вы — даже выше головы.",
+        "Ву-ву-ву — я нарвал траву-мураву.",
+        "Ве-ве-ве — сидит ворона на траве."
+      ]}
+    ]
+  }
+};
+
+const VOWELS = [["А","😮"],["О","😯"],["У","😗"],["И","😁"],["Э","😃"],["Ы","😬"]];
+const PRAISE = ["Вот это да! 🤩","Ты молодчина! 🐱","Супер-мур! 💥","Как у настоящего кота! 😻","Получилось! 🎉","Я так не умею! 😹","Мур-мур, класс! ⭐"];
+const NUDGE  = ["Ещё разочек, я с тобой 🐾","Почти-почти! 😺","Давай вместе, я тоже буду 🐱","Не спеши, попробуй ещё 🌟"];
+
+/* ============================================================
+   КОТ. Нарисован здесь же — никаких картинок и интернета.
+   Мордочка умеет показывать упражнения: рот открывается,
+   язык поднимается, опускается, ходит по уголкам.
+   ============================================================ */
+const FACE_SVG = `
+<svg class="face" viewBox="0 0 220 220" data-pose="rest" aria-hidden="true">
+  <defs><clipPath id="MCLIP" clipPathUnits="userSpaceOnUse">
+    <ellipse cx="110" cy="158" rx="48" ry="31"/>
+  </clipPath></defs>
+  <path class="fur" d="M40 76 L46 18 L94 52 Z"/>
+  <path class="fur" d="M180 76 L174 18 L126 52 Z"/>
+  <path class="ear-in" d="M54 68 L58 34 L84 54 Z"/>
+  <path class="ear-in" d="M166 68 L162 34 L136 54 Z"/>
+  <ellipse class="fur" cx="110" cy="124" rx="86" ry="80"/>
+  <ellipse class="eye" cx="76" cy="94" rx="13" ry="15"/>
+  <ellipse class="eye" cx="144" cy="94" rx="13" ry="15"/>
+  <circle class="glint" cx="81" cy="88" r="4.5"/>
+  <circle class="glint" cx="149" cy="88" r="4.5"/>
+  <path class="nose" d="M110 126 L100 116 h20 Z"/>
+  <g class="whisk">
+    <path d="M52 128 H10"/><path d="M54 142 H12"/>
+    <path d="M168 128 H210"/><path d="M166 142 H208"/>
+  </g>
+  <g class="mouth">
+    <ellipse class="lips" cx="110" cy="158" rx="48" ry="31"/>
+    <g class="teeth" clip-path="url(#MCLIP)">
+      <rect class="t-up"  x="58" y="122" width="104" height="28" rx="9"/>
+      <rect class="t-low" x="58" y="166" width="104" height="28" rx="9"/>
+      <rect class="t-closed" x="58" y="122" width="104" height="74" rx="10"/>
+      <line class="t-line" x1="64" y1="158" x2="156" y2="158"/>
+    </g>
+  </g>
+  <rect class="lip-bite" x="62" y="157" width="96" height="18" rx="9"/>
+  <g class="tongue">
+    <ellipse class="t-wide" cx="110" cy="168" rx="34" ry="18"/>
+    <ellipse class="t-narrow" cx="110" cy="172" rx="13" ry="23"/>
+    <path class="t-cup" d="M74 184 Q66 128 86 137 Q110 160 134 137 Q154 128 146 184 Z"/>
+  </g>
+</svg>`;
+
+const CAT_MINI = `
+<svg class="cat-svg" viewBox="0 0 130 152" aria-hidden="true">
+  <path class="fur" d="M99 132 C126 126 124 94 111 84" fill="none"/>
+  <path class="fur" d="M64 142 C30 142 22 120 26 100 C30 78 44 66 64 66 C84 66 98 78 102 100 C106 120 98 142 64 142 Z"/>
+  <path class="fur" d="M34 56 L38 2 L66 34 Z"/>
+  <path class="fur" d="M92 56 L88 2 L60 34 Z"/>
+  <path class="ear-in" d="M42 50 L45 16 L61 34 Z"/>
+  <path class="ear-in" d="M84 50 L81 16 L65 34 Z"/>
+  <ellipse class="fur" cx="63" cy="58" rx="40" ry="34"/>
+  <ellipse class="eye" cx="49" cy="54" rx="6" ry="7.5"/>
+  <ellipse class="eye" cx="77" cy="54" rx="6" ry="7.5"/>
+  <path class="nose" d="M63 74 L57 67 h12 Z"/>
+  <g class="whisk"><path d="M33 72 H5"/><path d="M93 72 H121"/></g>
+</svg>`;
+
+/* Показ упражнения: перебираем позы. auto=0 — шагаем только по нажатию. */
+let faceSeq = 0;
+function mountFace(host, poses, ms){
+  const uid = "MCLIP" + (++faceSeq);
+  host.innerHTML = FACE_SVG.replace(/MCLIP/g, uid);
+  const svg = host.querySelector(".face");
+  let i = 0;
+  svg.dataset.pose = poses[0];
+  if(ms && poses.length > 1){
+    const id = setInterval(() => { i = (i+1) % poses.length; svg.dataset.pose = poses[i]; }, ms);
+    CLEANUP.push(() => clearInterval(id));
+  }
+  return { step(){ i = (i+1) % poses.length; svg.dataset.pose = poses[i]; } };
+}
+
+/* ---------- сохранение ---------- */
+const KEY = "kotozaryadka-v1";
+/* в некоторых браузерах и встроенных страницах хранилище закрыто — тогда просто играем без сохранения */
+function loadState(){
+  try{ return JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ return {}; }
+}
+let S = Object.assign({stars:0, medals:[], off:[], mic:false, sound:true}, loadState());
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+
+/* ---------- viewport (страница может быть без meta) ---------- */
+if(!document.querySelector('meta[name="viewport"]')){
+  const m = document.createElement("meta");
+  m.name = "viewport";
+  m.content = "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1";
+  document.head.appendChild(m);
+}
+
+const $ = s => document.querySelector(s);
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+/* ---------- звук ---------- */
+let AC = null;
+function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==="suspended") AC.resume(); return AC; }
+function beep(freq, dur=0.12, type="sine", gain=0.16){
+  const c = ac(); if(!c) return;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, c.currentTime);
+  g.gain.linearRampToValueAtTime(gain, c.currentTime+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
+  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+dur+0.02);
+}
+const sndTap  = () => beep(660, .08, "triangle", .12);
+const sndGood = () => { beep(784,.1,"triangle"); setTimeout(()=>beep(1046,.16,"triangle"),90); };
+const sndWin  = () => { [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.2,"triangle",.18), i*110)); };
+const sndOops = () => beep(240, .2, "sine", .1);
+function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+
+/* ---------- голос кота ---------- */
+let ruVoice = null;
+function pickVoice(){
+  if(!window.speechSynthesis) return;
+  const v = speechSynthesis.getVoices();
+  ruVoice = v.find(x=>/ru[-_]RU/i.test(x.lang)) || v.find(x=>/^ru/i.test(x.lang)) || null;
+}
+if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text){
+  if(!S.sound || !window.speechSynthesis || !text) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ru-RU"; u.rate = 0.9; u.pitch = 1.35;
+    if(ruVoice) u.voice = ruVoice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------- кот говорит ---------- */
+function cat(text, where){
+  const el = where === "home" ? $("#homeBubble") : $("#runBubble");
+  el.textContent = text;
+  say(text.replace(/[^\wА-Яа-яЁё \-—,.!?:]/gu, " "));
+}
+
+/* ---------- конфетти ---------- */
+function confetti(n=18){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const pool = ["⭐","🎉","✨","💛","🐾","🎈","💫"];
+  for(let i=0;i<n;i++){
+    const s = document.createElement("span");
+    s.className = "confetti"; s.textContent = rnd(pool);
+    s.style.left = (10 + Math.random()*80) + "vw";
+    s.style.top = "60vh";
+    document.body.appendChild(s);
+    const dx = (Math.random()-.5)*220, dy = -(180 + Math.random()*260), rot = (Math.random()-.5)*720;
+    s.animate(
+      [{transform:"translate(0,0) rotate(0)", opacity:1},
+       {transform:`translate(${dx}px,${dy}px) rotate(${rot}deg)`, opacity:0}],
+      {duration: 1100 + Math.random()*500, easing:"cubic-bezier(.2,.7,.4,1)"}
+    ).onfinish = () => s.remove();
+  }
+}
+
+/* ---------- звёзды ---------- */
+function addStar(n=1){
+  S.stars += n; save(); paintStars(); sndGood(); buzz(30);
+}
+function paintStars(){
+  $("#starCount").textContent = S.stars;
+  $("#starCount2").textContent = S.stars;
+  $("#medalCount").textContent = S.medals.length;
+}
+
+/* ---------- фон со звёздами ---------- */
+(function starfield(){
+  const c = $("#starsBg"), x = c.getContext("2d");
+  function draw(){
+    const w = c.width = c.offsetWidth, h = c.height = c.offsetHeight;
+    x.clearRect(0,0,w,h);
+    for(let i=0;i<120;i++){
+      const px = Math.random()*w, py = Math.random()*h, r = Math.random()*1.6+.4;
+      x.fillStyle = `rgba(255,255,255,${.15+Math.random()*.55})`;
+      x.beginPath(); x.arc(px,py,r,0,7); x.fill();
+    }
+  }
+  draw(); addEventListener("resize", draw);
+})();
+
+/* ---------- микрофон ---------- */
+let micLevel = 0, micReady = false, micBase = 0.01;
+async function initMic(){
+  if(micReady) return true;
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+    const c = ac(); if(!c) return false;
+    const src = c.createMediaStreamSource(stream);
+    const an = c.createAnalyser(); an.fftSize = 512;
+    src.connect(an);
+    const buf = new Float32Array(an.fftSize);
+    let calib = [], t0 = performance.now();
+    (function loop(){
+      an.getFloatTimeDomainData(buf);
+      let sum = 0; for(let i=0;i<buf.length;i++) sum += buf[i]*buf[i];
+      micLevel = Math.sqrt(sum/buf.length);
+      if(performance.now()-t0 < 1200){ calib.push(micLevel); }
+      else if(calib.length){ micBase = calib.reduce((a,b)=>a+b,0)/calib.length; calib = []; }
+      requestAnimationFrame(loop);
+    })();
+    micReady = true;
+    return true;
+  }catch(e){ return false; }
+}
+const micActive = () => micReady && S.mic && micLevel > Math.max(micBase*3.2, 0.028);
+
+/* ============================================================
+   ЭКРАНЫ
+   ============================================================ */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  $("#scr-"+id).classList.add("on");
+}
+
+/* ---------- главный экран ---------- */
+function buildHome(){
+  const t = $("#trail"); t.innerHTML = "";
+  Object.keys(PLAN).forEach(key=>{
+    if(S.off.includes(key)) return;
+    const st = PLAN[key];
+    const b = document.createElement("button");
+    b.className = "station" + (S.medals.includes(key) ? " done" : "");
+    b.dataset.c = st.color;
+    b.innerHTML = `${S.medals.includes(key)?`<span class="medal">${st.medal}</span>`:""}
+      <span class="em">${st.emoji}</span><span class="nm">${st.name}</span>
+      <span class="dots">${st.tasks.map(()=>'<i></i>').join("")}</span>`;
+    b.onclick = () => { sndTap(); startStation(key); };
+    t.appendChild(b);
+  });
+  const d = document.createElement("button");
+  d.className = "station"; d.dataset.c = "dice";
+  d.innerHTML = `<span class="em">🎲</span><span class="nm">Кубик<br>одно задание</span>`;
+  d.onclick = () => { sndTap(); startRandom(); };
+  t.appendChild(d);
+  paintStars();
+}
+
+/* ---------- запуск станции ---------- */
+let RUN = null;
+function startStation(key){
+  const st = PLAN[key];
+  RUN = {key, tasks: st.tasks.slice(), i: 0, station: st, single:false};
+  show("run");
+  paintProgress();
+  runTask();
+}
+function startRandom(){
+  const keys = Object.keys(PLAN).filter(k=>!S.off.includes(k));
+  const k = rnd(keys);
+  const task = rnd(PLAN[k].tasks);
+  RUN = {key:k, tasks:[task], i:0, station:PLAN[k], single:true};
+  show("run");
+  cat("Кубик выбрал: " + task.title + "!");
+  paintProgress();
+  runTask();
+}
+function paintProgress(){
+  $("#progress").innerHTML = RUN.tasks.map((_,i)=>`<i class="${i<RUN.i?"on":""}"></i>`).join("");
+}
+function nextTask(){
+  if(!RUN) return;
+  RUN.i++;
+  paintProgress();
+  if(RUN.i >= RUN.tasks.length) return finishStation();
+  runTask();
+}
+function finishStation(){
+  cleanup();
+  const st = RUN.station;
+  if(!RUN.single && !S.medals.includes(RUN.key)){ S.medals.push(RUN.key); save(); }
+  addStar(2);
+  sndWin(); confetti(26);
+  $("#rewardMedal").textContent = RUN.single ? "⭐" : st.medal;
+  $("#rewardText").textContent = RUN.single ? "Задание сделано!" : "Блок «"+st.name+"» пройден!";
+  $("#reward").classList.add("on");
+  say(RUN.single ? "Здорово! Задание сделано." : "Ура! Мы прошли " + st.name);
+}
+/* награда за блок: короткая серия про Кота Саймона с официального канала */
+$("#simonBtn").onclick = () => {
+  const box = $("#simonBox");
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  const n = 1 + Math.floor(Math.random()*30);
+  if(EMBEDDED){
+    box.innerHTML = `<div class="check" style="max-width:min(94vw,560px)">
+      Здесь мультик не проигрывается. Открой приложение с диска — или включи вручную:<br>
+      <a href="https://www.youtube.com/playlist?list=${SIMON_PLAYLIST}" target="_blank" rel="noopener"
+         style="color:var(--star)">Simon's Cat — короткие серии</a></div>`;
+    return;
+  }
+  $("#rewardMedal").style.display = "none";
+  box.innerHTML = `<div class="simon"><iframe
+    src="https://www.youtube.com/embed/videoseries?list=${SIMON_PLAYLIST}&index=${n}&autoplay=1&rel=0&playsinline=1"
+    allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
+  $("#simonBtn").textContent = "🎲 Другую серию";
+};
+$("#rewardBtn").onclick = () => {
+  $("#simonBox").innerHTML = "";
+  $("#rewardMedal").style.display = "";
+  $("#simonBtn").textContent = "🐱 Кот Саймон";
+  $("#reward").classList.remove("on");
+  goHome();
+};
+function goHome(){
+  cleanup();
+  $("#simonBox").innerHTML = "";
+  $("#rewardMedal").style.display = "";
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  RUN = null; buildHome(); show("home");
+  cat(S.stars >= 20 ? "У тебя уже "+S.stars+" звёзд! 🌟" : "Что выберем теперь?", "home");
+}
+$("#btnHome").onclick = () => { sndTap(); $("#reward").classList.remove("on"); goHome(); };
+$("#btnSkip").onclick = () => { sndTap(); nextTask(); };
+$("#btnBack2").onclick = () => { sndTap(); goHome(); };
+
+/* ============================================================
+   ЗАДАНИЯ
+   ============================================================ */
+const stage = () => $("#stage");
+
+/* Задания живут только до перехода к следующему: гасим таймеры и слушатели,
+   иначе «пропустить» оставляет крутиться прошлое упражнение. */
+let TICK = 0;
+const CLEANUP = [];
+function cleanup(){ TICK++; while(CLEANUP.length){ try{ CLEANUP.pop()(); }catch(e){} } }
+/* отложенный вызов, который умрёт вместе с заданием */
+function later(fn, ms){ const id = setTimeout(fn, ms); CLEANUP.push(()=>clearTimeout(id)); return id; }
+
+function head(t){
+  return `<div class="task-title">${t.title}</div>${t.how?`<div class="task-how">${t.how}</div>`:""}`;
+}
+/* ============================================================
+   ВИДЕО-ОБРАЗЕЦ
+   На опубликованной странице внешние ролики заблокированы —
+   там показываем ссылку и рисованный образец. С диска играет.
+   ============================================================ */
+const EMBEDDED = (() => { try{ return window.self !== window.top; }catch(e){ return true; } })();
+
+function parseYT(s){
+  s = (s || "").trim();
+  const m = s.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/) || s.match(/^([A-Za-z0-9_-]{11})$/);
+  return m ? m[1] : null;
+}
+function videoCfg(t){
+  return (S.vids && S.vids[t.title]) || t.vid || VIDEO_DEFAULT;
+}
+function ytEmbed(c, autoplay){
+  let u = "https://www.youtube.com/embed/" + c.id + "?rel=0&modestbranding=1&playsinline=1";
+  if(autoplay) u += "&autoplay=1";
+  if(c.start) u += "&start=" + c.start;
+  if(c.end) u += "&end=" + c.end;
+  return u;
+}
+function ytWatch(c){
+  return "https://www.youtube.com/watch?v=" + c.id + (c.start ? "&t=" + c.start + "s" : "");
+}
+/* видео + пронумерованные шаги + строчка для родителя */
+function demoBlock(t){
+  if(!t.steps) return "";
+  const c = videoCfg(t);
+  const player = EMBEDDED
+    ? `${t.anim ? `<div class="face-wrap" id="faceHost"></div>` : ""}
+       <div class="video"><div class="nolink">Ролик здесь не проигрывается.<br>Открой приложение с диска — или посмотри по ссылке:<br>
+       <a href="${ytWatch(c)}" target="_blank" rel="noopener">${ytWatch(c)}</a></div></div>`
+    : `<div class="video" id="vidBox">
+         <button class="play" id="vidPlay"><span class="pbtn">▶</span><span>Смотри и повторяй</span></button>
+       </div>`;
+  return player + stepsHtml(t);
+}
+function stepsHtml(t){
+  if(!t.steps) return "";
+  return `<ol class="steps">${t.steps.map((s,i)=>`<li><b>${i+1}</b><span>${s}</span></li>`).join("")}</ol>` +
+    (t.check ? `<div class="check"><b>👀 Родителю:</b> ${t.check}</div>` : "");
+}
+function wireDemo(t){
+  if(EMBEDDED){
+    if(t.anim && $("#faceHost")) mountFace($("#faceHost"), t.anim, t.anim.length > 1 ? 900 : 0);
+    return;
+  }
+  const p = document.getElementById("vidPlay");
+  if(!p) return;
+  p.onclick = () => {
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    $("#vidBox").innerHTML = `<iframe src="${ytEmbed(videoCfg(t), true)}"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  };
+}
+
+function done(msg){
+  cat(msg || rnd(PRAISE));
+  addStar(1); confetti(12);
+  later(nextTask, 900);
+}
+
+function runTask(){
+  cleanup();
+  const t = RUN.tasks[RUN.i];
+  /* с видео и шагами экран плотнее — ужимаем таймер и кнопки */
+  stage().className = "stage" + (t.steps ? " compact" : "");
+  cat(RUN.i === 0 && RUN.station.intro && !RUN.single ? RUN.station.intro : (t.how || t.title));
+  ({hold:tHold, ring:tRing, reps:tReps, rhyme:tRhyme, echo:tEcho, path:tPath, syl:tSyl, words:tWords, sort:tSort, say:tSay})[t.type](t);
+}
+
+/* --- ДЫХАНИЕ / ТЯНЕМ ЗВУК --- */
+function tHold(t){
+  let rep = 0, running = false, raf = 0, prog = 0, holding = false;
+  const myTick = TICK;
+  stage().innerHTML = `${head(t)}
+    ${stepsHtml(t)}
+    <div class="blow" id="blowBox"></div>
+    <div class="bar"><i id="blowBar"></i></div>
+    <div class="counter"><span id="repN">0</span><small> / ${t.reps}</small></div>
+    <button class="hold-btn" id="holdBtn">👆 Держи и дуй</button>`;
+
+  const box = $("#blowBox"), bar = $("#blowBar"), btn = $("#holdBtn");
+  const scenes = {
+    candle:  `<span class="mover" id="mv">🕯️</span><span class="flame" id="fl">🔥</span>`,
+    balloon: `<span class="mover" id="mv">🎈</span>`,
+    boat:    `<span class="mover" id="mv">⛵</span>`,
+    snake:   `<span class="mover" id="mv">🐍</span>`,
+    wind:    `<span class="mover" id="mv">🌳</span>`,
+    car:     `<span class="mover" id="mv">🚗</span>`
+  };
+  box.innerHTML = scenes[t.scene] || scenes.balloon;
+  const mv = $("#mv"), fl = $("#fl");
+  if(fl) fl.style.marginLeft = "-.5em";
+
+  function paint(){
+    const p = Math.min(prog/(t.sec*1000), 1);
+    bar.style.width = (p*100)+"%";
+    if(t.scene === "balloon") mv.style.transform = `scale(${1+p*1.6})`;
+    else if(t.scene === "boat" || t.scene === "car"){
+      const span = (box.clientWidth - mv.clientWidth) / 2;
+      mv.style.transform = `translateX(${(-1 + p*2) * span * 0.9}px)`;
+    }
+    else if(t.scene === "candle" && fl){ fl.style.transform = `scale(${1-p*.9}) rotate(${Math.sin(prog/60)*25}deg)`; fl.style.opacity = 1-p*.95; }
+    else if(t.scene === "wind") mv.style.transform = `rotate(${Math.sin(prog/70)*14*(0.4+p)}deg) scale(${1+p*.4})`;
+    else if(t.scene === "snake") mv.style.transform = `translateX(${Math.sin(prog/90)*22}px) scale(${1+p*.5})`;
+  }
+  function tick(now){
+    if(!running || myTick !== TICK) return;
+    const dt = now - (tick.last || now); tick.last = now;
+    const on = holding || micActive();
+    btn.classList.toggle("pressed", on);
+    if(on) prog += dt; else prog = Math.max(0, prog - dt*1.6);
+    paint();
+    if(prog >= t.sec*1000){ succeed(); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function start(){ if(running) return; running = true; tick.last = 0; raf = requestAnimationFrame(tick); if(t.voice) say(t.voice); }
+  function stop(){ running = false; cancelAnimationFrame(raf); }
+  function succeed(){
+    stop(); rep++; $("#repN").textContent = rep;
+    sndGood(); buzz(40); confetti(8);
+    prog = 0; paint();
+    if(rep >= t.reps){ done(); return; }
+    cat(rep === 1 ? "Класс! Отдохни секундочку — и ещё разок 🌬️" : rnd(PRAISE) + " Ещё разок!");
+    btn.textContent = "👆 Держи и дуй";
+  }
+  const down = e => { e.preventDefault(); ac(); holding = true; btn.textContent = "🌬️ Дуй!"; start(); };
+  const up   = () => { holding = false; btn.textContent = "👆 Держи и дуй"; };
+  btn.addEventListener("pointerdown", down);
+  addEventListener("pointerup", up);
+  addEventListener("pointercancel", up);
+  CLEANUP.push(() => {
+    stop();
+    removeEventListener("pointerup", up);
+    removeEventListener("pointercancel", up);
+  });
+  if(S.mic && micReady) start();
+}
+
+/* --- СТАТИЧЕСКАЯ ПОЗА: КОЛЬЦО-ТАЙМЕР --- */
+function tRing(t){
+  let rep = 0, timer = null;
+  const C = 2*Math.PI*84;
+  stage().innerHTML = `${head(t)}
+    ${t.steps ? demoBlock(t) : (t.anim ? `<div class="face-wrap" id="faceHost"></div>` : `<div class="big-em">${t.em}</div>`)}
+    <div class="ring">
+      <svg viewBox="0 0 200 200"><circle class="track" cx="100" cy="100" r="84"></circle>
+      <circle class="fill" cx="100" cy="100" r="84" stroke-dasharray="${C}" stroke-dashoffset="0" id="ringFill"></circle></svg>
+      <div class="num" id="ringNum">${t.sec}</div>
+    </div>
+    <div class="counter"><span id="repN">0</span><small> / ${t.reps}</small></div>
+    <button class="go" id="startBtn">▶️ Держим!</button>`;
+  const fill = $("#ringFill"), num = $("#ringNum"), btn = $("#startBtn");
+  if(t.steps) wireDemo(t);
+  else if(t.anim) mountFace($("#faceHost"), t.anim, t.anim.length > 1 ? 900 : 0);
+  CLEANUP.push(() => { if(timer) clearInterval(timer); timer = null; });
+  btn.onclick = () => {
+    if(timer) return;
+    ac(); btn.style.visibility = "hidden";
+    let left = t.sec;
+    num.textContent = left;
+    say(String(left));
+    fill.style.strokeDashoffset = 0;
+    timer = setInterval(() => {
+      left--;
+      fill.style.strokeDashoffset = C * (1 - left/t.sec);
+      num.textContent = Math.max(left,0);
+      if(left > 0){ beep(520,.06,"sine",.08); say(String(left)); }
+      if(left <= 0){
+        clearInterval(timer); timer = null;
+        rep++; $("#repN").textContent = rep;
+        sndGood(); buzz(40);
+        if(rep >= t.reps){ done(); return; }
+        num.textContent = t.sec; fill.style.strokeDashoffset = 0;
+        btn.style.visibility = "visible"; btn.textContent = "▶️ Ещё разок!";
+        cat(rnd(PRAISE));
+      }
+    }, 1000);
+  };
+}
+
+/* --- ПОВТОРЫ С НАЖАТИЕМ --- */
+function tReps(t){
+  let n = 0, fi = 0;
+  const faces = t.faces || [t.em];
+  stage().innerHTML = `${head(t)}
+    ${t.steps ? demoBlock(t) : ""}
+    ${(!t.steps && t.anim) ? `<button class="face-btn" id="tap"></button>`
+                           : `<button class="tapper" id="tap">${t.steps ? "👆" : faces[0]}</button>`}
+    <div class="counter"><span id="repN">0</span><small> / ${t.reps}</small></div>
+    ${t.steps ? "" : `<div class="task-how">${t.anim ? "Повтори за котом и нажми на него 👆" : "Сделал — нажми на кружок 👆"}</div>`}`;
+  const tap = $("#tap");
+  if(t.steps) wireDemo(t);
+  const face = (!t.steps && t.anim) ? mountFace(tap, t.anim, 0) : null;
+  tap.onclick = () => {
+    ac(); n++;
+    if(face) face.step();
+    else { fi = (fi+1) % faces.length; tap.textContent = faces[fi]; }
+    $("#repN").textContent = n;
+    sndTap(); buzz(15);
+    if(n >= t.reps) done();
+  };
+}
+
+/* --- ПАЛЬЧИКОВЫЙ СТИШОК --- */
+function tRhyme(t){
+  let i = 0;
+  stage().innerHTML = `<div class="task-title">${t.em} ${t.title}</div>
+    <div class="rhyme" id="rh">${t.lines.map((l,k)=>
+      `<div class="rline${k===0?" now":""}"><span>${l[0]}</span><small>${l[1]}</small></div>`).join("")}</div>
+    <button class="go" id="nextLine">Сказали! 👉</button>`;
+  const lines = [...document.querySelectorAll(".rline")];
+  say(t.lines[0][0]);
+  $("#nextLine").onclick = () => {
+    ac(); sndTap();
+    lines[i].classList.remove("now"); lines[i].classList.add("past");
+    i++;
+    if(i >= lines.length){ done(); return; }
+    lines[i].classList.add("now");
+    lines[i].scrollIntoView({block:"nearest", behavior:"smooth"});
+    say(t.lines[i][0]);
+  };
+}
+
+/* --- ЭХО КОТА (повторяй за котом) --- */
+function tEcho(t){
+  let len = t.start || 2, round = 0, seq = [], input = [], locked = true;
+  const myTick = TICK;
+  stage().innerHTML = `${head(t)}
+    <div class="task-how" id="echoState" style="color:var(--vowel);font-weight:900">Смотри на кота…</div>
+    <div class="vgrid" id="vgrid">${VOWELS.map((v,i)=>
+      `<button class="vkey" data-i="${i}"><span class="l">${v[0]}</span><span class="f">${v[1]}</span></button>`).join("")}</div>
+    <button class="go ghost" id="again">🔁 Ещё раз покажи</button>`;
+  const keys = [...document.querySelectorAll(".vkey")];
+
+  function light(i, ms=650){
+    return new Promise(res=>{
+      keys[i].classList.add("lit");
+      beep(440 + i*90, .3, "triangle", .16);
+      say(VOWELS[i][0]);
+      setTimeout(()=>{ keys[i].classList.remove("lit"); setTimeout(res, 220); }, ms);
+    });
+  }
+  async function play(){
+    if(myTick !== TICK) return;
+    locked = true; input = [];
+    $("#echoState").textContent = "Слушай и смотри 👀";
+    await new Promise(r=>setTimeout(r,500));
+    for(const i of seq){ if(myTick !== TICK) return; await light(i); }
+    if(myTick !== TICK) return;
+    locked = false;
+    $("#echoState").textContent = "Теперь ты! Скажи вслух и нажми 👆";
+    cat("Повтори за мной!");
+  }
+  function newRound(){
+    seq = Array.from({length: len}, () => Math.floor(Math.random()*VOWELS.length));
+    play();
+  }
+  keys.forEach(k => k.onclick = async () => {
+    if(locked || myTick !== TICK) return;
+    ac();
+    const i = +k.dataset.i;
+    k.classList.add("lit"); beep(440+i*90,.25,"triangle",.16); say(VOWELS[i][0]);
+    setTimeout(()=>k.classList.remove("lit"), 260);
+    input.push(i);
+    const pos = input.length - 1;
+    if(input[pos] !== seq[pos]){
+      locked = true; sndOops(); buzz(80);
+      cat(rnd(NUDGE));
+      $("#echoState").textContent = "Смотри ещё раз 🐾";
+      later(play, 1100);
+      return;
+    }
+    if(input.length === seq.length){
+      locked = true; round++;
+      sndGood(); confetti(10); addStar(1);
+      if(round >= (t.rounds||3)){ done("Ты запомнил всё! 🧠✨"); return; }
+      cat(rnd(PRAISE));
+      len++;
+      $("#echoState").textContent = "Дальше — длиннее!";
+      later(newRound, 1200);
+    }
+  });
+  $("#again").onclick = () => { if(!locked || input.length===0) play(); };
+  newRound();
+}
+
+/* --- ДОРОЖКА ДЛЯ ГЛАСНОЙ --- */
+function tPath(t){
+  let dragging = false, t0 = 0, best = 0;
+  const NEED = 3500;
+  stage().innerHTML = `${head(t)}
+    <div class="big-em">${t.face}</div>
+    <div class="track-wrap">
+      <div class="track" id="tr">
+        <div class="glow" id="glow"></div>
+        <div class="knob" id="knob">${t.face}</div>
+        <div class="finish">🏁</div>
+      </div>
+    </div>
+    <div class="counter" style="color:var(--vowel)">${t.letter}<span id="ln"></span></div>
+    <div class="task-how" id="ph">Поставь пальчик слева и веди вправо 👉</div>`;
+  const tr = $("#tr"), knob = $("#knob"), glow = $("#glow"), ln = $("#ln"), ph = $("#ph");
+
+  function setP(p){
+    p = Math.max(0, Math.min(1, p));
+    const w = tr.clientWidth - knob.clientWidth;
+    knob.style.left = (p*w) + "px";
+    glow.style.width = (p*100)+"%";
+    ln.textContent = "-" + t.letter.repeat(Math.round(p*8));
+    return p;
+  }
+  const pos = e => (e.clientX - tr.getBoundingClientRect().left) / tr.clientWidth;
+
+  tr.addEventListener("pointerdown", e => {
+    ac(); dragging = true; t0 = performance.now(); best = 0;
+    tr.setPointerCapture(e.pointerId);
+    setP(pos(e)); say(t.letter + "-" + t.letter + "-" + t.letter);
+    ph.textContent = "Тяни звук, пока едешь! " + t.letter + "-" + t.letter + "-" + t.letter;
+  });
+  tr.addEventListener("pointermove", e => {
+    if(!dragging) return;
+    const p = setP(pos(e));
+    best = Math.max(best, p);
+    if(p >= 0.98){
+      dragging = false;
+      const took = performance.now() - t0;
+      if(took < NEED){
+        sndOops();
+        cat("Ой, слишком быстро! Тяни медленно и долго 🐌");
+        ph.textContent = "Ещё разок — медленно-медленно";
+        setP(0); return;
+      }
+      done("Какой длинный звук! 🎵");
+    }
+  });
+  tr.addEventListener("pointerup", () => {
+    if(!dragging) return;
+    dragging = false;
+    if(best < 0.98){ cat("Доведи пальчик до флажка 🏁"); setP(0); }
+  });
+}
+
+/* --- СЛОГИ --- */
+function tSyl(t){
+  let n = 0;
+  stage().innerHTML = `${head(t)}
+    <div class="syl" id="syl">${t.items.map((s,i)=>`<button data-i="${i}">${s}</button>`).join("")}</div>
+    <div class="counter"><span id="repN">0</span><small> / ${t.items.length}</small></div>`;
+  document.querySelectorAll("#syl button").forEach(b => {
+    b.onclick = () => {
+      if(b.classList.contains("done")) return;
+      ac(); b.classList.add("done");
+      const txt = t.items[+b.dataset.i];
+      say(txt); beep(500 + n*40, .12, "triangle", .14); buzz(15);
+      n++; $("#repN").textContent = n;
+      if(n >= t.items.length) done("Все бусинки собрал! 📿");
+    };
+  });
+}
+
+/* --- КАРТОЧКИ СЛОВ --- */
+function tWords(t){
+  let idx = -1, saidCount = 0, doneN = 0;
+  stage().innerHTML = `${head(t)}
+    <div class="cards" id="cards">${t.items.map((w,i)=>`<button class="wcard" data-i="${i}">${w[0]}</button>`).join("")}</div>
+    <div id="wordZone" style="min-height:96px;display:flex;flex-direction:column;align-items:center;gap:10px;justify-content:center"></div>`;
+  const zone = $("#wordZone");
+
+  function openCard(i){
+    idx = i; saidCount = 0;
+    const [em, word] = t.items[i];
+    zone.innerHTML = `<div class="word-big">${em} ${word}</div>
+      <div class="saybeads" id="beads"><i></i><i></i><i></i></div>
+      <div class="hint">Скажи 3 раза — и нажми звёздочку</div>`;
+    say(word);
+    zone.onclick = () => {
+      ac(); saidCount++;
+      const beads = [...document.querySelectorAll("#beads i")];
+      if(beads[saidCount-1]) beads[saidCount-1].classList.add("on");
+      beep(600 + saidCount*90, .1, "triangle", .14); say(word);
+      if(saidCount >= 3){
+        zone.onclick = null;
+        document.querySelector(`.wcard[data-i="${idx}"]`).classList.add("done");
+        doneN++; sndGood(); confetti(6); buzz(30);
+        zone.innerHTML = `<div class="word-big" style="color:var(--win)">✓ ${word}</div>`;
+        if(doneN >= t.items.length) later(()=>done("Все слова сказал! 🗣️⭐"), 600);
+        else cat(rnd(PRAISE) + " Бери следующую картинку!");
+      }
+    };
+  }
+  document.querySelectorAll(".wcard").forEach(c => c.onclick = () => {
+    if(c.classList.contains("done")) return;
+    sndTap(); openCard(+c.dataset.i);
+  });
+  zone.innerHTML = `<div class="hint">👆 Нажми любую картинку</div>`;
+}
+
+/* --- ГДЕ СПРЯТАЛСЯ ЗВУК --- */
+function tSort(t){
+  let i = 0, right = 0;
+  const items = t.items.slice().sort(()=>Math.random()-.5);
+  stage().innerHTML = `${head(t)}
+    <div class="big-em" id="sEm"></div>
+    <div class="word-big" id="sWord"></div>
+    <div class="buckets">
+      <button class="bucket" data-a="start"><span class="be">🚩</span>В НАЧАЛЕ</button>
+      <button class="bucket" data-a="mid"><span class="be">🎯</span>В СЕРЕДИНКЕ</button>
+    </div>
+    <div class="counter"><span id="repN">0</span><small> / ${items.length}</small></div>`;
+  const em = $("#sEm"), wd = $("#sWord"), bs = [...document.querySelectorAll(".bucket")];
+
+  function paint(){
+    const it = items[i];
+    em.textContent = it[0]; wd.textContent = it[1];
+    say(it[1]);
+  }
+  bs.forEach(b => b.onclick = () => {
+    ac();
+    const ok = b.dataset.a === items[i][2];
+    b.classList.add(ok ? "right" : "wrong");
+    if(ok){
+      sndGood(); buzz(30); right++; $("#repN").textContent = right;
+      later(()=>{
+        b.classList.remove("right");
+        i++;
+        if(i >= items.length){ done("Ты слышишь звук В! 👂⭐"); return; }
+        paint();
+      }, 550);
+    }else{
+      sndOops(); buzz(80);
+      cat("Послушай ещё: " + items[i][1]);
+      later(()=>{ b.classList.remove("wrong"); say(items[i][1]); }, 700);
+    }
+  });
+  paint();
+}
+
+/* --- ЧИСТОГОВОРКИ --- */
+function tSay(t){
+  let i = 0, n = 0;
+  stage().innerHTML = `${head(t)}
+    <div class="big-em">🗣️</div>
+    <div class="word-big" id="phrase" style="font-size:clamp(20px,5.4vw,32px);max-width:22ch;line-height:1.3"></div>
+    <div class="saybeads" id="beads"><i></i><i></i><i></i></div>
+    <button class="go" id="sayBtn">Сказал! 👍</button>`;
+  const ph = $("#phrase"), btn = $("#sayBtn");
+  function paint(){
+    ph.textContent = t.items[i]; n = 0;
+    document.querySelectorAll("#beads i").forEach(b=>b.classList.remove("on"));
+    say(t.items[i]);
+  }
+  btn.onclick = () => {
+    ac(); n++;
+    const beads = [...document.querySelectorAll("#beads i")];
+    if(beads[n-1]) beads[n-1].classList.add("on");
+    sndTap(); say(t.items[i]);
+    if(n >= 3){
+      i++; sndGood(); confetti(6);
+      if(i >= t.items.length){ done("Настоящий говорун! 🎤"); return; }
+      cat(rnd(PRAISE));
+      later(paint, 700);
+    }
+  };
+  paint();
+}
+
+/* ============================================================
+   РОДИТЕЛЬСКИЙ ЭКРАН
+   ============================================================ */
+let pressTimer = null;
+$("#btnParent").addEventListener("pointerdown", () => {
+  pressTimer = setTimeout(() => { sndTap(); openParent(); }, 1500);
+});
+["pointerup","pointerleave","pointercancel"].forEach(ev =>
+  $("#btnParent").addEventListener(ev, () => clearTimeout(pressTimer)));
+
+function openParent(){
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  buildToggles(); paintStickers(); paintStars(); buildVidEditor();
+  $("#micToggle").classList.toggle("on", !!S.mic);
+  show("parent");
+}
+function buildToggles(){
+  const wrap = $("#toggles"); wrap.innerHTML = "";
+  Object.keys(PLAN).forEach(k => {
+    const on = !S.off.includes(k);
+    const b = document.createElement("button");
+    b.className = "toggle" + (on ? " on" : "");
+    b.innerHTML = `${PLAN[k].emoji} ${PLAN[k].name} <span class="sw"></span>`;
+    b.onclick = () => {
+      if(S.off.includes(k)) S.off = S.off.filter(x=>x!==k);
+      else if(S.off.length < Object.keys(PLAN).length-1) S.off.push(k);
+      save(); buildToggles();
+    };
+    wrap.appendChild(b);
+  });
+}
+/* редактор видео: ссылка + секунда старта для каждого упражнения */
+function buildVidEditor(){
+  const wrap = $("#vidEditor");
+  if(!wrap) return;
+  wrap.innerHTML = "";
+  S.vids = S.vids || {};
+  Object.keys(PLAN).forEach(k => {
+    PLAN[k].tasks.filter(t => t.steps).forEach(t => {
+      const cur = S.vids[t.title] || {};
+      const row = document.createElement("div");
+      row.className = "vrow";
+      row.innerHTML = `<label>${PLAN[k].emoji} ${t.title}</label>
+        <input type="text" inputmode="url" placeholder="ссылка на YouTube" value="${cur.url || ""}">
+        <input type="number" min="0" placeholder="сек" value="${cur.start != null ? cur.start : ""}">`;
+      const [link, sec] = row.querySelectorAll("input");
+      const apply = () => {
+        const id = parseYT(link.value);
+        const start = parseInt(sec.value, 10);
+        if(!id && !link.value.trim() && !(start >= 0)){ delete S.vids[t.title]; save(); return; }
+        const base = id || videoCfg(t).id;
+        S.vids[t.title] = {id: base, start: start >= 0 ? start : 0, url: link.value.trim()};
+        save();
+        link.style.borderColor = (link.value.trim() && !id) ? "#FF7A6B" : "";
+      };
+      link.onchange = apply; sec.onchange = apply;
+      wrap.appendChild(row);
+    });
+  });
+}
+
+function paintStickers(){
+  const el = $("#stickers");
+  el.innerHTML = S.medals.length
+    ? S.medals.map(k => `<span title="${PLAN[k]?PLAN[k].name:""}">${PLAN[k]?PLAN[k].medal:"⭐"}</span>`).join("")
+    : `<span class="empty">Пока пусто — пройдите любой блок целиком.</span>`;
+}
+$("#micToggle").onclick = async () => {
+  if(!S.mic){
+    const ok = await initMic();
+    S.mic = ok;
+    if(!ok) try{ alert("Браузер не дал доступ к микрофону. Ничего страшного — играем, удерживая кнопку пальцем."); }catch(e){}
+  } else S.mic = false;
+  save();
+  $("#micToggle").classList.toggle("on", !!S.mic);
+};
+$("#btnReset").onclick = () => {
+  if(confirm("Обнулить звёзды и наклейки?")){
+    S.stars = 0; S.medals = []; save(); paintStars(); paintStickers();
+  }
+};
+$("#btnSound").onclick = () => {
+  S.sound = !S.sound; save();
+  $("#btnSound").textContent = S.sound ? "🔊" : "🔇";
+  if(!S.sound && window.speechSynthesis) speechSynthesis.cancel();
+  else cat("Я снова говорю!", "home");
+};
+
+/* ---------- старт ---------- */
+document.querySelectorAll(".cat").forEach(el => el.innerHTML = CAT_MINI);
+$("#btnSound").textContent = S.sound ? "🔊" : "🔇";
+buildHome();
+const h = new Date().getHours();
+$("#helloTitle").textContent = h < 12 ? "Доброе утро! Я кот Мур 🐱" : h < 18 ? "Привет! Я кот Мур 🐱" : "Добрый вечер! Я кот Мур 🐱";
+$("#homeBubble").textContent = S.stars > 0 ? `У тебя ${S.stars} ⭐ — давай ещё!` : "Нажимай на любой кружок — там весело!";
+document.addEventListener("pointerdown", () => ac(), {once:true});
+</script>
