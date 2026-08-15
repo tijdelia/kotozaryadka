@@ -132,6 +132,17 @@
   }
   .dial.holding .knob{transform:scale(.97)}
 
+  /* сцена с игрушкой: она же кнопка «держи и дуй» */
+  .scene{
+    width:min(92vw,520px,calc(44dvh * 4 / 3));
+    aspect-ratio:4/3;background:var(--card);
+    border-radius:22px;overflow:hidden;position:relative;
+    touch-action:none;-webkit-touch-callout:none;
+    transition:transform .14s ease;
+  }
+  .scene canvas{width:100%;height:100%;display:block}
+  .scene.holding{transform:scale(.988)}
+
   .dots{display:flex;gap:8px;justify-content:center}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
   .dots i.on{background:var(--accent)}
@@ -284,11 +295,11 @@ const GLYPH = {
 
 const PLAN = {
   breath:{ name:"Дыхание", tasks:[
-    {type:"hold", title:"Задуй свечу",  sec:3, reps:3, tip:"Вдох носом, выдох ровный и долгий. Плечи не поднимаются, щёки не надуваются."},
-    {type:"hold", title:"Надуй шар",    sec:5, reps:3, tip:"Самый длинный выдох. Между попытками — пауза, иначе закружится голова."},
-    {type:"hold", title:"Ветер",        sec:6, reps:2, tip:"Выдох плавный, одной струёй, без толчков."},
-    {type:"hold", title:"Змейка",       sec:5, reps:2, voice:"с-с-с-с-с", tip:"Тянем С-С-С на одном выдохе, пока хватает воздуха."},
-    {type:"hold", title:"Моторчик",     sec:4, reps:3, voice:"в-в-в-в-в", tip:"Нижняя губа под верхними зубами, тянем В-В-В. Ладонь ребёнка на горле — должно дрожать."}
+    {type:"hold", toy:"candle",    title:"Свеча",     sec:3, reps:3, tip:"Короткий сильный выдох. Вдох носом, плечи не поднимаются, щёки не надуваются."},
+    {type:"hold", toy:"balloon",   title:"Шарик",     sec:5, reps:3, tip:"Самый длинный выдох. Между попытками пауза, иначе закружится голова."},
+    {type:"hold", toy:"boat",      title:"Кораблик",  sec:6, reps:2, tip:"Выдох плавный, одной струёй, без толчков — иначе кораблик встанет."},
+    {type:"hold", toy:"dandelion", title:"Одуванчик", sec:5, reps:2, tip:"Ровный долгий выдох. Парашютики улетают по одному."},
+    {type:"hold", toy:"bubbles",   title:"Пузыри",    sec:4, reps:3, tip:"Выдох мягкий: сильно дунешь — пузыри лопнут, так же и с настоящими."}
   ]},
 
   artic:{ name:"Язычок", tasks:[
@@ -531,11 +542,207 @@ function setDial(p){
 function dotsHTML(n){ return `<div class="dots" id="dots">${Array.from({length:n},()=>"<i></i>").join("")}</div>`; }
 function markDots(n){ document.querySelectorAll("#dots i").forEach((d,i)=>d.classList.toggle("on", i<n)); }
 
+/* ============================================================
+   ИГРУШКИ ДЛЯ ДЫХАНИЯ
+   Рисуются на canvas: пламя дрожит и отклоняется от дутья,
+   шарик пружинит, парашютики разлетаются. Прогресс виден по
+   самой игрушке — отдельный индикатор не нужен.
+   ============================================================ */
+function fitCanvas(cv){
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const r=cv.getBoundingClientRect();
+  const w=r.width||360, h=r.height||270;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+function rrect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(x,y,w,h,r);
+  else{
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+}
+const INK="#191713", ACC="#FF4D6D";
+
+function makeToy(kind){
+  const st={cel:0, seeds:[], bubs:[], spin:0};
+  for(let i=0;i<44;i++){
+    const a=Math.random()*Math.PI*2, d=Math.pow(Math.random(),.6);
+    st.seeds.push({a, d, out:false, x:0, y:0, vx:0, vy:0, rot:Math.random()*6});
+  }
+  return {
+    pop(){ st.cel=performance.now(); if(kind==="dandelion") st.seeds.forEach(s=>{s.out=false;}); },
+    draw(ctx,w,h,p,on,now){
+      ctx.clearRect(0,0,w,h);
+      const cel=st.cel && now-st.cel<1000 ? (now-st.cel)/1000 : 0;
+      if(st.cel && now-st.cel>=1000) st.cel=0;
+      ({candle:candleT, balloon:balloonT, boat:boatT, dandelion:dandT, bubbles:bubT}[kind])
+        (ctx,w,h,p,on,now,st,cel);
+      if(on) windT(ctx,w,h,now);
+    }
+  };
+}
+
+/* воздушная струя — общий намёк на выдох */
+function windT(ctx,w,h,now){
+  ctx.save(); ctx.strokeStyle="rgba(25,23,19,.13)"; ctx.lineWidth=2; ctx.lineCap="round";
+  for(let i=0;i<3;i++){
+    const y=h*(0.3+i*0.16), t=(now/9+i*160)%(w+180)-90;
+    ctx.beginPath(); ctx.moveTo(t,y); ctx.quadraticCurveTo(t+34,y-7,t+66,y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* свеча: пламя гнётся от дутья и тает, потом дымок */
+function candleT(ctx,w,h,p,on,now,st,cel){
+  const cx=w*0.5, base=h*0.94, bh=h*0.42, bw=Math.min(58,w*0.17), top=base-bh;
+  const alive=1-p;
+  if(alive>.03 && !cel){
+    const g=ctx.createRadialGradient(cx,top-24,2,cx,top-24,96);
+    g.addColorStop(0,"rgba(255,183,64,"+(.34*alive)+")"); g.addColorStop(1,"rgba(255,183,64,0)");
+    ctx.fillStyle=g; ctx.fillRect(cx-110,top-130,220,210);
+  }
+  const bg=ctx.createLinearGradient(cx-bw/2,0,cx+bw/2,0);
+  bg.addColorStop(0,"#E7DCC8"); bg.addColorStop(.34,"#FFFCF6"); bg.addColorStop(1,"#DFD3BC");
+  ctx.fillStyle=bg; rrect(ctx,cx-bw/2,top,bw,bh,11); ctx.fill();
+  ctx.strokeStyle=INK; ctx.lineWidth=3; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(cx,top+1); ctx.lineTo(cx,top-9); ctx.stroke();
+
+  if(cel){                                   // задули — дымок
+    ctx.strokeStyle="rgba(25,23,19,"+(.35*(1-cel))+")"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(cx,top-10);
+    ctx.bezierCurveTo(cx-16,top-40-cel*30, cx+16,top-70-cel*40, cx-6,top-104-cel*54);
+    ctx.stroke(); return;
+  }
+  if(alive<=.05) return;
+  const sway=Math.sin(now/95)*3+Math.sin(now/41)*1.6;
+  const lean=on?16+Math.sin(now/70)*7:0;
+  const fh=(44+Math.sin(now/130)*4)*alive, fw=14*alive;
+  const bx=cx, by=top-9, tx=cx-lean+sway, ty=by-fh;
+  const fg=ctx.createLinearGradient(0,ty,0,by);
+  fg.addColorStop(0,"#FFEFB8"); fg.addColorStop(.45,"#FFB020"); fg.addColorStop(1,"#FF6A2C");
+  ctx.fillStyle=fg; ctx.beginPath(); ctx.moveTo(tx,ty);
+  ctx.quadraticCurveTo(bx+fw,by-fh*.34,bx,by);
+  ctx.quadraticCurveTo(bx-fw,by-fh*.34,tx,ty); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.75)"; ctx.beginPath();
+  ctx.ellipse(bx-lean*.3,by-fh*.28,fw*.28,fh*.2,0,0,7); ctx.fill();
+}
+
+/* шарик: растёт, пружинит, на финале улетает */
+function balloonT(ctx,w,h,p,on,now,st,cel){
+  const cx=w*0.5;
+  let r=16+p*Math.min(w,h)*0.32, cy=h*0.46;
+  if(cel){ cy=h*0.46-cel*h*0.95; r=16+Math.min(w,h)*0.32; }
+  const wob=1+Math.sin(now/170)*(on?.035:.012);
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(wob,1/wob);
+  const g=ctx.createRadialGradient(-r*.32,-r*.42,r*.1,0,0,r*1.25);
+  g.addColorStop(0,"#FF8FA3"); g.addColorStop(1,ACC);
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(0,0,r*.86,r,0,0,7); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.5)"; ctx.beginPath();
+  ctx.ellipse(-r*.34,-r*.4,r*.16,r*.26,-.5,0,7); ctx.fill();
+  ctx.fillStyle=ACC; ctx.beginPath();
+  ctx.moveTo(-r*.13,r*.95); ctx.lineTo(r*.13,r*.95); ctx.lineTo(0,r*1.16); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle="rgba(25,23,19,.35)"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx,cy+r*1.16);
+  ctx.bezierCurveTo(cx+16,cy+r*1.16+30,cx-16,cy+r*1.16+58,cx+5,cy+r*1.16+88);
+  ctx.stroke();
+}
+
+/* кораблик: путь по воде и есть прогресс */
+function boatT(ctx,w,h,p,on,now,st,cel){
+  const wl=h*0.70;
+  ctx.fillStyle="#DCE7EC"; ctx.beginPath(); ctx.moveTo(0,wl);
+  for(let x=0;x<=w;x+=8) ctx.lineTo(x,wl+Math.sin(x/34+now/420)*4);
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.fill();
+  ctx.strokeStyle="rgba(25,23,19,.14)"; ctx.lineWidth=2; ctx.beginPath();
+  for(let x=0;x<=w;x+=8){const y=wl+Math.sin(x/34+now/420)*4; x?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+  ctx.stroke();
+  const s=Math.min(w,h)/230;
+  const x=w*0.12+p*(w*0.66), y=wl-2+Math.sin(now/300)*3;
+  ctx.save(); ctx.translate(x,y); ctx.rotate(Math.sin(now/300)*.05); ctx.scale(s,s);
+  ctx.fillStyle=ACC; ctx.beginPath();                    // корпус
+  ctx.moveTo(-30,-7); ctx.lineTo(30,-7);
+  ctx.quadraticCurveTo(23,15,0,15);
+  ctx.quadraticCurveTo(-23,15,-30,-7); ctx.fill();
+  ctx.strokeStyle=INK; ctx.lineWidth=3; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(0,-72); ctx.stroke();
+  ctx.fillStyle="#FFFFFF"; ctx.lineWidth=2.5;            // парус
+  ctx.beginPath(); ctx.moveTo(5,-68);
+  ctx.quadraticCurveTo(34,-47,46,-14);
+  ctx.lineTo(5,-14); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=ACC; ctx.beginPath();                    // флажок
+  ctx.moveTo(0,-72); ctx.lineTo(-17,-66); ctx.lineTo(0,-60); ctx.fill();
+  ctx.restore();
+}
+
+/* одуванчик: парашютики срываются по одному */
+function dandT(ctx,w,h,p,on,now,st,cel){
+  const cx=w*0.36, cy=h*0.40, R=Math.min(w,h)*0.21;
+  ctx.strokeStyle="#7E8B62"; ctx.lineWidth=4; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(cx,cy+R*.7);
+  ctx.quadraticCurveTo(cx+10,h*0.8,cx-4,h); ctx.stroke();
+  const gone=Math.floor(p*st.seeds.length);
+  /* сначала тонкие ножки от серединки — без них шар не читается */
+  ctx.strokeStyle="rgba(25,23,19,.16)"; ctx.lineWidth=1;
+  st.seeds.forEach((s,i)=>{
+    if(i<gone) return;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(s.a)*R*s.d, cy+Math.sin(s.a)*R*s.d); ctx.stroke();
+  });
+  st.seeds.forEach((s,i)=>{
+    if(i<gone && !s.out){ s.out=true; s.x=cx+Math.cos(s.a)*R*s.d; s.y=cy+Math.sin(s.a)*R*s.d;
+      s.vx=.9+Math.random()*1.4; s.vy=-.3-Math.random()*.45; }
+    let x,y,rot=0;
+    if(s.out){ s.x+=s.vx; s.y+=s.vy+Math.sin(now/300+i)*.12; s.rot+=.02; x=s.x; y=s.y; rot=s.rot; }
+    else { x=cx+Math.cos(s.a)*R*s.d; y=cy+Math.sin(s.a)*R*s.d; }
+    if(x>w+30||x<-30) return;
+    ctx.save(); ctx.translate(x,y); ctx.rotate(rot);
+    ctx.fillStyle="rgba(255,255,255,.75)";               // пушок
+    ctx.beginPath(); ctx.arc(0,-3,7,0,7); ctx.fill();
+    ctx.strokeStyle="rgba(25,23,19,.20)"; ctx.lineWidth=.9; ctx.lineCap="round";
+    for(let k=0;k<9;k++){ const a=-Math.PI/2+(k-4)*.34;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*9,Math.sin(a)*9-1); ctx.stroke(); }
+    ctx.restore();
+  });
+  ctx.fillStyle="#B8AC90"; ctx.beginPath(); ctx.arc(cx,cy,6,0,7); ctx.fill();
+}
+
+/* пузыри: сколько выдул — столько и летит */
+function bubT(ctx,w,h,p,on,now,st,cel){
+  const wx=w*0.16, wy=h*0.66, wr=Math.min(22,w*0.06);
+  ctx.strokeStyle=INK; ctx.lineWidth=3.5; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(wx,wy+wr); ctx.lineTo(wx,h*0.95); ctx.stroke();
+  ctx.beginPath(); ctx.arc(wx,wy,wr,0,7); ctx.stroke();
+  const want=Math.floor(p*7);
+  while(st.bubs.length<want)
+    st.bubs.push({
+      x:wx+(Math.random()-.5)*wr, y:wy+(Math.random()-.5)*wr,
+      r:8+Math.random()*16, vy:-.35-Math.random()*.7,
+      vx:.35+Math.random()*1.1, ph:Math.random()*6
+    });
+  if(!p && st.bubs.length && !cel) st.bubs.length=0;
+  st.bubs.forEach(b=>{
+    b.y+=b.vy; b.x+=b.vx+Math.sin(now/500+b.ph)*.3;
+    const g=ctx.createRadialGradient(b.x-b.r*.3,b.y-b.r*.3,1,b.x,b.y,b.r);
+    g.addColorStop(0,"rgba(255,255,255,.85)"); g.addColorStop(.7,"rgba(190,220,235,.30)");
+    g.addColorStop(1,"rgba(140,180,205,.16)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fill();
+    ctx.strokeStyle="rgba(120,165,195,.5)"; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.9)"; ctx.beginPath();
+    ctx.arc(b.x-b.r*.34,b.y-b.r*.36,b.r*.16,0,7); ctx.fill();
+  });
+  if(st.bubs.length>60) st.bubs.splice(0,20);
+}
+
 /* ---------- задания ---------- */
 const stage = () => $("#stage");
-function finish(){
+function finish(ms){
   okSnd(); buzz(30);
-  later(nextTask, 650);
+  later(nextTask, ms || 650);
 }
 function runTask(){
   cleanup();
@@ -545,26 +752,47 @@ function runTask(){
 
 /* держать и дуть/тянуть */
 function tHold(t){
-  let rep=0, prog=0, holding=false, last=0;
+  let rep=0, prog=0, holding=false, last=0, over=false, lastP=0;
+  const toyKind = t.toy;
   stage().innerHTML = `<div class="title">${t.title}</div>
-    ${dial(`<span class="breath" id="br"></span>${t.letter?`<span class="val letter">${t.letter}</span>`:""}`)}
+    ${toyKind
+      ? `<button class="scene" id="scene"><canvas id="cv"></canvas></button>`
+      : dial(`<span class="breath" id="br"></span>${t.letter?`<span class="val letter">${t.letter}</span>`:""}`)}
     ${dotsHTML(t.reps)}
-    <div class="hint">Держи, пока дуешь</div>`;
-  const d=$("#dial"), br=$("#br");
+    <div class="hint">Держи и дуй</div>`;
+  const d = toyKind ? $("#scene") : $("#dial");
+  const br = $("#br");
+
+  let toy=null, ctx=null, cw=0, ch=0;
+  if(toyKind){
+    const cv=$("#cv"), f=fitCanvas(cv);
+    ctx=f.ctx; cw=f.w; ch=f.h; toy=makeToy(toyKind);
+    toy.draw(ctx,cw,ch,0,false,performance.now());   // первый кадр сразу, без пустой вспышки
+    const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h;
+                      toy.draw(ctx,cw,ch,lastP,false,performance.now()); };
+    addEventListener("resize",refit);
+    CLEAN.push(()=>removeEventListener("resize",refit));
+  }
+
   const id = setInterval(() => {
     const now = performance.now();
     const dt = now - (last||now); last = now;
+    /* доиграли — оставляем картинку жить, пока идёт награда */
+    if(over){ if(toy) toy.draw(ctx,cw,ch,lastP,false,now); return; }
     const on = holding || blowing();
     d.classList.toggle("holding", on);
-    /* отпустил — полоска откатывается быстрее, чем набиралась:
-       выдох должен быть непрерывным, а не по кусочкам */
+    /* отпустил — откат быстрее, чем набор: выдох должен быть
+       непрерывным, а не по кусочкам */
     prog = on ? prog+dt : Math.max(0, prog - dt*1.6);
     const p = Math.min(1, prog/(t.sec*1000));
-    setDial(p);
-    if(br) br.style.transform = "scale(" + (1 + 1.9*p) + ")";
+    lastP = p;
+    if(toy) toy.draw(ctx,cw,ch,p,on,now);
+    else { setDial(p); if(br) br.style.transform = "scale(" + (1 + 1.9*p) + ")"; }
     if(prog >= t.sec*1000){
-      rep++; markDots(rep); prog=0; setDial(0); okSnd(); buzz(30);
-      if(rep>=t.reps){ clearInterval(id); finish(); }
+      rep++; markDots(rep); prog=0;
+      if(toy) toy.pop(); else setDial(0);
+      okSnd(); buzz(30);
+      if(rep>=t.reps){ over=true; finish(toy?1100:650); }
     }
   }, 33);
   const down=e=>{ e.preventDefault(); ac(); holding=true; if(t.voice) say(t.voice); };
