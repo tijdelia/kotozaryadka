@@ -98,8 +98,8 @@
     flex:1;min-height:0;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     justify-content:safe center;
-    gap:clamp(14px,3.4vh,30px);
-    padding:10px 18px 22px;overflow-y:auto;
+    gap:clamp(10px,2.4vh,24px);
+    padding:6px 10px 14px;overflow-y:auto;
   }
   .stage > *{flex:none}
   .title{font-size:clamp(21px,5vw,28px);font-weight:800;letter-spacing:-.02em;text-align:center;text-wrap:balance}
@@ -149,7 +149,7 @@
   }
 
   /* кольцо — единственный орган управления */
-  .dial{position:relative;width:min(46vw,30dvh);aspect-ratio:1;display:grid;place-items:center}
+  .dial{position:relative;width:min(72vw,46dvh);aspect-ratio:1;display:grid;place-items:center}
   .dial svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
   .dial .trk{fill:none;stroke:var(--line);stroke-width:6}
   .dial .fil{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .25s ease}
@@ -170,7 +170,9 @@
 
   /* сцена с игрушкой: она же кнопка «держи и дуй» */
   .scene{
-    width:min(92vw,520px,calc(44dvh * 4 / 3));
+    /* без потолка в пикселях: на планшете сцена должна занимать экран,
+       иначе пятилетке негде разместить ладонь */
+    width:min(96vw, calc(70dvh * 4 / 3));
     aspect-ratio:4/3;background:var(--card);
     border-radius:22px;overflow:hidden;position:relative;
     touch-action:none;-webkit-touch-callout:none;
@@ -181,13 +183,13 @@
 
   /* значок упражнения: раскрашивается, пока идёт занятие */
   .emblem{
-    width:min(46vw,180px);aspect-ratio:1;
+    width:min(46vw,26dvh,230px);aspect-ratio:1;
     background:var(--card);border-radius:24px;overflow:hidden;flex:none;
   }
   .emblem canvas{width:100%;height:100%;display:block}
 
   /* пузырьки: лопаем пальцами */
-  .popgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(8px,2.4vw,16px);width:min(92vw,460px)}
+  .popgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,2.6vw,22px);width:min(96vw, calc(62dvh * 5 / 4))}
   .bub{
     aspect-ratio:1;border-radius:50%;border:0;padding:0;
     background:radial-gradient(circle at 34% 28%, #fff 6%, var(--c) 72%);
@@ -201,7 +203,7 @@
   }
 
   /* барабанчики */
-  .drums{display:flex;gap:clamp(14px,4vw,28px);width:min(92vw,460px)}
+  .drums{display:flex;gap:clamp(16px,4vw,36px);width:min(96vw, calc(58dvh * 2))}
   .pad{
     flex:1;aspect-ratio:1;border-radius:50%;border:0;
     background:var(--card);box-shadow:inset 0 0 0 3px var(--line);
@@ -211,7 +213,7 @@
   .pad:active{transform:scale(.94)}
 
   /* «В или Ф»: загорается та буква, которую ребёнок на самом деле сказал */
-  .pair{display:flex;gap:clamp(12px,4vw,26px);width:min(92vw,460px)}
+  .pair{display:flex;gap:clamp(14px,4vw,32px);width:min(96vw, calc(58dvh * 2))}
   .pcard{
     flex:1;aspect-ratio:1;border-radius:26px;background:var(--card);
     display:grid;place-items:center;position:relative;
@@ -234,12 +236,12 @@
   .dots i.on{background:var(--accent)}
 
   /* плитки: слоги, гласные, слова */
-  .tiles{display:grid;gap:10px;width:100%;max-width:520px}
+  .tiles{display:grid;gap:clamp(10px,1.6vw,16px);width:min(96vw,860px)}
   .tiles.c3{grid-template-columns:repeat(3,1fr)}
   .tiles.c4{grid-template-columns:repeat(4,1fr)}
   .cell{
     background:var(--card);border-radius:16px;
-    min-height:clamp(64px,11vh,86px);
+    min-height:clamp(70px,14vh,120px);
     display:grid;place-items:center;
     font-size:22px;font-weight:800;letter-spacing:-.01em;
     transition:transform .12s ease,background .18s,color .18s;
@@ -348,6 +350,8 @@
   .row.on .sw{background:var(--good)}
   .row.on .sw::after{left:22px}
   .quiet{font-size:13px;color:var(--muted);margin-top:8px}
+  .lvl{height:16px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:10px}
+  .lvl i{display:block;height:100%;width:0;background:var(--good);transition:width .06s linear}
   .seg{display:flex;gap:4px;background:var(--paper);border-radius:12px;padding:3px;flex:none}
   .seg button{font-size:13px;font-weight:700;padding:7px 11px;border-radius:9px;color:var(--muted)}
   .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.10)}
@@ -468,6 +472,14 @@
     <h3>Запасной вариант</h3>
     <p>Если готовый файл почему-то не загрузился, говорит синтез планшета. Русские голоса на разных устройствах звучат очень по-разному — послушайте и выберите приятнее:</p>
     <div id="vlist"></div>
+
+    <h3>Проверка микрофона</h3>
+    <p>Если игры «Заведи вертолёт» и «В или Ф» не отзываются — сначала сюда. Нажмите и говорите: полоска должна прыгать.</p>
+    <button class="row" id="micTest">Проверить микрофон</button>
+    <div id="micBox" hidden>
+      <div class="lvl"><i id="lvlBar"></i></div>
+      <p class="quiet" id="micInfo">—</p>
+    </div>
 
     <h3>Настройка звуков</h3>
     <p>В играх «Заведи вертолёт» и «В или Ф» приложение слушает микрофон. Оно <b>не оценивает правильность</b> — этого не умеет ни одна программа на детской речи с нарушениями, и врать ребёнку хуже, чем молчать. Оно измеряет ровно одно: дрожат ли голосовые связки. Именно этим В отличается от Ф, и это физика, а не догадка.</p>
@@ -605,7 +617,7 @@ const PLAN = {
 
   /* игр больше, чем нужно на одно занятие: каждый раз берём четыре
      случайные, чтобы блок не приедался и оставался коротким */
-  finger:{ name:"Пальчики", pick:4, tasks:[
+  finger:{ name:"Пальчики", pick:5, tasks:[
     {type:"pinch", title:"Собери ягоды", n:5,
      tip:"Щипковый захват большим и указательным — с него начинается правильное держание карандаша. Пусть берёт ягоду именно двумя пальцами, а не всей горстью."},
     {type:"twist", title:"Заведи ключик", reps:3,
@@ -623,9 +635,9 @@ const PLAN = {
   ]},
 
   vowel:{ name:"Гласные", tasks:[
-    {type:"hold", title:"А", letter:"А", sec:4, reps:3, voice:"а-а-а-а", tip:"Рот широко открыт. Тянем на одном выдохе, ровно, без толчков."},
-    {type:"hold", title:"У", letter:"У", sec:4, reps:3, voice:"у-у-у-у", tip:"Губы трубочкой."},
-    {type:"hold", title:"И", letter:"И", sec:4, reps:3, voice:"и-и-и-и", tip:"Губы в улыбке."},
+    {type:"hold", title:"А", letter:"А", sec:2.5, reps:3, voice:"а-а-а-а", tip:"Рот широко открыт. Тянем на одном выдохе, ровно, без толчков. Держать надо столько же, сколько тянет голос в записи."},
+    {type:"hold", title:"У", letter:"У", sec:2.5, reps:3, voice:"у-у-у-у", tip:"Губы трубочкой."},
+    {type:"hold", title:"И", letter:"И", sec:2.5, reps:3, voice:"и-и-и-и", tip:"Губы в улыбке."},
     {type:"echo", title:"Повторяй", rounds:4, tip:"Кольца загораются по очереди — ребёнок повторяет вслух и нажимает в том же порядке. Тренирует слуховую память."},
     {type:"echo", title:"Ещё длиннее", rounds:3, start:3, tip:"То же, но цепочка длиннее."}
   ]},
@@ -1601,10 +1613,15 @@ function tVoice(t){
     <div class="ear" id="ear"><i></i><span id="est">включаю микрофон…</span></div>`;
   const cv=$("#cv"); let {ctx,w:cw,h:ch}=fitCanvas(cv);
   let prog=0, rep=0, last=0, over=false, ok=false, spin=0, ready=false;
+  /* Звук в браузере просыпается только от касания, а вкладка могла его
+     усыпить. Поэтому любое касание сцены будит и переспрашивает микрофон. */
+  const wake=()=>{ ac(); if(!micOn) initMic().then(g=>{ if(my===TICK && g){ ready=true;
+                     $("#est").textContent="скажи в-в-в"; } }); };
+  $("#scene").addEventListener("pointerdown",wake);
   initMic().then(g=>{
     if(my!==TICK) return;
     ready=g;
-    $("#est").textContent = g ? "скажи в-в-в" : "микрофон не дали — держи картинку пальцем";
+    $("#est").textContent = g ? "скажи в-в-в" : "нажми на картинку, чтобы включить микрофон";
     if(!g){ const sc=$("#scene");
       const d=()=>ok=true, u=()=>ok=false;
       sc.addEventListener("pointerdown",e=>{e.preventDefault();ac();d();});
@@ -1658,15 +1675,18 @@ function heli(ctx,w,h,p,on,spin){
 function tPair(t){
   const my=TICK;
   stage().innerHTML=`<div class="title">${t.title}</div>
-    <div class="pair">
+    <div class="pair" id="pair0">
       <div class="pcard v" id="c0"><b>${t.a.toUpperCase()}</b><small>голос</small></div>
       <div class="pcard f" id="c1"><b>${t.b.toUpperCase()}</b><small>ветерок</small></div>
     </div>
     ${dotsHTML(t.reps)}
     <div class="ear" id="ear"><i></i><span id="est">включаю микрофон…</span></div>`;
   let rep=0, on=false, acc={v:0,c:0,l:0,n:0}, t0=0, cool=0, ready=false;
+  const wake=()=>{ ac(); if(!micOn) initMic().then(g=>{ if(my===TICK && g){ ready=true;
+                     $("#est").textContent=`скажи ${t.a}`; } }); };
+  $("#pair0").addEventListener("pointerdown",wake);
   initMic().then(g=>{ if(my!==TICK) return; ready=g;
-    $("#est").textContent = g ? `скажи ${t.a}` : "нужен микрофон — дайте доступ в настройках"; });
+    $("#est").textContent = g ? `скажи ${t.a}` : "нажми на букву, чтобы включить микрофон"; });
   const light=(i)=>{
     const c=$("#c"+i); if(!c) return;
     c.classList.add("lit"); later(()=>c.classList.remove("lit"),900);
@@ -1815,54 +1835,71 @@ function trackPointers(box, onChange){
 /* щипок: двумя пальцами берём ягоду и кладём в корзинку.
    Тот самый щипковый захват, с которого начинается держание карандаша. */
 function tPinch(t){
-  let got=0, hold=false, fly=0, bx=0, by=0;
+  /* Раньше засчитывался только «щипок на месте»: пальцы должны были сойтись
+     ровно поверх ягоды, и промах ничего не давал. Теперь ягоду берут и
+     несут в корзину, не отпуская, — так делают с настоящей ягодой, и так
+     щипковый захват держится дольше, а значит и тренируется лучше. */
+  let got=0, held=false, fly=0, bx=0, by=0, sx=0, sy=0;
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${dotsHTML(t.n)}
-    <div class="hint">Сожми ягодку двумя пальчиками</div>`;
+    <div class="hint">Возьми ягодку двумя пальчиками и отнеси в корзинку</div>`;
   const box=$("#scene"), cv=$("#cv");
   let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
-  const R=Math.min(cw,ch)*0.10;
-  const place=()=>{ bx=cw*(.2+Math.random()*.6); by=ch*(.16+Math.random()*.42); };
+  let R=Math.max(30, Math.min(cw,ch)*0.13);
+  const bk=()=>({x:cw*0.5, y:ch*0.88, r:Math.max(58, Math.min(cw,ch)*0.24)});
+  const place=()=>{ bx=cw*(.18+Math.random()*.64); by=ch*(.14+Math.random()*.34); };
   place();
 
   const live=trackPointers(box,pts=>{
     if(fly) return;
     const a=[...pts.values()];
-    if(a.length<2){ hold=false; return; }
+    if(a.length<2){ if(held) drop(); return; }
     const [p,q]=a, mx=(p.x+q.x)/2, my=(p.y+q.y)/2;
     const d=Math.hypot(p.x-q.x,p.y-q.y);
-    const near=Math.hypot(mx-bx,my-by) < R*2.4;
-    if(near && d > R*2.2) hold=true;                 // пальцы по бокам — взяли
-    if(hold && near && d < R*1.15){                  // и сомкнули
-      hold=false; fly=performance.now(); got++; markDots(got); okSnd(); buzz(30);
+    if(!held){
+      /* берём щедро: два пальца рядом с ягодой и сведены — этого хватает */
+      if(Math.hypot(mx-bx,my-by) < R*2.6 && d < R*2.6){ held=true; sx=bx-mx; sy=by-my; }
+    }
+    if(held){
+      if(d > R*4.2){ drop(); return; }        // развёл пальцы — выронил
+      bx=Math.max(R,Math.min(cw-R,mx+sx*0.35));
+      by=Math.max(R,Math.min(ch-R,my+sy*0.35));
     }
   });
-
+  function drop(){
+    held=false;
+    const b=bk();
+    if(Math.hypot(bx-b.x,by-b.y) < b.r*1.05){    // донёс — засчитано
+      fly=performance.now(); got++; markDots(got); okSnd(); buzz(30);
+    }
+  }
   const id=setInterval(()=>{
-    const now=performance.now();
+    const now=performance.now(); const b=bk();
     ctx.clearRect(0,0,cw,ch);
-    const bkX=cw*0.5, bkY=ch*0.90;
-    ctx.fillStyle="#C98A5A"; outline(ctx);            // корзинка
-    ctx.beginPath(); ctx.moveTo(bkX-52,bkY-26);
-    ctx.quadraticCurveTo(bkX,bkY+34,bkX+52,bkY-26); ctx.closePath();
+    const over = held && Math.hypot(bx-b.x,by-b.y) < b.r*1.05;
+    ctx.fillStyle=over?"#E0A472":"#C98A5A"; outline(ctx,4);   // корзинка
+    ctx.beginPath(); ctx.moveTo(b.x-b.r,b.y-b.r*0.42);
+    ctx.quadraticCurveTo(b.x,b.y+b.r*0.62,b.x+b.r,b.y-b.r*0.42); ctx.closePath();
     ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x-b.r,b.y-b.r*0.42); ctx.lineTo(b.x+b.r,b.y-b.r*0.42); ctx.stroke();
     let x=bx, y=by, r=R;
-    if(fly){                                          // ягода летит в корзинку
-      const k=Math.min(1,(now-fly)/450);
-      x=bx+(bkX-bx)*k; y=by+(bkY-30-by)*k; r=R*(1-k*.55);
+    if(fly){
+      const k=Math.min(1,(now-fly)/380);
+      x=bx+(b.x-bx)*k; y=by+(b.y-by)*k; r=R*(1-k*.6);
       if(k>=1){ fly=0; if(got>=t.n){ clearInterval(id); finish(700); return; } place(); }
     }
-    ctx.fillStyle=hold?"#B0284A":"#E24B6B"; outline(ctx);
+    ctx.fillStyle=held?"#B0284A":"#E24B6B"; outline(ctx,4);
     ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle="#5E8F4A"; ctx.lineWidth=5;       // веточка
-    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.lineTo(x+r*.5,y-r*1.6); ctx.stroke();
+    ctx.strokeStyle="#5E8F4A"; ctx.lineWidth=5;
+    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.lineTo(x+r*.5,y-r*1.55); ctx.stroke();
   },33);
-  CLEAN.push(()=>clearInterval(id));
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h;
+                    R=Math.max(30,Math.min(cw,ch)*0.13); place(); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>{ clearInterval(id); removeEventListener("resize",refit); });
 }
 
-/* кручение: поворачиваем ключик. Одним пальцем по кругу или двумя —
-   как удобнее; засчитываем накопленный угол. */
 function tTwist(t){
   let turns=0, ang=0, prev=null;
   stage().innerHTML=`<div class="title">${t.title}</div>
@@ -1933,114 +1970,133 @@ function tDrum(t){
   }));
 }
 
-/* изоляция: вся ладонь лежит, поднимаем один названный пальчик */
+/* Кружки не рисуем заранее. Ребёнок кладёт ладонь куда ему удобно, а мы
+   запоминаем, где легли его пальцы, и дальше говорим уже про них. Подгонять
+   маленькую руку под чужие точки на большом экране — отдельное мучение,
+   к моторике отношения не имеющее. */
+const fingerR = (cw,ch) => Math.max(26, Math.min(cw,ch)*0.10);
+
+function palmHint(ctx,cw,ch,n,need){
+  ctx.save();
+  ctx.strokeStyle="#E4E1DA"; ctx.lineWidth=3; ctx.setLineDash([9,9]);
+  const r=Math.min(cw,ch)*0.30;
+  ctx.beginPath(); ctx.arc(cw/2,ch/2,r,0,7); ctx.stroke();
+  ctx.restore();
+  const d=Math.min(cw,ch)*0.035, gap=d*2.1, y=ch/2+Math.min(cw,ch)*0.36;
+  for(let i=0;i<need;i++){
+    ctx.beginPath();
+    ctx.arc(cw/2+(i-(need-1)/2)*gap, y, d, 0, 7);
+    ctx.fillStyle = i<n ? GOOD : "#E4E1DA"; ctx.fill();
+  }
+}
+function drawFingers(ctx,pts,R,color){
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,R,0,7);
+    ctx.fillStyle=color||ACC; ctx.globalAlpha=.30; ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle=color||ACC; ctx.lineWidth=4; ctx.stroke();
+  });
+}
+const GOOD="#12A06A";
+
+/* вся ладошка: пять пальцев одновременно, где угодно */
+function tHand(t){
+  let rep=0, held=0;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.reps)}
+    <div class="hint">Положи всю ладошку куда хочешь</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  let pts=[];
+  const live=trackPointers(box,m=>{ pts=[...m.values()]; paint(); });
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    palmHint(ctx,cw,ch,Math.min(pts.length,5),5);
+    drawFingers(ctx,pts,fingerR(cw,ch), pts.length>=5?GOOD:ACC);
+  }
+  const id=setInterval(()=>{
+    const all=pts.length>=5;
+    if(all && !held) held=performance.now();
+    if(!all) held=0;
+    if(held && performance.now()-held>500){
+      held=0; live.clear(); pts=[]; rep++; markDots(rep); okSnd(); buzz(40); paint();
+      if(rep>=t.reps){ clearInterval(id); finish(800); }
+    }
+  },80);
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; paint(); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>{ clearInterval(id); removeEventListener("resize",refit); });
+  paint();
+}
+
+/* поднять один палец, не отрывая остальных */
 function tLift(t){
-  let rep=0, target=0, up=0, spots=[];
+  let rep=0, target=0, up=0, spots=[], phase=0, pts=[], lifted=-1;
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${dotsHTML(t.reps)}
     <div class="hint" id="ph">Положи всю ладошку</div>`;
   const box=$("#scene"), cv=$("#cv"), ph=$("#ph");
   let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
-  const R=Math.min(cw,ch)*0.11;
-  spots=handSpots(cw,ch);
-  let phase=0;                                        // 0 — кладём руку, 1 — поднимаем палец
+  const live=trackPointers(box,m=>{ pts=[...m.values()]; paint(); });
 
+  const near=(s)=>pts.some(p=>Math.hypot(s.x-p.x,s.y-p.y) < fingerR(cw,ch)*1.9);
   function paint(){
+    const R=fingerR(cw,ch);
     ctx.clearRect(0,0,cw,ch);
+    if(phase===0){
+      palmHint(ctx,cw,ch,Math.min(pts.length,5),5);
+      drawFingers(ctx,pts,R, pts.length>=5?GOOD:ACC);
+      return;
+    }
     spots.forEach((s,i)=>{
-      const isT = phase===1 && i===target;
-      ctx.fillStyle = isT ? "#FFFFFF" : (s.on?ACC:"#F1EFEA");
-      ctx.strokeStyle = isT ? ACC : (s.on?ACC:"#DCD8D0");
-      ctx.lineWidth = isT ? 6 : 4;
-      ctx.beginPath(); ctx.arc(s.x,s.y,R,0,7); ctx.fill(); ctx.stroke();
-      if(isT){ ctx.strokeStyle=ACC; ctx.lineWidth=5;  // стрелка вверх: этот подними
-        ctx.beginPath(); ctx.moveTo(s.x,s.y+8); ctx.lineTo(s.x,s.y-10);
-        ctx.moveTo(s.x-9,s.y-2); ctx.lineTo(s.x,s.y-12); ctx.lineTo(s.x+9,s.y-2); ctx.stroke(); }
+      const isT=i===target, down=near(s);
+      ctx.beginPath(); ctx.arc(s.x,s.y,R,0,7);
+      ctx.fillStyle = down ? (isT?"#FFE7EC":"#EFEDE7") : (isT?"#FFFFFF":"#F6F5F2");
+      ctx.fill();
+      ctx.strokeStyle = isT ? ACC : (down?"#CFCAC0":GOOD);
+      ctx.lineWidth = isT ? 6 : 4; ctx.stroke();
+      if(isT){                                   // стрелка вверх: этот подними
+        ctx.strokeStyle=ACC; ctx.lineWidth=5; ctx.lineCap="round";
+        ctx.beginPath(); ctx.moveTo(s.x,s.y+R*.42); ctx.lineTo(s.x,s.y-R*.46);
+        ctx.moveTo(s.x-R*.34,s.y-R*.10); ctx.lineTo(s.x,s.y-R*.52); ctx.lineTo(s.x+R*.34,s.y-R*.10);
+        ctx.stroke();
+      }
+      if(i===lifted && !isT){                    // видно, какой палец поднялся на самом деле
+        ctx.strokeStyle="#8FBEE8"; ctx.lineWidth=5;
+        ctx.beginPath(); ctx.arc(s.x,s.y,R*1.28,0,7); ctx.stroke();
+      }
     });
   }
-  const live=trackPointers(box,pts=>{
-    spots.forEach(s=>{
-      s.on=false;
-      pts.forEach(p=>{ if(Math.hypot(s.x-p.x,s.y-p.y) < R+16) s.on=true; });
-    });
-    paint();
-  });
   const id=setInterval(()=>{
-    const all=spots.every(s=>s.on);
-    if(phase===0 && all){
-      phase=1; target=Math.floor(Math.random()*5); up=0;
-      ph.textContent="Подними пальчик со стрелкой"; paint();
-    }
-    if(phase===1){
-      const ok = !spots[target].on && spots.every((s,i)=>i===target||s.on);
-      if(ok && !up) up=performance.now();
-      if(!ok) up=0;
-      if(up && performance.now()-up>400){
-        up=0; phase=0; rep++; markDots(rep); okSnd(); buzz(40);
-        ph.textContent="Положи всю ладошку"; paint();
-        if(rep>=t.reps){ clearInterval(id); finish(800); }
+    if(phase===0){
+      if(pts.length>=5){
+        spots=pts.slice(0,5).map(p=>({x:p.x,y:p.y})).sort((a,b)=>a.x-b.x);
+        target=Math.floor(Math.random()*5); phase=1; up=0; lifted=-1;
+        ph.textContent="Подними пальчик со стрелкой"; paint();
       }
+      return;
     }
-  },100);
-  CLEAN.push(()=>clearInterval(id));
+    const off=spots.map((s,i)=>near(s)?-1:i).filter(i=>i>=0);
+    lifted = off.length===1 ? off[0] : -1;
+    if(pts.length===0){ phase=0; lifted=-1; ph.textContent="Положи всю ладошку"; paint(); return; }
+    const ok = off.length===1 && off[0]===target;
+    if(ok && !up) up=performance.now();
+    if(!ok) up=0;
+    paint();
+    if(up && performance.now()-up>400){
+      up=0; phase=0; lifted=-1; live.clear(); pts=[];
+      rep++; markDots(rep); okSnd(); buzz(40);
+      ph.textContent="Положи всю ладошку"; paint();
+      if(rep>=t.reps){ clearInterval(id); finish(800); }
+    }
+  },80);
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; paint(); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>{ clearInterval(id); removeEventListener("resize",refit); });
   paint();
 }
 
-/* подушечки пальцев веером: большой ниже и сбоку, средний выше всех */
-const HAND=[[.14,.74],[.32,.40],[.50,.29],[.68,.38],[.85,.57]];
-const handSpots=(cw,ch)=>HAND.map(([x,y])=>({x:x*cw, y:y*ch, on:false}));
-
-/* вся ладошка: пять пальцев в кружки одновременно */
-function tHand(t){
-  let rep=0, held=0, live=new Map();
-  stage().innerHTML=`<div class="title">${t.title}</div>
-    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
-    ${dotsHTML(t.reps)}
-    <div class="hint">Поставь все пять пальчиков сразу</div>`;
-  const box=$("#scene"), cv=$("#cv");
-  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h, spots=[];
-  const R=Math.min(cw,ch)*0.11;
-  const place=()=>{ spots=handSpots(cw,ch); };
-  function paint(){
-    ctx.clearRect(0,0,cw,ch);
-    spots.forEach(s=>{
-      ctx.fillStyle=s.on?ACC:"#F1EFEA";
-      ctx.strokeStyle=s.on?ACC:"#DCD8D0"; ctx.lineWidth=4;
-      ctx.beginPath(); ctx.arc(s.x,s.y,R,0,7); ctx.fill(); ctx.stroke();
-    });
-  }
-  function check(){
-    const r=cv.getBoundingClientRect();
-    spots.forEach(s=>{
-      s.on=false;
-      live.forEach(p=>{
-        const dx=s.x-(p.x-r.left), dy=s.y-(p.y-r.top);
-        if(dx*dx+dy*dy < (R+16)*(R+16)) s.on=true;
-      });
-    });
-    paint();
-    const all=spots.every(s=>s.on);
-    if(all && !held){ held=performance.now(); }
-    if(!all) held=0;
-    if(held && performance.now()-held>500){
-      held=0; live.clear(); rep++; markDots(rep); okSnd(); buzz(40); paint();
-      if(rep>=t.reps) finish(800);
-    }
-  }
-  box.addEventListener("pointerdown",e=>{ e.preventDefault(); ac(); live.set(e.pointerId,{x:e.clientX,y:e.clientY}); check(); });
-  box.addEventListener("pointermove",e=>{ if(live.has(e.pointerId)){ live.set(e.pointerId,{x:e.clientX,y:e.clientY}); check(); } });
-  const off=e=>{ live.delete(e.pointerId); check(); };
-  addEventListener("pointerup",off); addEventListener("pointercancel",off);
-  const tick=setInterval(check,120);              // на случай, если палец лежит неподвижно
-  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("pointerup",off); removeEventListener("pointercancel",off); });
-  const refit=()=>{ f=fitCanvas(cv); ctx=f.ctx; cw=f.w; ch=f.h; place(); paint(); };
-  addEventListener("resize",refit);
-  CLEAN.push(()=>removeEventListener("resize",refit));
-  place(); paint();
-}
-
-/* повторяем за роликом: картинка раскрашивается сама, счёта нет */
 function tFollow(t){
   let prog=0, last=0, over=false;
   stage().innerHTML = `<div class="title">${t.title}</div>
@@ -2335,6 +2391,37 @@ $("#swMic").onclick=async()=>{
   } else S.mic=false;
   save(); $("#swMic").classList.toggle("on",!!S.mic);
 };
+/* Живая проверка: родитель видит, доходит ли звук вообще, и какие числа
+   видят игры. Без этого «не реагирует» невозможно отличить от «не дали
+   доступ», «браузер не тот» или «порог не тот». */
+let MICT=null;
+function micTest(){
+  const box=$("#micBox"), bar=$("#lvlBar"), info=$("#micInfo");
+  if(MICT){ clearInterval(MICT); MICT=null; box.hidden=true; $("#micTest").classList.remove("on"); return; }
+  box.hidden=false; $("#micTest").classList.add("on");
+  info.textContent="прошу доступ…";
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    info.textContent="Этот браузер не умеет слушать микрофон. Нужен Chrome или Safari."; return;
+  }
+  if(!window.isSecureContext){
+    info.textContent="Страница открыта не по https — браузер не даст микрофон."; return;
+  }
+  initMic().then(okMic=>{
+    if(!okMic){ info.textContent="Доступ не дали или микрофон занят. Разрешите его для сайта в настройках браузера и нажмите ещё раз."; return; }
+    let peak=0;
+    MICT=setInterval(()=>{
+      peak=Math.max(peak*0.96, micLvl);
+      bar.style.width=Math.min(100, Math.round(micLvl/0.25*100))+"%";
+      info.textContent =
+        `громкость ${micLvl.toFixed(3)} · фон ${micBase.toFixed(3)} · порог ${Math.max(micBase*2.6,.012).toFixed(3)}`
+        + ` · голос ${MIC.voiced.toFixed(2)} · низкие ${MIC.lowr.toFixed(2)}`
+        + (loud() ? " · СЛЫШУ" : " · тихо");
+    },100);
+    CLEAN.push(()=>{ if(MICT){ clearInterval(MICT); MICT=null; } });
+  });
+}
+$("#micTest").onclick=micTest;
+
 function paintBlow(){
   const cur=String(S.blow||1);
   $("#segBlow").querySelectorAll("button").forEach(b=>{
