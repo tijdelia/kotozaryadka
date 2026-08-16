@@ -348,6 +348,9 @@
   .row.on .sw{background:var(--good)}
   .row.on .sw::after{left:22px}
   .quiet{font-size:13px;color:var(--muted);margin-top:8px}
+  .seg{display:flex;gap:4px;background:var(--paper);border-radius:12px;padding:3px;flex:none}
+  .seg button{font-size:13px;font-weight:700;padding:7px 11px;border-radius:9px;color:var(--muted)}
+  .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.10)}
   .row.on .tick2{color:var(--good);font-weight:800;margin-left:auto}
   .row .tick2{margin-left:auto;color:transparent;font-weight:800}
 
@@ -474,6 +477,11 @@
     <h3>Настройки</h3>
     <button class="row" id="swVoice">Голос подсказок и похвалы <span class="sw"></span></button>
     <button class="row" id="swMic">Реагировать на дутьё в микрофон <span class="sw"></span></button>
+    <div class="row" style="gap:8px"><span style="flex:1">Длина выдоха</span>
+      <span class="seg" id="segBlow">
+        <button data-v="0.7">короче</button><button data-v="1">обычно</button><button data-v="1.4">длиннее</button>
+      </span></div>
+    <p class="quiet">«Обычно» — это два-три секунды на выдох. Если ребёнок не дотягивает и бросает, ставьте «короче»: дуть дольше, чем можешь, — не тренировка, а головокружение.</p>
     <p class="quiet">Микрофон работает не во всех браузерах. Если доступ не дали — просто держим кольцо пальцем, пока ребёнок дует.</p>
     <p class="quiet" id="stats"></p>
     <button class="row" id="swReset">Снять галочки за сегодня</button>
@@ -573,11 +581,11 @@ const GLYPH = {
 
 const PLAN = {
   breath:{ name:"Дыхание", tasks:[
-    {type:"hold", toy:"candle",    title:"Свеча",     sec:3, reps:3, tip:"Короткий сильный выдох. Вдох носом, плечи не поднимаются, щёки не надуваются."},
-    {type:"hold", toy:"balloon",   title:"Шарик",     sec:5, reps:3, tip:"Самый длинный выдох. Между попытками пауза, иначе закружится голова."},
-    {type:"hold", toy:"boat",      title:"Кораблик",  sec:6, reps:2, tip:"Выдох плавный, одной струёй, без толчков — иначе кораблик встанет."},
-    {type:"hold", toy:"dandelion", title:"Одуванчик", sec:5, reps:2, tip:"Ровный долгий выдох. Парашютики улетают по одному."},
-    {type:"hold", toy:"bubbles",   title:"Пузыри",    sec:4, reps:3, tip:"Выдох мягкий: сильно дунешь — пузыри лопнут, так же и с настоящими."}
+    {type:"hold", toy:"candle",    title:"Свеча",     sec:2,   reps:3, tip:"Короткий сильный выдох. Вдох носом, плечи не поднимаются, щёки не надуваются."},
+    {type:"hold", toy:"balloon",   title:"Шарик",     sec:2.5, reps:3, tip:"Выдох подлиннее. Между попытками пауза, иначе закружится голова."},
+    {type:"hold", toy:"boat",      title:"Кораблик",  sec:3,   reps:3, tip:"Выдох плавный, одной струёй, без толчков — иначе кораблик встанет."},
+    {type:"hold", toy:"dandelion", title:"Одуванчик", sec:2.5, reps:3, tip:"Ровный выдох. Парашютики улетают по одному."},
+    {type:"hold", toy:"bubbles",   title:"Пузыри",    sec:2,   reps:3, tip:"Выдох мягкий: сильно дунешь — пузыри лопнут, так же и с настоящими."}
   ]},
 
   artic:{ name:"Язычок", tasks:[
@@ -642,7 +650,7 @@ const VOW = ["А","О","У","И","Э","Ы"];
 /* ---------- состояние ---------- */
 const KEY = "kotozaryadka-v2";
 const load = () => { try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; } };
-let S = Object.assign({done:[], voice:true, mic:false, stars:0, got:0, days:0, day:"", last:"", voiceName:""}, load());
+let S = Object.assign({done:[], voice:true, mic:false, stars:0, got:0, days:0, day:"", last:"", voiceName:"", blow:1}, load());
 if(S.since===undefined) S.since = (S.stars||0) % 3;      // перенос со старой схемы «три звезды»
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 
@@ -1071,7 +1079,8 @@ let VID=null;
 function theVideo(){
   if(VID) return VID;
   VID=document.createElement("video");
-  VID.loop=true; VID.preload="auto"; VID.controls=false;
+  /* без повтора: ролик должен кончиться, и вместе с ним упражнение */
+  VID.loop=false; VID.preload="auto"; VID.controls=false;
   VID.playsInline=true;
   VID.setAttribute("playsinline","");
   VID.setAttribute("webkit-playsinline","");
@@ -2056,7 +2065,17 @@ function tFollow(t){
     const dt=now-(last||now); last=now;
     if(over) return;
     prog+=dt;
-    const p=Math.min(1,prog/(t.dur*1000));
+    /* Картинка раскрашивается вместе с роликом, а не по своему таймеру:
+       кончился ролик — кончилось упражнение. Раньше таймер был длиннее
+       ролика, тот шёл на второй круг, и было непонятно, когда это кончится.
+       t.dur остаётся запасным сроком, если ролик так и не запустили. */
+    const v = t.vid ? theVideo() : null;
+    let p;
+    if(v && v.duration > 0) p = Math.min(1, v.currentTime / v.duration);
+    else                    p = Math.min(1, prog / (t.dur*1000));
+    if(v && v.ended) p = 1;
+    /* ролик поставили на паузу и ушли — упражнение не должно висеть вечно */
+    if(prog > (t.dur + 60)*1000) p = 1;
     at(p,0);
     if(p>=1){
       over=true;
@@ -2074,6 +2093,10 @@ function tFollow(t){
 }
 
 /* держать и дуть/тянуть */
+/* Длину выдоха задаёт родитель: четырёхлетнему и семилетней нужно разное,
+   а дуть дольше, чем можешь, — не тренировка, а головокружение. */
+const secOf = t => (t.sec||3) * (S.blow||1);
+
 function tHold(t){
   let rep=0, prog=0, holding=false, last=0, over=false, lastP=0;
   const toyKind = t.toy;
@@ -2107,15 +2130,20 @@ function tHold(t){
     /* отпустил — откат быстрее, чем набор: выдох должен быть
        непрерывным, а не по кусочкам */
     prog = on ? prog+dt : Math.max(0, prog - dt*1.6);
-    const p = Math.min(1, prog/(t.sec*1000));
+    const cur = Math.min(1, prog/(secOf(t)*1000));
+    /* Игрушка показывает общий путь, а не один выдох. Раньше шарик улетал
+       и появлялся снова — ребёнку было непонятно, что происходит и сколько
+       осталось. Теперь он надувается от выдоха к выдоху и улетает один раз,
+       в самом конце: у трёх выдохов одна общая цель. */
+    const p = toy ? (rep + cur)/t.reps : cur;
     lastP = p;
     if(toy) toy.draw(ctx,cw,ch,p,on,now);
     else { setDial(p); if(br) br.style.transform = "scale(" + (1 + 1.9*p) + ")"; }
-    if(prog >= t.sec*1000){
+    if(prog >= secOf(t)*1000){
       rep++; markDots(rep); prog=0;
-      if(toy) toy.pop(); else setDial(0);
       okSnd(); buzz(30);
-      if(rep>=t.reps){ over=true; finish(toy?1100:650); }
+      if(rep>=t.reps){ over=true; lastP=1; if(toy) toy.pop(); else setDial(0); finish(toy?1400:650); }
+      else if(!toy) setDial(0);
     }
   }, 33);
   const down=e=>{ e.preventDefault(); ac(); holding=true; if(t.voice) say(t.voice); };
@@ -2292,6 +2320,7 @@ function openParent(){
     return `<p style="margin-top:14px"><b>${PLAN[k].name}</b></p><ul>${rows}</ul>`;
   }).join("");
   paintVoiceList(); paintRec(); paintCal();
+  paintBlow();
   $("#swVoice").classList.toggle("on", !!S.voice);
   $("#swMic").classList.toggle("on", !!S.mic);
   $("#stats").textContent =
@@ -2306,6 +2335,14 @@ $("#swMic").onclick=async()=>{
   } else S.mic=false;
   save(); $("#swMic").classList.toggle("on",!!S.mic);
 };
+function paintBlow(){
+  const cur=String(S.blow||1);
+  $("#segBlow").querySelectorAll("button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.v===cur);
+    b.onclick=()=>{ S.blow=parseFloat(b.dataset.v); save(); paintBlow(); };
+  });
+}
+
 /* ---------- калибровка звуков по самому ребёнку ---------- */
 const CALS=[{k:"в",n:"Звук В — «заведи мотор», горло дрожит"},
             {k:"ф",n:"Звук Ф — «ветерок», горло молчит"}];
