@@ -630,6 +630,12 @@ const PLAN = {
      tip:"Просите лопать разными пальцами, не только указательным: средним, безымянным, мизинцем. Тогда это настоящая тренировка на изоляцию пальцев, а не просто тыканье."},
     {type:"trace", title:"Веди по дорожке", rounds:3,
      tip:"Ведём одним пальцем, не отрывая его от экрана. Прямая подготовка руки к письму: дорожки от простой волны к зигзагу и петлям."},
+    {type:"spider", title:"Паучок", stones:9,
+     tip:"Попеременный шаг: передний палец стоит, задний переставляется вперёд. Пусть шагает указательным и средним одной руки — это подготовка к переключению между пальцами."},
+    {type:"wave", title:"Волна", reps:3,
+     tip:"Пальцы ложатся по очереди слева направо и остаются лежать — как играют гамму. Не чередование, а наслаивание: удерживать уже положенные и добавлять новый труднее, чем стучать."},
+    {type:"snail", title:"Улитка", rounds:2,
+     tip:"Здесь спешка не помогает: если вести быстро, улитка останавливается. Управление темпом и силой движения — то, без чего не выходит письмо."},
     {type:"hand", title:"Вся ладошка", reps:3,
      tip:"Ставим сразу все пять пальцев в кружки и держим. Учит разводить пальцы и удерживать их раздельно — то, что в стишках делается «замком» и «растопыркой»."}
   ]},
@@ -1588,7 +1594,8 @@ function runTask(){
   ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho, tiles:tTiles,
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
     pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
-    voice:tVoice, pair:tPair})[t.type](t);
+    voice:tVoice, pair:tPair,
+    spider:tSpider, wave:tWave, snail:tSnail})[t.type](t);
 }
 
 /* ===================== ИГРЫ ДЛЯ ПАЛЬЦЕВ =====================
@@ -1757,6 +1764,181 @@ function samples(pts,w,h,n){
   out.push(at(P.length-1));
   return out;
 }
+/* ===== ПАУЧОК: шагаем двумя пальцами по камушкам =====
+   Ни одна игра пока не тренировала попеременный шаг: передний палец
+   стоит, задний переставляется вперёд. Это другая координация, чем
+   постучать или провести. */
+function tSpider(t){
+  const N=t.stones||9;
+  let idx=0, pts=[], stones=[];
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(N-1)}
+    <div class="hint">Шагай двумя пальчиками по камушкам</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  /* радиус ограничен и шагом между камушками, и полями: иначе крайние
+     срезаются краем сцены, а на узком экране они налезают друг на друга */
+  const R=()=>Math.min(Math.max(26, Math.min(cw,ch)*0.10), cw*0.72/(N-1)*0.62, cw*0.085);
+  const build=()=>{
+    stones=[];
+    for(let i=0;i<N;i++){
+      stones.push({x:cw*(0.14+0.72*i/(N-1)),
+                   y:ch*(0.50+(i%2?0.21:-0.21))});
+    }
+  };
+  const on=s=>pts.some(p=>Math.hypot(s.x-p.x,s.y-p.y)<R()*1.35);
+  function paint(){
+    const r=R();
+    ctx.clearRect(0,0,cw,ch);
+    ctx.strokeStyle="#E4E1DA"; ctx.lineWidth=6; ctx.setLineDash([3,14]); ctx.lineCap="round";
+    ctx.beginPath(); stones.forEach((s,i)=>i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y)); ctx.stroke();
+    ctx.setLineDash([]);
+    stones.forEach((s,i)=>{
+      const done=i<idx, next=i===idx, hold=on(s);
+      ctx.beginPath(); ctx.arc(s.x,s.y,r,0,7);
+      ctx.fillStyle = done?"#D8F0E4" : (next?"#FFE7EC":"#F4F3F0");
+      ctx.fill();
+      ctx.strokeStyle = hold?ACC : (done?GOOD:(next?ACC:"#DCD8D0"));
+      ctx.lineWidth = next?6:4; ctx.stroke();
+      if(next){                                        // куда шагнуть дальше
+        ctx.fillStyle=ACC; ctx.beginPath();
+        ctx.arc(s.x,s.y,r*0.24,0,7); ctx.fill();
+      }
+    });
+  }
+  const live=trackPointers(box,m=>{ pts=[...m.values()]; step(); paint(); });
+  function step(){
+    if(idx===0){ if(stones.length && on(stones[0])) idx=1; return; }
+    if(idx>=N) return;
+    /* шаг засчитывается, только если задний палец ещё стоит: в этом вся суть */
+    if(on(stones[idx]) && on(stones[idx-1])){
+      idx++; markDots(idx-1); tone(420+idx*26,.07,.06); buzz(10);
+      if(idx>=N){ okSnd(); finish(900); }
+    }
+  }
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
+  addEventListener("resize",refit);
+  const tick=setInterval(()=>{ step(); paint(); },100);
+  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("resize",refit); });
+  build(); paint();
+}
+
+/* ===== ВОЛНА: перекат по клавишам, не отрывая предыдущий =====
+   Пальцы должны ложиться по очереди и накапливаться — так играют гамму.
+   Это не барабанчики: там чередование, здесь наслаивание. */
+function tWave(t){
+  const N=5;
+  let idx=0, rep=0, keys=[];
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.reps)}
+    <div class="hint">Клади пальчики по очереди слева направо и не убирай</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  let pts=[];
+  const build=()=>{
+    keys=[];
+    const pad=cw*0.055, w=(cw-pad*2)/N;
+    for(let i=0;i<N;i++) keys.push({x:pad+w*i+w*0.05, w:w*0.90, y:ch*0.15, h:ch*0.70});
+  };
+  const on=k=>pts.some(p=>p.x>=k.x&&p.x<=k.x+k.w&&p.y>=k.y&&p.y<=k.y+k.h);
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    keys.forEach((k,i)=>{
+      const done=i<idx, next=i===idx, hold=on(k);
+      rrect(ctx,k.x,k.y,k.w,k.h,18);
+      ctx.fillStyle = done?"#D8F0E4" : (next?"#FFE7EC":"#F6F5F2"); ctx.fill();
+      ctx.strokeStyle = hold?ACC : (done?GOOD:(next?ACC:"#DCD8D0"));
+      ctx.lineWidth = next?6:4; ctx.stroke();
+      if(next){ ctx.fillStyle=ACC; ctx.beginPath();
+        ctx.arc(k.x+k.w/2, k.y+k.h*0.5, Math.min(k.w,k.h)*0.13, 0, 7); ctx.fill(); }
+    });
+  }
+  const live=trackPointers(box,m=>{ pts=[...m.values()]; check(); paint(); });
+  function check(){
+    if(idx<N && on(keys[idx]) && keys.slice(0,idx).every(on)){
+      idx++; tone(392+idx*66,.09,.07); buzz(10);
+      if(idx>=N){
+        rep++; markDots(rep); okSnd(); buzz(40); idx=0; live.clear(); pts=[];
+        if(rep>=t.reps) finish(900);
+      }
+    }
+    /* убрал руку совсем — начинаем волну заново, но без наказания */
+    else if(!pts.length) idx=0;
+  }
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
+  addEventListener("resize",refit);
+  const tick=setInterval(()=>{ check(); paint(); },100);
+  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("resize",refit); });
+  build(); paint();
+}
+
+/* ===== УЛИТКА: вести медленно =====
+   Дорожки тренируют точность, но не скорость. Здесь наоборот: спешка
+   не даёт продвинуться. Управлять силой и темпом движения — то, без
+   чего не выходит письмо. */
+function tSnail(t){
+  let round=0, idx=0, down=false, pts=[], fast=0, lastP=null, lastT=0;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.rounds)}
+    <div class="hint" id="sh">Веди улитку медленно</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const TOL=()=>Math.max(38, Math.min(cw,ch)*0.13);
+  const MAXV=()=>Math.min(cw,ch)*0.0016;         // пикселей за миллисекунду
+  const build=()=>{ pts=samples(TRACKS[round%TRACKS.length],cw,ch,26); idx=0; };
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    ctx.strokeStyle="#EDEBE6"; ctx.lineWidth=TOL()*1.5; ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+    ctx.strokeStyle=GOOD; ctx.lineWidth=8;
+    ctx.beginPath(); pts.slice(0,Math.max(1,idx)).forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+    ctx.stroke();
+    const c=pts[Math.min(idx,pts.length-1)];
+    const r=TOL()*0.62;
+    ctx.fillStyle = fast>0 ? "#FFD1DC" : "#F2E2C0"; outline(ctx,4);
+    ctx.beginPath(); ctx.arc(c[0],c[1],r,0,7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle=INK; ctx.lineWidth=4;          // ракушка
+    ctx.beginPath();
+    for(let a=0;a<9;a+=0.25){ const rr=r*0.14*a/2.2;
+      ctx.lineTo(c[0]+Math.cos(a)*rr, c[1]+Math.sin(a)*rr); }
+    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c[0]-r*0.5,c[1]-r*0.5); ctx.lineTo(c[0]-r*0.8,c[1]-r*0.95);
+    ctx.moveTo(c[0]-r*0.2,c[1]-r*0.62); ctx.lineTo(c[0]-r*0.3,c[1]-r*1.05); ctx.stroke();
+  }
+  const move=e=>{
+    if(!down) return;
+    const r=cv.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top, now=performance.now();
+    if(lastP){
+      const v=Math.hypot(x-lastP[0],y-lastP[1])/Math.max(16,now-lastT);
+      if(v>MAXV()){ fast=12; $("#sh").textContent="Слишком быстро, помедленнее"; }
+    }
+    lastP=[x,y]; lastT=now;
+    if(fast>0) return;                             // спешка не двигает улитку
+    while(idx<pts.length && Math.hypot(pts[idx][0]-x,pts[idx][1]-y)<TOL()) idx++;
+    if(idx>=pts.length){
+      down=false; round++; markDots(round); okSnd(); buzz(30);
+      $("#sh").textContent="Веди улитку медленно";
+      if(round>=t.rounds){ finish(900); return; }
+      build();
+    }
+    paint();
+  };
+  box.addEventListener("pointerdown",e=>{ e.preventDefault(); ac(); down=true; lastP=null; move(e); });
+  box.addEventListener("pointermove",move);
+  const up=()=>{ down=false; lastP=null; };
+  addEventListener("pointerup",up); addEventListener("pointercancel",up);
+  const tick=setInterval(()=>{ if(fast>0){ fast--; if(!fast) $("#sh").textContent="Веди улитку медленно"; paint(); } },60);
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("pointerup",up);
+                   removeEventListener("pointercancel",up); removeEventListener("resize",refit); });
+  build(); paint();
+}
+
 function tTrace(t){
   let round=0, idx=0, down=false, pts=[];
   stage().innerHTML=`<div class="title">${t.title}</div>
