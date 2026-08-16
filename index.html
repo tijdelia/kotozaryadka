@@ -83,8 +83,16 @@
   .tile.done .name{color:var(--muted)}
 
   /* ---------------- ЗАДАНИЕ ---------------- */
-  .prog{height:2px;background:var(--line);flex:none}
-  .prog i{display:block;height:100%;background:var(--ink);width:0;transition:width .3s ease}
+  /* сколько упражнений осталось — видно ребёнку, а не только родителю:
+     кружок за упражнение, пройденные закрашиваются */
+  .steps{display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;flex:1}
+  .steps i{
+    width:13px;height:13px;border-radius:50%;flex:none;
+    box-shadow:inset 0 0 0 2px var(--line);transition:background .3s ease,box-shadow .3s ease;
+  }
+  .steps i.done{background:var(--good);box-shadow:inset 0 0 0 2px var(--good)}
+  .steps i.now{box-shadow:inset 0 0 0 3px var(--accent);animation:nowdot 1.6s ease-in-out infinite}
+  @keyframes nowdot{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
 
   .stage{
     flex:1;min-height:0;
@@ -321,6 +329,25 @@
   .row.on .sw{background:var(--good)}
   .row.on .sw::after{left:22px}
   .quiet{font-size:13px;color:var(--muted);margin-top:8px}
+  .row.on .tick2{color:var(--good);font-weight:800;margin-left:auto}
+  .row .tick2{margin-left:auto;color:transparent;font-weight:800}
+
+  /* свой голос вместо синтеза */
+  .vgrp{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:18px 0 6px}
+  .vrow{
+    display:flex;align-items:center;gap:8px;background:var(--card);
+    border-radius:14px;padding:8px 8px 8px 14px;margin-top:6px;
+  }
+  .vrow .vtx{flex:1;font-size:15px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vrow.has .vtx{color:var(--good)}
+  .vb{
+    width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;
+    background:var(--paper);color:var(--ink);
+  }
+  .vb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .vb[hidden]{display:none}
+  .vb.on{background:var(--accent);color:#fff;animation:recpulse 1s ease-in-out infinite}
+  @keyframes recpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important;transition-duration:.01ms !important}
@@ -346,10 +373,9 @@
 
   <!-- ЗАДАНИЕ -->
   <section class="screen" id="s-run">
-    <div class="prog"><i id="progFill"></i></div>
     <div class="bar">
       <button class="ic" id="toHome" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <div class="grow"></div>
+      <div class="steps" id="steps"></div>
       <button class="ic" id="skip" aria-label="Дальше"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <div class="stage" id="stage"></div>
@@ -401,12 +427,23 @@
     <div id="tips"></div>
 
     <h3>Награда</h3>
-    <p>За каждый пройденный блок — похвала вслух и <b>звёздочка</b>. Три звёздочки превращаются в <b>наклейку</b>, она навсегда остаётся в альбоме. Наклейки выдаются по порядку, и следующая всегда видна серой — ребёнок знает, ради чего старается, и может показать её пальцем. В альбоме 72 наклейки на шести страницах: хватит примерно на три месяца занятий, потом страницы можно дописать.</p>
-    <p>Награду <b>нельзя потерять</b>. Не получилось, пропустили упражнение, ушли с середины — заработанное остаётся. Это принципиально: ребёнку заниматься долго, и он не должен бояться ошибиться.</p>
+    <p>За каждый пройденный блок — похвала вслух и <b>звёздочка</b>. Звёздочки превращаются в <b>наклейку</b>, она навсегда остаётся в альбоме. Наклейки выдаются по порядку, и следующая всегда видна серой — ребёнок знает, ради чего старается, и может показать её пальцем. В альбоме 72 наклейки на шести страницах.</p>
+    <p>Сначала наклейка даётся <b>за каждый блок</b>, после четвёртой — за два, после восьмой — за три. Награда густая на старте и редеет, когда привычка уже сложилась: ждать три занятия до первой наклейки пятилетке слишком долго, он бросит раньше, чем дойдёт.</p>
+    <p>Награду <b>нельзя потерять</b>. Не получилось, пропустили упражнение — заработанное остаётся. Если ребёнок устал и вы вышли с середины, <b>звёздочка всё равно засчитывается</b>, когда сделано больше половины блока. Уходить надо уметь без потери, иначе «давай закончим, ты устал» становится наказанием ровно в тот момент, когда ему и так тяжело.</p>
+    <p>Сверху на экране занятия — <b>кружки по числу упражнений</b>: пройденные закрашиваются. Ребёнок видит, сколько осталось, и это видно ему, а не только вам — конец должен быть виден, иначе длинный блок кажется бесконечным.</p>
     <p>В альбоме наклейку можно нажать — приложение назовёт её вслух. Хороший повод повторить слово ещё раз.</p>
     <div class="warn">
       <b>Хвалите за старание, а не за результат.</b> «Ты постарался», «ты сегодня долго держал язычок» работают лучше, чем «умница» и «правильно». Приложение говорит именно так — говорите так же.
     </div>
+
+    <h3>Голос приложения</h3>
+    <p>Приложение говорит: хвалит, называет гласные, слоги и слова. <b>Живой голос всегда лучше синтеза</b> — особенно для звуков и слогов, которые ребёнок повторяет. Тянущийся звук («а-а-а-а», «в-в-в-в») синтез вообще не умеет: он прочитает его как отдельные буквы, поэтому без записи приложение такие подсказки просто молчит.</p>
+    <p>Нажмите ● и скажите фразу — приложение будет говорить вашим голосом. Записывать всё не нужно: начните с «Гласных» и «Звука В», похвалу можно оставить синтезу.</p>
+    <div id="vrec"></div>
+
+    <h3>Если записи нет</h3>
+    <p>Тогда говорит синтез планшета. Русские голоса на разных устройствах звучат очень по-разному — от живого до откровенно робота. Послушайте и выберите тот, что приятнее:</p>
+    <div id="vlist"></div>
 
     <h3>Настройки</h3>
     <button class="row" id="swVoice">Голос подсказок и похвалы <span class="sw"></span></button>
@@ -482,16 +519,23 @@ const ALL = [];
 const OFF = [];
 ALBUMS.forEach((a,ai)=>{ OFF.push(ALL.length); a.items.forEach(([e,n],i)=>ALL.push({e,n,ai,i})); });
 
-/* сколько блоков стоит одна наклейка */
-const PER = 3;
+/* Сколько блоков стоит наклейка. Подкрепление густое в начале и
+   редеет, когда привычка заниматься уже сложилась: первые четыре
+   раза наклейка за каждый блок, потом за два, дальше за три.
+   Пятилетке, которому тяжело, ждать награду три занятия на старте —
+   слишком долго, он бросит раньше, чем дойдёт до первой. */
+const stepFor = s => s<4 ? 1 : s<12 ? 2 : 3;
 
-/* хвалим за старание, а не за талант: ребёнку заниматься долго */
+/* Хвалим за старание, а не за способности. «Ты постарался» и «получилось»
+   ребёнок может повторить завтра, а «умница» — это приговор о себе, и при
+   первой же неудаче он звучит наоборот. Занятий впереди на год. */
 const PRAISE = [
-  "Молодец!","Как здорово!","У тебя получается!","Вот это да!",
-  "Ты постарался!","Очень хорошо!","Я горжусь тобой!","Отлично вышло!",
-  "Ты справился!","Умница!","Так держать!","Здорово стараешься!"
+  "Ты постарался!","У тебя получается!","Вот это да!","Ты справился!",
+  "Как здорово вышло!","С каждым разом всё лучше!","Ты не сдался — и вышло!",
+  "Я горжусь тобой!","Молодец, что попробовал!","Хорошо поработал!",
+  "Смотри, как ты можешь!","Ты сегодня хорошо старался!"
 ];
-const SHORT = ["Молодец!","Здорово!","Отлично!","Умница!","Супер!","Получилось!","Вот так!","Хорошо!"];
+const SHORT = ["Вот так!","Получилось!","Хорошо!","Молодец!","Здорово!","Так держать!","Уже лучше!","Ты смог!"];
 
 const GLYPH = {
   breath:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="6"/></svg>',
@@ -569,7 +613,8 @@ const VOW = ["А","О","У","И","Э","Ы"];
 /* ---------- состояние ---------- */
 const KEY = "kotozaryadka-v2";
 const load = () => { try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; } };
-let S = Object.assign({done:[], voice:true, mic:false, stars:0, got:0, days:0, day:"", last:""}, load());
+let S = Object.assign({done:[], voice:true, mic:false, stars:0, got:0, days:0, day:"", last:"", voiceName:""}, load());
+if(S.since===undefined) S.since = (S.stars||0) % 3;      // перенос со старой схемы «три звезды»
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 
 /* новый день — галочки на плитках снимаются сами, коллекция остаётся */
@@ -601,15 +646,75 @@ const tapSnd = () => tone(520,.07,.05);
 const okSnd  = () => { tone(660,.1); setTimeout(()=>tone(880,.14),80); };
 function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
 
+/* ============================================================
+   ГОЛОС
+   Живая запись всегда важнее синтеза: если фраза начитана
+   родителем, играем её. Синтез — только запасной вариант, и
+   голос для него выбирается не первым попавшимся: качество
+   русских голосов на разных планшетах отличается очень сильно.
+   ============================================================ */
+const VKEY = "kotozaryadka-voice";
+let REC = (()=>{ try{ return JSON.parse(localStorage.getItem(VKEY)||"{}"); }catch(e){ return {}; } })();
+function saveRec(){
+  try{ localStorage.setItem(VKEY, JSON.stringify(REC)); return true; }
+  catch(e){ return false; }
+}
+/* синтез читает КАПС как аббревиатуру («вэ-о-дэ-а»), поэтому всё,
+   что произносим, приводим к строчным — на экране регистр остаётся */
+const spoken = t => String(t).trim().toLowerCase();
+
+/* «а-а-а-а» синтез читает как четыре отдельные буквы, а «в-в-в-в» —
+   как «вэ вэ вэ вэ», то есть попросту неверно. Гласную говорим один
+   раз (имя буквы совпадает со звуком), согласную не говорим вовсе:
+   тянущийся звук умеет показать только живой голос — запишите его. */
+const VOWELS = "аоуиэы";
+function ttsFor(k){
+  const m = k.match(/^(.)(?:-\1)+$/);
+  if(m) return VOWELS.includes(m[1]) ? m[1] : null;
+  return k;
+}
+
 let ruV=null;
-function pickVoice(){ if(!window.speechSynthesis) return; const v=speechSynthesis.getVoices(); ruV=v.find(x=>/^ru/i.test(x.lang))||null; }
+const ruVoices = () => window.speechSynthesis
+  ? speechSynthesis.getVoices().filter(v=>/^ru/i.test(v.lang)) : [];
+function scoreVoice(v){
+  const n = v.name + " " + (v.voiceURI||"");
+  let s = 0;
+  if(/premium|enhanced|neural|улучшен/i.test(n))                s += 60;  // премиальные пакеты iOS и Windows
+  if(/google/i.test(n))                                          s += 40;  // сетевые голоса Google — самые живые
+  if(/milena|милена|katya|катя|yuri|юрий/i.test(n))               s += 25;  // iOS
+  if(/svetlana|светлана|dariya|дарья|dmitry|дмитрий/i.test(n))    s += 20;  // современные Windows
+  if(/irina|ирина|pavel|павел/i.test(n))                         s -= 15;  // старые движки, звучат роботом
+  if(!v.localService)                                            s += 10;
+  return s;
+}
+function pickVoice(){
+  const list = ruVoices();
+  ruV = list.find(v=>v.name===S.voiceName)
+     || list.slice().sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]
+     || null;
+}
 if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
-function say(t){
-  if(!S.voice||!window.speechSynthesis||!t) return;
+
+let CURA=null;
+function stopVoice(){
+  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
+  try{ if(CURA){ CURA.pause(); CURA=null; } }catch(e){}
+}
+function say(t, force){
+  if((!S.voice && !force) || !t) return;
+  const k = spoken(t);
+  stopVoice();
+  if(REC[k]){                                   // записано родителем — играем живой голос
+    try{ CURA=new Audio(REC[k]); const p=CURA.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+    return;
+  }
+  if(!window.speechSynthesis) return;
+  const tx = ttsFor(k);
+  if(!tx) return;                               // синтез сказал бы неправильно — лучше промолчать
   try{
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(t);
-    u.lang="ru-RU"; u.rate=.9; u.pitch=1.1;
+    const u=new SpeechSynthesisUtterance(tx);
+    u.lang="ru-RU"; u.rate=.92; u.pitch=1.05;
     if(ruV) u.voice=ruV;
     speechSynthesis.speak(u);
   }catch(e){}
@@ -683,7 +788,8 @@ function startBlock(k){
   show("run"); paintProg(); runTask();
 }
 function paintProg(){
-  $("#progFill").style.width = (RUN.i / RUN.block.tasks.length * 100) + "%";
+  $("#steps").innerHTML = RUN.block.tasks.map((_,i)=>
+    `<i class="${i<RUN.i?"done":i===RUN.i?"now":""}"></i>`).join("");
 }
 function nextTask(){
   if(!RUN) return;
@@ -694,20 +800,28 @@ function nextTask(){
 function finishBlock(){
   cleanup();
   if(!S.done.includes(RUN.key)) S.done.push(RUN.key);
-  S.stars++;
+  S.stars++; S.since++;
   if(S.last !== today()){ S.last = today(); S.days = (S.days||0)+1; }
   let fresh = null;
-  const want = Math.min(ALL.length, Math.floor(S.stars/PER));
-  if(want > S.got){ S.got = want; fresh = ALL[S.got-1]; }
+  if(S.since >= stepFor(S.stars-1) && S.got < ALL.length){
+    S.since = 0; S.got++; fresh = ALL[S.got-1];
+  }
   save();
   showReward(fresh);
 }
 function goHome(){
   cleanup();
-  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopVoice();
   RUN=null; buildHome(); show("home");
 }
-$("#toHome").onclick = () => { tapSnd(); goHome(); };
+/* Устал и вышел на середине — звёздочка всё равно его. Уходить надо
+   уметь без потери: иначе «давай закончим, ты устал» превращается
+   в наказание ровно тогда, когда ребёнку и так тяжело. */
+$("#toHome").onclick = () => {
+  tapSnd();
+  if(RUN && RUN.i >= Math.ceil(RUN.block.tasks.length/2)) return finishBlock();
+  goHome();
+};
 $("#skip").onclick   = () => { tapSnd(); nextTask(); };
 
 /* ============================================================
@@ -726,14 +840,14 @@ const GRID4 = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.
 let FRESH = null;
 function showReward(fresh){
   FRESH = fresh;
-  const lit = (S.stars % PER) || PER;
+  const need = stepFor(S.stars-1), lit = fresh ? need : S.since;
   /* закрыл все пять блоков за день — отдельная похвала */
   const full = S.done.length === Object.keys(PLAN).length;
   const ph  = full ? "Ты сделал всё!" : pick(PRAISE);
   $("#rw").innerHTML = `
     <canvas class="fx" id="fx"></canvas>
     <div class="praise">${ph}</div>
-    <div class="stars">${[0,1,2].map(i=>
+    <div class="stars">${Array.from({length:need},(_,i)=>
       `<b class="${i<lit?"on":""}${i===lit-1?" pop":""}">★</b>`).join("")}</div>
     ${fresh ? `<div class="sticker" id="stk"><span>${fresh.e}</span></div>
                <div class="sname" id="stn">${fresh.n}</div>` : ""}
@@ -797,7 +911,7 @@ function openAlbum(fresh){
 function paintAlbum(fresh){
   const a=ALBUMS[PAGE], base=OFF[PAGE];
   const have=Math.max(0, Math.min(a.items.length, S.got-base));
-  const next=ALL[S.got], lit=S.stars%PER;
+  const next=ALL[S.got], need=stepFor(S.stars), lit=S.since;
   $("#albBody").innerHTML = `
     <div class="albhead"><h2>${a.name}</h2><span>${have} из ${a.items.length}</span></div>
     <div class="stickgrid" id="sg">${a.items.map(([e,n],i)=>{
@@ -809,7 +923,7 @@ function paintAlbum(fresh){
     <div class="pages" id="pgs">${ALBUMS.map((_,i)=>
       `<button class="${i===PAGE?"on":""}" data-p="${i}" aria-label="Страница ${i+1}"></button>`).join("")}</div>
     ${next ? `<div class="nextup">
-        ${[0,1,2].map(i=>`<b class="${i<lit?"on":""}">★</b>`).join("")}
+        ${Array.from({length:need},(_,i)=>`<b class="${i<lit?"on":""}">★</b>`).join("")}
         <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         <span class="ne">${next.e}</span></div>` : ""}`;
   document.querySelectorAll("#sg .sl").forEach(b=>{
@@ -866,7 +980,7 @@ function wireVideo(src){
   const box=$("#vbox"); if(!box) return;
   const v=theVideo();
   box.insertBefore(v, box.firstChild);
-  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopVoice();
 
   v.muted=false;
   if(v.getAttribute("src")!==src){ v.setAttribute("src",src); v.load(); }
@@ -1942,23 +2056,24 @@ function tWords(t){
 let press=null;
 $("#toParent").addEventListener("pointerdown",()=>{ press=setTimeout(openParent,900); });
 ["pointerup","pointerleave","pointercancel"].forEach(e=>$("#toParent").addEventListener(e,()=>clearTimeout(press)));
-$("#fromParent").onclick=()=>goHome();
+$("#fromParent").onclick=()=>{ releaseMic(); goHome(); };
 
 function openParent(){
-  if(window.speechSynthesis) speechSynthesis.cancel();
+  stopVoice();
   const tips=$("#tips");
   tips.innerHTML = Object.keys(PLAN).map(k=>{
     const rows = PLAN[k].tasks.filter(t=>t.tip)
       .map(t=>`<li><b>${t.title}.</b> ${t.tip}</li>`).join("");
     return `<p style="margin-top:14px"><b>${PLAN[k].name}</b></p><ul>${rows}</ul>`;
   }).join("");
+  paintVoiceList(); paintRec();
   $("#swVoice").classList.toggle("on", !!S.voice);
   $("#swMic").classList.toggle("on", !!S.mic);
   $("#stats").textContent =
     `Дней с занятиями: ${S.days||0} · звёздочек: ${S.stars||0} · наклеек: ${S.got||0} из ${ALL.length}`;
   show("parent");
 }
-$("#swVoice").onclick=()=>{ S.voice=!S.voice; save(); $("#swVoice").classList.toggle("on",S.voice); if(!S.voice&&window.speechSynthesis) speechSynthesis.cancel(); };
+$("#swVoice").onclick=()=>{ S.voice=!S.voice; save(); $("#swVoice").classList.toggle("on",S.voice); if(!S.voice) stopVoice(); };
 $("#swMic").onclick=async()=>{
   if(!S.mic){
     const ok=await initMic(); S.mic=ok;
@@ -1966,6 +2081,118 @@ $("#swMic").onclick=async()=>{
   } else S.mic=false;
   save(); $("#swMic").classList.toggle("on",!!S.mic);
 };
+/* ---------- выбор синтезированного голоса ---------- */
+function paintVoiceList(){
+  const box=$("#vlist"), list=ruVoices();
+  pickVoice();
+  if(!list.length){
+    box.innerHTML = `<div class="warn"><b>Русского голоса на устройстве нет.</b>
+      Пока его не поставить, приложение будет молчать: читать кириллицу английским голосом
+      бессмысленно и вредно. На Android — «Настройки → Язык и ввод → Синтез речи»,
+      добавить русский в «Речевой синтезатор Google». На iPad — «Настройки → Универсальный доступ
+      → Устный контент → Голоса → Русский». Или запишите фразы своим голосом выше.</div>`;
+    return;
+  }
+  box.innerHTML = list.map(v=>
+    `<button class="row${ruV&&v.name===ruV.name?" on":""}" data-v="${v.name.replace(/"/g,"&quot;")}">
+       ${v.name}<span class="tick2">✓</span></button>`).join("");
+  box.querySelectorAll("[data-v]").forEach(b=>{
+    b.onclick=()=>{
+      S.voiceName=b.dataset.v; save(); pickVoice(); paintVoiceList();
+      try{
+        stopVoice();
+        const u=new SpeechSynthesisUtterance("молодец! у тебя получается.");
+        u.lang="ru-RU"; u.rate=.92; u.pitch=1.05; if(ruV) u.voice=ruV;
+        speechSynthesis.speak(u);
+      }catch(e){}
+    };
+  });
+}
+
+/* ---------- запись своего голоса ----------
+   Список берётся прямо из заданий, чтобы не разъезжался с ними. */
+function voiceItems(){
+  const out=[], seen=new Set();
+  const add=(g,txt)=>{ const k=spoken(txt); if(!txt||seen.has(k)) return; seen.add(k); out.push({g,k,d:txt}); };
+  PLAN.vowel.tasks.forEach(t=>t.voice&&add("Гласные",t.voice));
+  VOW.forEach(v=>add("Гласные",v));
+  PLAN.sound.tasks.forEach(t=>{
+    if(t.voice) add("Звук В",t.voice);
+    if(t.type==="tiles") t.items.forEach(s=>add("Звук В",s));
+    if(t.type==="words") t.items.forEach(p=>add("Звук В",p[1]));
+    if(t.say) add("Звук В",t.say);
+  });
+  PRAISE.forEach(p=>add("Похвала — по желанию",p));
+  SHORT.forEach(p=>add("Похвала — по желанию",p));
+  return out;
+}
+const IC_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z" fill="currentColor" stroke="none"/></svg>';
+const IC_REC  = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="currentColor" stroke="none"/></svg>';
+const IC_STOP = '<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none"/></svg>';
+const IC_DEL  = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+function paintRec(){
+  const box=$("#vrec"); let g=null, html="";
+  voiceItems().forEach(it=>{
+    if(it.g!==g){ g=it.g; html+=`<div class="vgrp">${g}</div>`; }
+    const has=!!REC[it.k];
+    html+=`<div class="vrow${has?" has":""}" data-k="${encodeURIComponent(it.k)}">
+        <span class="vtx">${it.d}</span>
+        <button class="vb play" ${has?"":"hidden"} aria-label="Послушать">${IC_PLAY}</button>
+        <button class="vb rec" aria-label="Записать">${IC_REC}</button>
+        <button class="vb del" ${has?"":"hidden"} aria-label="Стереть">${IC_DEL}</button>
+      </div>`;
+  });
+  box.innerHTML=html;
+  box.querySelectorAll(".vrow").forEach(row=>{
+    const k=decodeURIComponent(row.dataset.k);
+    row.querySelector(".play").onclick=()=>say(k,true);
+    row.querySelector(".del").onclick =()=>{ delete REC[k]; saveRec(); paintRec(); };
+    row.querySelector(".rec").onclick =()=>recToggle(k,row);
+  });
+}
+
+let MR=null, MSTREAM=null, MROW=null;
+async function recToggle(k,row){
+  if(MR && MR.state==="recording"){ MR.stop(); return; }
+  stopVoice();
+  if(!navigator.mediaDevices || !window.MediaRecorder){
+    alert("Этот браузер не умеет записывать звук. Попробуйте Chrome или Safari."); return;
+  }
+  try{
+    if(!MSTREAM) MSTREAM=await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){ alert("Микрофон не разрешён. Дайте доступ и попробуйте ещё раз."); return; }
+
+  const chunks=[];
+  try{ MR=new MediaRecorder(MSTREAM); }catch(e){ MR=null; alert("Не удалось начать запись."); return; }
+  MROW=row;
+  const btn=row.querySelector(".rec");
+  btn.innerHTML=IC_STOP; btn.classList.add("on");
+  MR.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  MR.onstop=()=>{
+    btn.innerHTML=IC_REC; btn.classList.remove("on");
+    const b=new Blob(chunks,{type:(MR&&MR.mimeType)||"audio/webm"});
+    MR=null;
+    if(!b.size) return;
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const prev=REC[k]; REC[k]=fr.result;
+      if(!saveRec()){
+        if(prev===undefined) delete REC[k]; else REC[k]=prev;
+        alert("Не хватило места для записи. Сотрите то, что уже не нужно.");
+      }
+      paintRec();
+    };
+    fr.readAsDataURL(b);
+  };
+  MR.start();
+  setTimeout(()=>{ if(MR && MR.state==="recording") MR.stop(); }, 6000);   // страховка от забытой записи
+}
+function releaseMic(){
+  try{ if(MR && MR.state==="recording") MR.stop(); }catch(e){}
+  if(MSTREAM){ try{ MSTREAM.getTracks().forEach(t=>t.stop()); }catch(e){} MSTREAM=null; }
+}
+
 $("#swReset").onclick=()=>{
   let ok=true;
   try{ ok=confirm("Снять галочки за сегодня? Наклейки останутся."); }catch(e){}
