@@ -197,12 +197,87 @@
   /* строка стишка */
   .line{font-size:clamp(20px,5vw,27px);font-weight:700;text-align:center;max-width:20ch;line-height:1.3;text-wrap:balance}
 
-  /* награда */
-  .reward{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--dark)}
-  .reward .rv{flex:1;min-height:0;position:relative}
-  .reward iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-  .reward .done-bar{padding:14px;display:flex;justify-content:center;flex:none}
-  .reward .done-bar button{color:#fff;font-size:16px;font-weight:700;padding:12px 26px;border-radius:999px;background:rgba(255,255,255,.14)}
+  /* ---------------- НАГРАДА ---------------- */
+  .reward{
+    flex:1;min-height:0;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    justify-content:safe center;
+    gap:clamp(12px,2.6vh,24px);padding:18px 20px 26px;
+  }
+  .reward > *{flex:none}
+  .reward .fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .praise{
+    font-size:clamp(24px,6.6vw,36px);font-weight:800;letter-spacing:-.025em;
+    text-align:center;text-wrap:balance;position:relative;
+  }
+  .stars{display:flex;gap:clamp(8px,2.6vw,16px);position:relative}
+  .stars b{
+    font-size:clamp(36px,11vw,54px);line-height:1;font-weight:400;
+    color:var(--line);transition:color .3s ease;
+  }
+  .stars b.on{color:#FFC93C}
+  .stars b.pop{animation:starpop .62s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes starpop{0%{transform:scale(0) rotate(-120deg)}100%{transform:scale(1) rotate(0)}}
+
+  .sticker{
+    width:min(46vw,26dvh,200px);aspect-ratio:1;background:var(--card);
+    border-radius:30px;display:grid;place-items:center;position:relative;
+    box-shadow:0 14px 34px rgba(25,23,19,.13);opacity:0;
+  }
+  .sticker span{font-size:min(26vw,15dvh,112px);line-height:1}
+  .sticker.in{animation:stickin .75s cubic-bezier(.2,1.5,.4,1) forwards}
+  @keyframes stickin{0%{transform:scale(.15) rotate(-24deg);opacity:0}70%{opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+  .sname{font-size:17px;font-weight:700;color:var(--muted);opacity:0}
+  .sname.in{animation:fadein .4s .5s ease forwards}
+  @keyframes fadein{to{opacity:1}}
+
+  .rbar{display:flex;gap:16px;align-items:center;position:relative}
+  .bigbtn{
+    width:72px;height:72px;border-radius:50%;background:var(--ink);color:#fff;
+    display:grid;place-items:center;transition:transform .14s ease;
+  }
+  .bigbtn:active{transform:scale(.93)}
+  .bigbtn svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .bigbtn.ghost{width:60px;height:60px;background:var(--card);color:var(--ink)}
+  .bigbtn.ghost svg{width:24px;height:24px;stroke-width:2}
+
+  /* ---------------- АЛЬБОМ ---------------- */
+  .albbtn{display:flex;align-items:center;gap:7px;padding:6px 13px 6px 9px;border-radius:999px;background:var(--card);flex:none}
+  .albbtn span{font-size:21px;line-height:1}
+  .albbtn i{font-style:normal;font-size:15px;font-weight:800;color:var(--muted)}
+
+  .album{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
+         justify-content:safe center;gap:12px;padding:0 16px 20px}
+  .album > *{flex:none}
+  .albhead{display:flex;align-items:baseline;gap:10px;padding:0 6px}
+  .albhead h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .albhead span{font-size:14px;color:var(--muted);font-weight:600}
+  .stickgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media (orientation:landscape){ .stickgrid{grid-template-columns:repeat(6,1fr)} }
+  .sl{
+    background:var(--card);border-radius:18px;aspect-ratio:1;padding:4px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    transition:transform .12s ease;
+  }
+  .sl span{font-size:clamp(24px,7vw,38px);line-height:1}
+  .sl small{font-size:10px;font-weight:700;color:var(--muted);text-align:center;line-height:1.1}
+  .sl:active{transform:scale(.94)}
+  .sl.locked{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+  .sl.locked span{filter:grayscale(1);opacity:.2}
+  .sl.locked small{visibility:hidden}
+  .sl.fresh{animation:stickin .8s cubic-bezier(.2,1.5,.4,1) both}
+  .sl.wig{animation:wig .5s ease}
+  @keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) scale(1.09)}75%{transform:rotate(8deg) scale(1.09)}}
+
+  .pages{display:flex;gap:9px;justify-content:center;padding:4px}
+  .pages button{width:9px;height:9px;border-radius:50%;background:var(--line);padding:0}
+  .pages button.on{background:var(--ink)}
+
+  .nextup{display:flex;align-items:center;justify-content:center;gap:9px;padding:2px 0}
+  .nextup b{font-size:19px;line-height:1;font-weight:400;color:var(--line)}
+  .nextup b.on{color:#FFC93C}
+  .nextup svg{width:17px;height:17px;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .nextup .ne{font-size:25px;line-height:1;filter:grayscale(1);opacity:.32}
 
   /* ---------------- РОДИТЕЛЯМ ---------------- */
   .doc{overflow-y:auto;padding:0 22px 40px;font-weight:500}
@@ -229,6 +304,7 @@
   <!-- ГЛАВНЫЙ -->
   <section class="screen on" id="s-home">
     <div class="bar">
+      <button class="albbtn" id="toAlbum" aria-label="Мои наклейки"><span>★</span><i>0</i></button>
       <div class="grow"></div>
       <button class="ic" id="toParent" aria-label="Родителям">
         <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
@@ -253,10 +329,18 @@
 
   <!-- НАГРАДА -->
   <section class="screen" id="s-reward">
-    <div class="reward">
-      <div class="rv" id="rewardVideo"></div>
-      <div class="done-bar"><button id="rewardDone">Дальше</button></div>
+    <div class="reward" id="rw"></div>
+  </section>
+
+  <!-- АЛЬБОМ НАКЛЕЕК -->
+  <section class="screen" id="s-album">
+    <div class="bar">
+      <button class="ic" id="fromAlbum" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="grow"></div>
+      <button class="ic" id="albPrev" aria-label="Предыдущая страница"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="ic" id="albNext" aria-label="Следующая страница"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
+    <div class="album" id="albBody"></div>
   </section>
 
   <!-- РОДИТЕЛЯМ -->
@@ -287,13 +371,20 @@
     <div id="tips"></div>
 
     <h3>Награда</h3>
-    <p>После каждого блока — серия <a href="https://www.youtube.com/playlist?list=PLagyxbJHFyL0X2obmssjdABSByaZC0CYg" target="_blank" rel="noopener">«Кота Саймона»</a> с официального канала, каждый раз новая.</p>
+    <p>За каждый пройденный блок — похвала вслух и <b>звёздочка</b>. Три звёздочки превращаются в <b>наклейку</b>, она навсегда остаётся в альбоме. Наклейки выдаются по порядку, и следующая всегда видна серой — ребёнок знает, ради чего старается, и может показать её пальцем. В альбоме 72 наклейки на шести страницах: хватит примерно на три месяца занятий, потом страницы можно дописать.</p>
+    <p>Награду <b>нельзя потерять</b>. Не получилось, пропустили упражнение, ушли с середины — заработанное остаётся. Это принципиально: ребёнку заниматься долго, и он не должен бояться ошибиться.</p>
+    <p>В альбоме наклейку можно нажать — приложение назовёт её вслух. Хороший повод повторить слово ещё раз.</p>
+    <div class="warn">
+      <b>Хвалите за старание, а не за результат.</b> «Ты постарался», «ты сегодня долго держал язычок» работают лучше, чем «умница» и «правильно». Приложение говорит именно так — говорите так же.
+    </div>
 
     <h3>Настройки</h3>
-    <button class="row" id="swVoice">Голос подсказок <span class="sw"></span></button>
+    <button class="row" id="swVoice">Голос подсказок и похвалы <span class="sw"></span></button>
     <button class="row" id="swMic">Реагировать на дутьё в микрофон <span class="sw"></span></button>
     <p class="quiet">Микрофон работает не во всех браузерах. Если доступ не дали — просто держим кольцо пальцем, пока ребёнок дует.</p>
-    <button class="row" id="swReset">Сбросить пройденное</button>
+    <p class="quiet" id="stats"></p>
+    <button class="row" id="swReset">Снять галочки за сегодня</button>
+    <p class="quiet">Звёздочки и наклейки при этом не пропадают — снимаются только отметки на плитках. Они и так снимаются сами каждое утро.</p>
 
     <h3>Новое домашнее задание</h3>
     <p class="quiet">Упражнения перечислены в начале файла <code>index.html</code>, в объекте <code>PLAN</code>. Там же ссылки на ролики — можно дописывать после каждого урока.</p>
@@ -314,7 +405,59 @@ const V = {
   kacheli:"oew5QCBE6j4", chasiki:"RvBaiajxjDI", chashka:"eBrmIfcR5vk",
   parus:"N1-nQpaQ2aE", gribok:"o3z7-WrdPFA", loshadka:"4eSkIzRFPqQ"
 };
-const SIMON = "PLagyxbJHFyL0X2obmssjdABSByaZC0CYg";
+/* ============================================================
+   НАКЛЕЙКИ
+   Шесть страниц альбома по двенадцать штук. Наклейки выдаются
+   строго по порядку: следующая всегда видна серой — ребёнок
+   знает, ради чего старается, и может её показать пальцем.
+   Когда наклеек станет мало, просто допишите сюда ещё страницу.
+   ============================================================ */
+const ALBUMS = [
+  {name:"Зверята", items:[
+    ["🐶","Собака"],["🐱","Кошка"],["🐰","Зайка"],["🦊","Лиса"],
+    ["🐻","Мишка"],["🐼","Панда"],["🐨","Коала"],["🦁","Лев"],
+    ["🐯","Тигр"],["🐮","Корова"],["🐷","Поросёнок"],["🐵","Обезьянка"]
+  ]},
+  {name:"Джунгли", items:[
+    ["🐘","Слон"],["🦒","Жираф"],["🦓","Зебра"],["🦏","Носорог"],
+    ["🐊","Крокодил"],["🐍","Змея"],["🦜","Попугай"],["🦍","Горилла"],
+    ["🦩","Фламинго"],["🦌","Олень"],["🦕","Динозавр"],["🦖","Тираннозавр"]
+  ]},
+  {name:"Море", items:[
+    ["🐳","Кит"],["🐬","Дельфин"],["🦈","Акула"],["🐠","Рыбка"],
+    ["🐙","Осьминог"],["🦀","Краб"],["🦞","Рак"],["🐢","Черепаха"],
+    ["🐧","Пингвин"],["🐡","Рыба-шар"],["🐚","Ракушка"],["🌊","Волна"]
+  ]},
+  {name:"Машины", items:[
+    ["🚗","Машина"],["🚌","Автобус"],["🚒","Пожарная"],["🚑","Скорая"],
+    ["🚓","Полиция"],["🚚","Грузовик"],["🚜","Трактор"],["🚂","Паровоз"],
+    ["🚁","Вертолёт"],["✈️","Самолёт"],["⛵","Парусник"],["🚲","Велосипед"]
+  ]},
+  {name:"Космос", items:[
+    ["🚀","Ракета"],["🌞","Солнце"],["🌙","Луна"],["⭐","Звезда"],
+    ["☄️","Комета"],["🪐","Сатурн"],["🛸","Тарелка"],["👽","Пришелец"],
+    ["🤖","Робот"],["🔭","Телескоп"],["🌍","Земля"],["🌈","Радуга"]
+  ]},
+  {name:"Вкусное", items:[
+    ["🍎","Яблоко"],["🍌","Банан"],["🍓","Клубника"],["🍉","Арбуз"],
+    ["🍇","Виноград"],["🍒","Вишня"],["🥕","Морковка"],["🍪","Печенье"],
+    ["🍰","Тортик"],["🍦","Мороженое"],["🍭","Леденец"],["🍫","Шоколадка"]
+  ]}
+];
+const ALL = [];
+const OFF = [];
+ALBUMS.forEach((a,ai)=>{ OFF.push(ALL.length); a.items.forEach(([e,n],i)=>ALL.push({e,n,ai,i})); });
+
+/* сколько блоков стоит одна наклейка */
+const PER = 3;
+
+/* хвалим за старание, а не за талант: ребёнку заниматься долго */
+const PRAISE = [
+  "Молодец!","Как здорово!","У тебя получается!","Вот это да!",
+  "Ты постарался!","Очень хорошо!","Я горжусь тобой!","Отлично вышло!",
+  "Ты справился!","Умница!","Так держать!","Здорово стараешься!"
+];
+const SHORT = ["Молодец!","Здорово!","Отлично!","Умница!","Супер!","Получилось!","Вот так!","Хорошо!"];
 
 const GLYPH = {
   breath:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="6"/></svg>',
@@ -390,8 +533,12 @@ const VOW = ["А","О","У","И","Э","Ы"];
 /* ---------- состояние ---------- */
 const KEY = "kotozaryadka-v2";
 const load = () => { try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; } };
-let S = Object.assign({done:[], voice:true, mic:false}, load());
+let S = Object.assign({done:[], voice:true, mic:false, stars:0, got:0, days:0, day:"", last:""}, load());
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+
+/* новый день — галочки на плитках снимаются сами, коллекция остаётся */
+const today = () => { const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+if(S.day !== today()){ S.day = today(); S.done = []; save(); }
 
 if(!document.querySelector('meta[name="viewport"]')){
   const m = document.createElement("meta");
@@ -416,7 +563,6 @@ function tone(f,d=.1,g=.07){
 }
 const tapSnd = () => tone(520,.07,.05);
 const okSnd  = () => { tone(660,.1); setTimeout(()=>tone(880,.14),80); };
-const noSnd  = () => tone(200,.16,.05);
 function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
 
 let ruV=null;
@@ -482,7 +628,12 @@ function buildHome(){
     g.appendChild(b);
   });
   const n=S.done.length;
-  $("#homeSub").textContent = n ? `пройдено ${n} из ${keys.length}` : "";
+  $("#homeSub").textContent = n ? `сегодня ${n} из ${keys.length}` : "";
+  paintAlbumBtn();
+}
+function paintAlbumBtn(){
+  $("#toAlbum").innerHTML =
+    `<span>${S.got ? ALL[(S.got-1)%ALL.length].e : "★"}</span><i>${S.got}</i>`;
 }
 
 /* ---------- прохождение блока ---------- */
@@ -506,22 +657,147 @@ function nextTask(){
 }
 function finishBlock(){
   cleanup();
-  if(!S.done.includes(RUN.key)){ S.done.push(RUN.key); save(); }
-  const n = 1 + Math.floor(Math.random()*40);
-  $("#rewardVideo").innerHTML =
-    `<iframe src="https://www.youtube.com/embed/videoseries?list=${SIMON}&index=${n}&autoplay=1&rel=0&playsinline=1"
-       allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-  show("reward");
+  if(!S.done.includes(RUN.key)) S.done.push(RUN.key);
+  S.stars++;
+  if(S.last !== today()){ S.last = today(); S.days = (S.days||0)+1; }
+  let fresh = null;
+  const want = Math.min(ALL.length, Math.floor(S.stars/PER));
+  if(want > S.got){ S.got = want; fresh = ALL[S.got-1]; }
+  save();
+  showReward(fresh);
 }
-$("#rewardDone").onclick = () => { $("#rewardVideo").innerHTML=""; goHome(); };
 function goHome(){
   cleanup();
   if(window.speechSynthesis) speechSynthesis.cancel();
-  $("#rewardVideo").innerHTML="";
   RUN=null; buildHome(); show("home");
 }
 $("#toHome").onclick = () => { tapSnd(); goHome(); };
 $("#skip").onclick   = () => { tapSnd(); nextTask(); };
+
+/* ============================================================
+   НАГРАДА
+   Похвала вслух + звёздочка. Каждая третья звёздочка приносит
+   наклейку в альбом. Ничего никогда не отбирается: пропустил,
+   не получилось, ушёл на середине — заработанное остаётся.
+   ============================================================ */
+function pick(list){
+  let i; do{ i=Math.floor(Math.random()*list.length); } while(i===list._p && list.length>1);
+  list._p=i; return list[i];
+}
+const ARROW = '<svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
+const GRID4 = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2.2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2.2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2.2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.2"/></svg>';
+
+let FRESH = null;
+function showReward(fresh){
+  FRESH = fresh;
+  const lit = (S.stars % PER) || PER;
+  /* закрыл все пять блоков за день — отдельная похвала */
+  const full = S.done.length === Object.keys(PLAN).length;
+  const ph  = full ? "Ты сделал всё!" : pick(PRAISE);
+  $("#rw").innerHTML = `
+    <canvas class="fx" id="fx"></canvas>
+    <div class="praise">${ph}</div>
+    <div class="stars">${[0,1,2].map(i=>
+      `<b class="${i<lit?"on":""}${i===lit-1?" pop":""}">★</b>`).join("")}</div>
+    ${fresh ? `<div class="sticker" id="stk"><span>${fresh.e}</span></div>
+               <div class="sname" id="stn">${fresh.n}</div>` : ""}
+    <div class="rbar">
+      ${S.got ? `<button class="bigbtn ghost" id="rAlbum" aria-label="Мои наклейки">${GRID4}</button>` : ""}
+      <button class="bigbtn" id="rDone" aria-label="Дальше">${ARROW}</button>
+    </div>`;
+  show("reward");
+  okSnd(); buzz(30);
+  say(ph);
+  confetti($("#fx"), (fresh?130:55) + (full?110:0));
+
+  if(fresh){
+    later(()=>{
+      const s=$("#stk"); if(!s) return;
+      s.classList.add("in"); $("#stn").classList.add("in");
+      okSnd(); buzz(50);
+      later(()=>say(fresh.n), 550);
+    }, 760);
+  }
+  $("#rDone").onclick = () => { tapSnd(); goHome(); };
+  const ra=$("#rAlbum");
+  if(ra) ra.onclick = () => { tapSnd(); openAlbum(FRESH); };
+}
+
+/* салют */
+function confetti(cv, n){
+  if(!cv) return;
+  const {ctx,w,h} = fitCanvas(cv);
+  const cols=["#FF4D6D","#FFC93C","#12A06A","#4C8DF6","#B06BF0","#FF8A3D"];
+  const P=Array.from({length:n},()=>({
+    x:w/2+(Math.random()-.5)*w*.4, y:h*.55+(Math.random()-.5)*40,
+    vx:(Math.random()-.5)*11, vy:-5-Math.random()*11,
+    r:3.5+Math.random()*5, a:Math.random()*6.3, va:(Math.random()-.5)*.34,
+    c:cols[(Math.random()*cols.length)|0]
+  }));
+  const id=setInterval(()=>{
+    ctx.clearRect(0,0,w,h);
+    let live=0;
+    for(const p of P){
+      p.vy+=.34; p.x+=p.vx; p.y+=p.vy; p.vx*=.994; p.a+=p.va;
+      if(p.y < h+40) live++;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a);
+      ctx.fillStyle=p.c; ctx.fillRect(-p.r,-p.r*.55,p.r*2,p.r*1.1);
+      ctx.restore();
+    }
+    if(!live){ clearInterval(id); ctx.clearRect(0,0,w,h); }
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+
+/* ---------- альбом ---------- */
+let PAGE=0;
+function openAlbum(fresh){
+  cleanup();
+  PAGE = fresh ? fresh.ai
+       : Math.min(ALBUMS.length-1, ALL[Math.max(0,Math.min(ALL.length-1,S.got-1))].ai);
+  paintAlbum(fresh);
+  show("album");
+}
+function paintAlbum(fresh){
+  const a=ALBUMS[PAGE], base=OFF[PAGE];
+  const have=Math.max(0, Math.min(a.items.length, S.got-base));
+  const next=ALL[S.got], lit=S.stars%PER;
+  $("#albBody").innerHTML = `
+    <div class="albhead"><h2>${a.name}</h2><span>${have} из ${a.items.length}</span></div>
+    <div class="stickgrid" id="sg">${a.items.map(([e,n],i)=>{
+      const own = base+i < S.got;
+      const isNew = fresh && fresh.ai===PAGE && fresh.i===i;
+      return `<button class="sl${own?"":" locked"}${isNew?" fresh":""}" data-i="${i}">
+        <span>${e}</span><small>${n}</small></button>`;
+    }).join("")}</div>
+    <div class="pages" id="pgs">${ALBUMS.map((_,i)=>
+      `<button class="${i===PAGE?"on":""}" data-p="${i}" aria-label="Страница ${i+1}"></button>`).join("")}</div>
+    ${next ? `<div class="nextup">
+        ${[0,1,2].map(i=>`<b class="${i<lit?"on":""}">★</b>`).join("")}
+        <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+        <span class="ne">${next.e}</span></div>` : ""}`;
+  document.querySelectorAll("#sg .sl").forEach(b=>{
+    b.onclick=()=>{
+      ac();
+      if(b.classList.contains("locked")){ tone(300,.07,.035); return; }
+      const n=a.items[+b.dataset.i][1];
+      tapSnd(); buzz(10); say(n);
+      b.classList.remove("wig","fresh"); void b.offsetWidth; b.classList.add("wig");
+    };
+  });
+  document.querySelectorAll("#pgs button").forEach(b=>{
+    b.onclick=()=>{ tapSnd(); PAGE=+b.dataset.p; paintAlbum(null); };
+  });
+}
+function flip(d){
+  tapSnd();
+  PAGE=(PAGE+d+ALBUMS.length)%ALBUMS.length;
+  paintAlbum(null);
+}
+$("#toAlbum").onclick   = () => { tapSnd(); openAlbum(null); };
+$("#fromAlbum").onclick = () => { tapSnd(); goHome(); };
+$("#albPrev").onclick   = () => flip(-1);
+$("#albNext").onclick   = () => flip(1);
 
 /* ---------- плеер ---------- */
 function ytSrc(id, autoplay){
@@ -976,7 +1252,8 @@ function drawEmblem(ctx,w,h,kind,p,bounce){
 const stage = () => $("#stage");
 function finish(ms){
   okSnd(); buzz(30);
-  later(nextTask, ms || 650);
+  say(pick(SHORT));                    // хвалим после каждого упражнения, не только в конце
+  later(nextTask, ms || 900);
 }
 function runTask(){
   cleanup();
@@ -1218,7 +1495,7 @@ function tDrum(t){
   const pads=[$("#p0"),$("#p1")];
   pads.forEach((p,i)=>p.addEventListener("pointerdown",e=>{
     e.preventDefault(); ac();
-    if(i!==side){ noSnd(); return; }
+    if(i!==side) return;              /* мимо — просто ничего, без укоряющего звука */
     tone(i?300:440,.09,.09); buzz(12);
     n++; $("#val").textContent=n;
     side=1-side;
@@ -1526,8 +1803,10 @@ function tEcho(t){
     setTimeout(()=>k.classList.remove("lit"),240);
     inp.push(i);
     if(inp[inp.length-1]!==seq[inp.length-1]){
-      lock=true; noSnd(); buzz(70); $("#st").textContent="Ещё раз";
-      later(play,900); return;
+      /* не наказываем: мягкий звук и «слушай ещё разок» */
+      lock=true; tone(360,.12,.045); $("#st").textContent="Слушай ещё раз";
+      say("Ничего, слушай ещё разок");
+      later(play,1400); return;
     }
     if(inp.length===seq.length){
       lock=true; round++; okSnd();
@@ -1592,6 +1871,8 @@ function openParent(){
   }).join("");
   $("#swVoice").classList.toggle("on", !!S.voice);
   $("#swMic").classList.toggle("on", !!S.mic);
+  $("#stats").textContent =
+    `Дней с занятиями: ${S.days||0} · звёздочек: ${S.stars||0} · наклеек: ${S.got||0} из ${ALL.length}`;
   show("parent");
 }
 $("#swVoice").onclick=()=>{ S.voice=!S.voice; save(); $("#swVoice").classList.toggle("on",S.voice); if(!S.voice&&window.speechSynthesis) speechSynthesis.cancel(); };
@@ -1604,7 +1885,7 @@ $("#swMic").onclick=async()=>{
 };
 $("#swReset").onclick=()=>{
   let ok=true;
-  try{ ok=confirm("Сбросить пройденное?"); }catch(e){}
+  try{ ok=confirm("Снять галочки за сегодня? Наклейки останутся."); }catch(e){}
   if(ok){ S.done=[]; save(); buildHome(); }
 };
 
