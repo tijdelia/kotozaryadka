@@ -6,3 +6,7 @@ _poses.html
 Видео/
 proby/
 Проба-*.mp3
+__pycache__/
+voice_mama.*
+Ваш-голос-*.mp3
+.tts/
