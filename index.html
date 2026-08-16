@@ -36,7 +36,10 @@
   button:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:14px}
 
   #app{
-    height:100dvh;width:100%;max-width:760px;margin:0 auto;
+    /* Ширина ничем не ограничена: детские экраны должны занимать планшет
+       целиком. Читаемую ширину держат только текстовые экраны — им это
+       нужно, играм нет. */
+    height:100dvh;width:100%;margin:0 auto;
     display:flex;flex-direction:column;background:var(--paper);
   }
   .screen{flex:1;min-height:0;display:none;flex-direction:column}
@@ -52,6 +55,7 @@
 
   /* ---------------- ГЛАВНЫЙ ---------------- */
   .home-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;gap:14px}
+  .home-head,.grid{width:100%;max-width:860px;margin-left:auto;margin-right:auto}
   .home-head{padding:0 22px;display:flex;align-items:baseline;gap:10px;flex:none}
   .home-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
   .home-head span{font-size:14px;color:var(--muted);font-weight:600}
@@ -102,6 +106,7 @@
     padding:6px 10px 14px;overflow-y:auto;
   }
   .stage > *{flex:none}
+  .stage > .scene{flex:1 1 auto;min-height:0}
   .title{font-size:clamp(21px,5vw,28px);font-weight:800;letter-spacing:-.02em;text-align:center;text-wrap:balance}
   .hint{font-size:14px;color:var(--muted);font-weight:600;text-align:center;max-width:32ch;line-height:1.45;text-wrap:balance}
 
@@ -170,10 +175,12 @@
 
   /* сцена с игрушкой: она же кнопка «держи и дуй» */
   .scene{
-    /* без потолка в пикселях: на планшете сцена должна занимать экран,
-       иначе пятилетке негде разместить ладонь */
-    width:min(96vw, calc(70dvh * 4 / 3));
-    aspect-ratio:4/3;background:var(--card);
+    /* Занимает всю свободную высоту, а не держит 4:3. Раньше из-за
+       соотношения сцена ужималась по высоте и на планшете оставалась
+       вдвое меньше экрана. */
+    width:min(98vw,1120px);
+    flex:1 1 auto;min-height:min(46dvh,420px);
+    background:var(--card);
     border-radius:22px;overflow:hidden;position:relative;
     touch-action:none;-webkit-touch-callout:none;
     transition:transform .14s ease;
@@ -230,6 +237,10 @@
   .ear{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600}
   .ear i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:background .1s,transform .1s}
   .ear i.hot{background:var(--accent);transform:scale(1.5)}
+
+  .fhint{display:flex;align-items:center;gap:10px;flex:none}
+  .fhint canvas{width:clamp(58px,9vh,88px);aspect-ratio:1;display:block}
+  .fhint span{font-size:15px;font-weight:700;color:var(--muted)}
 
   .dots{display:flex;gap:8px;justify-content:center}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
@@ -304,7 +315,7 @@
   .albbtn i{font-style:normal;font-size:15px;font-weight:800;color:var(--muted)}
 
   .album{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;
-         justify-content:safe center;gap:12px;padding:0 16px 20px}
+         justify-content:safe center;gap:12px;padding:0 16px 20px;max-width:1000px;margin:0 auto;width:100%}
   .album > *{flex:none}
   .albhead{display:flex;align-items:baseline;gap:10px;padding:0 6px}
   .albhead h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -338,6 +349,7 @@
 
   /* ---------------- РОДИТЕЛЯМ ---------------- */
   .doc{overflow-y:auto;padding:0 22px 40px;font-weight:500}
+  .doc > *{max-width:720px;margin-left:auto;margin-right:auto}
   .doc h2{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
   .doc h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:26px 0 8px}
   .doc p,.doc li{font-size:15px;line-height:1.6;color:#3D3A34}
@@ -1175,6 +1187,54 @@ function markDots(n){ document.querySelectorAll("#dots i").forEach((d,i)=>d.clas
    шарик пружинит, парашютики разлетаются. Прогресс виден по
    самой игрушке — отдельный индикатор не нужен.
    ============================================================ */
+/* ===== КАКИМ ПАЛЬЧИКОМ =====
+   Иначе всё делается правым указательным, а тренировать надо каждый.
+   Ребёнок не читает, поэтому главное — картинка ладошки с подсвеченным
+   пальцем; слово рядом для родителя. */
+const FINGERS=["большим","указательным","средним","безымянным","мизинцем"];
+function fhintHTML(){ return `<div class="fhint"><canvas id="fh"></canvas><span id="fhn"></span></div>`; }
+function drawHand(ctx,w,h,on){
+  ctx.clearRect(0,0,w,h);
+  const s=Math.min(w,h);
+  ctx.lineJoin="round"; ctx.lineCap="round"; ctx.lineWidth=Math.max(2,s*0.035);
+  const palmW=s*0.46, palmH=s*0.30, px=w/2-palmW*0.34, py=h*0.62;
+  /* четыре пальца веером вверх, большой отдельно сбоку — иначе на маленькой
+     картинке ладонь читается как варежка */
+  const F=[[px+palmW*0.10, s*0.34],[px+palmW*0.40, s*0.42],
+           [px+palmW*0.70, s*0.35],[px+palmW*0.98, s*0.26]];
+  const fw=s*0.115;
+  F.forEach(([fx,fl],k)=>{
+    const i=k+1, lit=on.includes(i);
+    ctx.fillStyle=lit?ACC:"#FFFFFF"; ctx.strokeStyle=lit?ACC:"#B9B3A8";
+    rrect(ctx,fx-fw/2,py-fl,fw,fl+s*0.08,fw/2); ctx.fill(); ctx.stroke();
+  });
+  const th=on.includes(0);                                  // большой
+  ctx.save(); ctx.translate(px-palmW*0.16,py+palmH*0.40); ctx.rotate(-0.95);
+  ctx.fillStyle=th?ACC:"#FFFFFF"; ctx.strokeStyle=th?ACC:"#B9B3A8";
+  rrect(ctx,-fw*0.62,-s*0.26,fw*1.24,s*0.30,fw*0.62); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle="#FFFFFF"; ctx.strokeStyle="#B9B3A8";
+  rrect(ctx,px-palmW*0.10,py,palmW*1.14,palmH,s*0.10); ctx.fill(); ctx.stroke();
+}
+/* показать подсказку; on — список пальцев (0 большой … 4 мизинец) */
+function showFinger(on){
+  const cv=$("#fh"); if(!cv) return;
+  const g=fitCanvas(cv); drawHand(g.ctx,g.w,g.h,on);
+  const n=$("#fhn"); if(n) n.textContent = on.map(i=>FINGERS[i]).join(" и ");
+  onResize(cv,()=>{ const q=fitCanvas(cv); drawHand(q.ctx,q.w,q.h,on); });
+}
+const randFinger = () => 1+Math.floor(Math.random()*4);   // без большого: им тыкать неудобно
+
+/* Размер холста надо ловить у самого холста: сцена теперь тянется по
+   высоте, и её размер меняется от вёрстки, а не только от поворота
+   экрана. По событию окна это не поймать. */
+function onResize(cv, refit){
+  addEventListener("resize", refit);
+  let ro=null;
+  try{ ro=new ResizeObserver(()=>refit()); ro.observe(cv); }catch(e){}
+  CLEAN.push(()=>{ removeEventListener("resize",refit); if(ro) ro.disconnect(); });
+}
+
 function fitCanvas(cv){
   const dpr=Math.min(2,window.devicePixelRatio||1);
   const r=cv.getBoundingClientRect();
@@ -1728,9 +1788,12 @@ function tPair(t){
 function tPopit(t){
   const hues=["#FF8FA3","#FFC46B","#8FD3A8","#8FBEE8","#C9A3E8"];
   let left=t.n;
+  const fing=randFinger();
   stage().innerHTML=`<div class="title">${t.title}</div>
+    ${fhintHTML()}
     <div class="popgrid" id="pg">${Array.from({length:t.n},(_,i)=>
       `<button class="bub" style="--c:${hues[(i*3)%hues.length]}"></button>`).join("")}</div>`;
+  showFinger([fing]);
   document.querySelectorAll("#pg .bub").forEach(b=>{
     b.addEventListener("pointerdown",e=>{
       e.preventDefault();
@@ -1773,12 +1836,14 @@ function tSpider(t){
   let idx=0, pts=[], stones=[];
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${fhintHTML()}
     ${dotsHTML(N-1)}
     <div class="hint">Шагай двумя пальчиками по камушкам</div>`;
   const box=$("#scene"), cv=$("#cv");
   let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
   /* радиус ограничен и шагом между камушками, и полями: иначе крайние
      срезаются краем сцены, а на узком экране они налезают друг на друга */
+  const f0=1+Math.floor(Math.random()*3); showFinger([f0,f0+1]);
   const R=()=>Math.min(Math.max(26, Math.min(cw,ch)*0.10), cw*0.72/(N-1)*0.62, cw*0.085);
   const build=()=>{
     stones=[];
@@ -1818,9 +1883,9 @@ function tSpider(t){
     }
   }
   const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
-  addEventListener("resize",refit);
+  onResize(cv,refit);
   const tick=setInterval(()=>{ step(); paint(); },100);
-  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("resize",refit); });
+  CLEAN.push(()=>clearInterval(tick));
   build(); paint();
 }
 
@@ -1868,9 +1933,9 @@ function tWave(t){
     else if(!pts.length) idx=0;
   }
   const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
-  addEventListener("resize",refit);
+  onResize(cv,refit);
   const tick=setInterval(()=>{ check(); paint(); },100);
-  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("resize",refit); });
+  CLEAN.push(()=>clearInterval(tick));
   build(); paint();
 }
 
@@ -1882,10 +1947,12 @@ function tSnail(t){
   let round=0, idx=0, down=false, pts=[], fast=0, lastP=null, lastT=0;
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${fhintHTML()}
     ${dotsHTML(t.rounds)}
     <div class="hint" id="sh">Веди улитку медленно</div>`;
   const box=$("#scene"), cv=$("#cv");
   let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  showFinger([randFinger()]);
   const TOL=()=>Math.max(38, Math.min(cw,ch)*0.13);
   const MAXV=()=>Math.min(cw,ch)*0.0016;         // пикселей за миллисекунду
   const build=()=>{ pts=samples(TRACKS[round%TRACKS.length],cw,ch,26); idx=0; };
@@ -1933,21 +2000,24 @@ function tSnail(t){
   addEventListener("pointerup",up); addEventListener("pointercancel",up);
   const tick=setInterval(()=>{ if(fast>0){ fast--; if(!fast) $("#sh").textContent="Веди улитку медленно"; paint(); } },60);
   const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
-  addEventListener("resize",refit);
+  onResize(cv,refit);
   CLEAN.push(()=>{ clearInterval(tick); removeEventListener("pointerup",up);
-                   removeEventListener("pointercancel",up); removeEventListener("resize",refit); });
+                   removeEventListener("pointercancel",up); });
   build(); paint();
 }
 
 function tTrace(t){
   let round=0, idx=0, down=false, pts=[];
+  const fing=randFinger();
   stage().innerHTML=`<div class="title">${t.title}</div>
+    ${fhintHTML()}
     <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${dotsHTML(t.rounds)}`;
   const box=$("#scene"), cv=$("#cv");
   let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
   const TOL=42;
 
+  showFinger([fing]);
   function build(){ pts=samples(TRACKS[round%TRACKS.length],cw,ch,26); idx=0; paint(); }
   function paint(){
     ctx.clearRect(0,0,cw,ch);
@@ -1996,9 +2066,8 @@ function tTrace(t){
   addEventListener("pointerup",up); addEventListener("pointercancel",up);
   CLEAN.push(()=>{ removeEventListener("pointerup",up); removeEventListener("pointercancel",up); });
   const refit=()=>{ f=fitCanvas(cv); ctx=f.ctx; cw=f.w; ch=f.h; build(); };
-  addEventListener("resize",refit);
-  CLEAN.push(()=>removeEventListener("resize",refit));
-  build();
+  onResize(cv,refit);
+    build();
 }
 
 /* следим за всеми касаниями сразу: координаты уже внутри канвы */
@@ -2078,8 +2147,8 @@ function tPinch(t){
   },33);
   const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h;
                     R=Math.max(30,Math.min(cw,ch)*0.13); place(); };
-  addEventListener("resize",refit);
-  CLEAN.push(()=>{ clearInterval(id); removeEventListener("resize",refit); });
+  onResize(cv,refit);
+  CLEAN.push(()=>clearInterval(id));
 }
 
 function tTwist(t){
@@ -2138,8 +2207,10 @@ function tDrum(t){
       <button class="pad lit" id="p0"></button>
       <button class="pad" id="p1"></button>
     </div>
+    ${fhintHTML()}
     <div class="counter"><span id="val">0</span><small> / ${t.reps}</small></div>
     <div class="hint">Бей по тому, который горит</div>`;
+  const d0=1+Math.floor(Math.random()*3); showFinger([d0,d0+1]);
   const pads=[$("#p0"),$("#p1")];
   pads.forEach((p,i)=>p.addEventListener("pointerdown",e=>{
     e.preventDefault(); ac();
@@ -2206,8 +2277,8 @@ function tHand(t){
     }
   },80);
   const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; paint(); };
-  addEventListener("resize",refit);
-  CLEAN.push(()=>{ clearInterval(id); removeEventListener("resize",refit); });
+  onResize(cv,refit);
+  CLEAN.push(()=>clearInterval(id));
   paint();
 }
 
@@ -2274,8 +2345,8 @@ function tLift(t){
     }
   },80);
   const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; paint(); };
-  addEventListener("resize",refit);
-  CLEAN.push(()=>{ clearInterval(id); removeEventListener("resize",refit); });
+  onResize(cv,refit);
+  CLEAN.push(()=>clearInterval(id));
   paint();
 }
 
@@ -2295,9 +2366,8 @@ function tFollow(t){
 
   const refit=()=>{ f=fitCanvas(cv); ctx=f.ctx; cw=f.w; ch=f.h;
                     at(Math.min(1,prog/(t.dur*1000)),0); };
-  addEventListener("resize",refit);
-  CLEAN.push(()=>removeEventListener("resize",refit));
-
+  onResize(cv,refit);
+  
   const id=setInterval(()=>{
     const now=performance.now();
     const dt=now-(last||now); last=now;
@@ -2354,9 +2424,8 @@ function tHold(t){
     toy.draw(ctx,cw,ch,0,false,performance.now());   // первый кадр сразу, без пустой вспышки
     const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h;
                       toy.draw(ctx,cw,ch,lastP,false,performance.now()); };
-    addEventListener("resize",refit);
-    CLEAN.push(()=>removeEventListener("resize",refit));
-  }
+  onResize(cv,refit);
+      }
 
   const id = setInterval(() => {
     const now = performance.now();
