@@ -10,3 +10,8 @@ __pycache__/
 voice_mama.*
 Ваш-голос-*.mp3
 .tts/
+audio_new/
+Нарезка-27.mp3
+Синтез-92.mp3
+voice_mama_27.*
+cut27/

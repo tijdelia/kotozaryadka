@@ -35,7 +35,11 @@ MODELS = {
 SPEED = {"norm": 1.0, "name": 0.85, "slow": 0.62}
 # слогов в секунду: похвалу оставляем как прочитала мама, а то, за чем
 # ребёнок повторяет, приводим к неторопливому темпу принудительно
-RATE  = {"slow": 2.6, "name": 3.2}
+RATE  = {}          # темп не подгоняем: связная речь даёт его сама
+# сколько фраз произносить одной связкой. Поодиночке модель звучит мертво:
+# ей нужен контекст. Но короткие слова в длинной связке слипаются, поэтому
+# для названий связка короче.
+BATCH = {"norm": 4, "name": 3, "slow": 1}
 
 # тянущиеся звуки моделью не синтезируются вовсе: сшиваем их из гласной
 HOLD = {"а-а-а-а": "а", "у-у-у-у": "у", "и-и-и-и": "и"}
@@ -239,6 +243,7 @@ def main():
     ap.add_argument("--out", default="audio")
     ap.add_argument("--speed", type=float, default=0, help="0 — темп по режиму речи")
     ap.add_argument("--write-app", action="store_true", help="вписать карту в index.html")
+    ap.add_argument("--only", default="", help="режимы через запятую: norm,name,slow")
     a = ap.parse_args()
 
     import torch
@@ -299,29 +304,83 @@ def main():
                 return cs[-1], sr
         return w, sr
 
-    man, bad = {}, []
-    for i, (t, reg) in enumerate(items, 1):
-        sp = a.speed if a.speed else SPEED[reg]
-        fn = slug(t.strip().lower())
-        if not a.probe and os.path.exists(f"{a.out}/{fn}.mp3"):
-            man[t.strip().lower()] = fn                 # уже озвучено, пропускаем
-            continue
+    def ends(t):
+        t = t.strip()
+        return t if t and t[-1] in ".!?" else t + "."
 
-        src = HOLD.get(t.lower(), t)              # «а-а-а-а» синтезируем как «а»
-        w, sr = speak(src, sp)
-        w = sustain(w, sr, 4.0) if t.lower() in HOLD else trim(w)
-        if reg in RATE and t.lower() not in HOLD:
-            w = pace(w, sr, t, RATE[reg])
-        if float(np.abs(w).max()) < 0.02:
-            bad.append(t); print("   НЕ ВЫШЛО:", t)     # один провал не рушит весь прогон
-            continue
+    def synth_batch(texts, speed, depth=0):
+        """Произносим связкой и режем по паузам. Если кусков вышло не столько,
+        сколько фраз, делим связку пополам и пробуем снова — и лишь в самом
+        конце произносим поодиночке."""
+        if len(texts) == 1:
+            t = texts[0]
+            need = max(1, sum(ch in SYL for ch in t.lower())) / 5.0
+            best = None
+            for _ in range(3):                     # синтез случаен: берём удачную попытку
+                w, sr = speak(t, speed); w = trim(w)
+                if best is None or len(w) > len(best): best = w
+                if len(w) / sr >= need: return [w], sr
+            return [best], sr
+        w, sr = raw(" ".join(ends(t) for t in texts), speed)
 
-        if a.probe:
-            save_mp3(f"proby/{a.model}_{i}.mp3", w, sr)
+        def sane(cs):
+            """Совпадения числа кусков мало: граница могла срезать конец слова.
+            Больше пяти слогов в секунду наш голос не выдаёт — значит, обрезано."""
+            for c, t in zip(cs, texts):
+                n = max(1, sum(ch in SYL for ch in t.lower()))
+                if len(c) / sr < n / 5.0: return False
+            return True
+
+        for gap in (0.20, 0.24, 0.16, 0.28, 0.12, 0.34):
+            cs = chunks(w, sr, gap=gap)
+            if len(cs) == len(texts) and sane(cs):
+                return cs, sr
+        if depth < 3:
+            mid = len(texts) // 2
+            l, sr = synth_batch(texts[:mid], speed, depth + 1)
+            r, _  = synth_batch(texts[mid:], speed, depth + 1)
+            return l + r, sr
+        out = []
+        for t in texts:
+            w, sr = speak(t, speed); out.append(trim(w))
+        print("   поодиночке:", ", ".join(texts))
+        return out, sr
+
+    # собираем подряд идущие фразы одного режима в связки
+    groups, only = [], set(a.only.split(",")) if a.only else None
+    for t, reg in items:
+        if only and reg not in only: continue
+        if groups and groups[-1][0] == reg and len(groups[-1][1]) < BATCH[reg]:
+            groups[-1][1].append(t)
         else:
-            save_mp3(f"{a.out}/{fn}.mp3", w, sr)
-            man[t.strip().lower()] = fn
-        print(f"  {i}/{len(items)}  [{reg}] {t[:46]}  {len(w)/sr:.2f}с")
+            groups.append((reg, [t]))
+
+    man, bad, done = {}, [], 0
+    for reg, texts in groups:
+        names = [slug(t.strip().lower()) for t in texts]
+        if not a.probe and all(os.path.exists(f"{a.out}/{n}.mp3") for n in names):
+            for t, n in zip(texts, names): man[t.strip().lower()] = n
+            done += len(texts); continue
+
+        sp = a.speed if a.speed else SPEED[reg]
+        hold = [t for t in texts if t.lower() in HOLD]
+        if hold:                                   # тянущиеся звуки только поодиночке
+            parts, sr = [], None
+            for t in texts:
+                w, sr = speak(HOLD.get(t.lower(), t), sp)
+                parts.append(sustain(w, sr, 4.0) if t.lower() in HOLD else trim(w))
+        else:
+            parts, sr = synth_batch(texts, sp)
+
+        for t, n, w in zip(texts, names, parts):
+            done += 1
+            if reg in RATE: w = pace(w, sr, t, RATE[reg])
+            if w is None or float(np.abs(w).max()) < 0.02:
+                bad.append(t); print("   НЕ ВЫШЛО:", t); continue
+            if a.probe: save_mp3(f"proby/{a.model}_{done}.mp3", w, sr)
+            else:       save_mp3(f"{a.out}/{n}.mp3", w, sr)
+            man[t.strip().lower()] = n
+            print(f"  {done}/{len(items)}  [{reg}] {t[:44]}  {len(w)/sr:.2f}с")
 
     if bad:
         print("\nне озвучились: " + ", ".join(bad))
