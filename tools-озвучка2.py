@@ -84,6 +84,31 @@ def trim(a, rel=0.02):
     if not len(i): return a
     return a[max(0, i[0] - 600): i[-1] + 1200]
 
+def write_app(man, path="index.html"):
+    """Вписывает карту «фраза → файл» прямо в объект AUD внутри index.html.
+    Руками её не перенести: 118 строк, ошибиться в одной — и фраза замолчит."""
+    s = open(path, encoding="utf-8").read()
+    head = "const AUD={"
+    i = s.index(head)
+    j = s.index("};", i) + 2
+
+    rows, line = [], []
+    for k in sorted(man):
+        line.append('"%s":"%s"' % (k.replace('"', '\\"'), man[k]))
+        if len(",".join(line)) > 92:
+            rows.append(",".join(line) + ","); line = []
+    if line: rows.append(",".join(line))
+
+    block = head + "\n" + "\n".join("  " + r for r in rows) + "\n};"
+    open(path, "w", encoding="utf-8").write(s[:i] + block + s[j:])
+
+    check = open(path, encoding="utf-8").read()
+    got = len(re.findall(r'"[^"]+":"[^"]+"', check[check.index(head):check.index("};", check.index(head))]))
+    print(f"→ в {path} вписано фраз: {got} (ожидалось {len(man)})")
+    if got != len(man):
+        raise SystemExit("карта записалась не полностью — проверьте index.html")
+
+
 def patch_torchaudio():
     """torchaudio 2.10 отдаёт всё декодирование torchcodec, а тот требует
     ровно ту версию библиотек FFmpeg, под которую собран. Читаем звук через
@@ -122,7 +147,8 @@ def main():
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--out", default="audio")
-    ap.add_argument("--speed", type=float, default=0.95)
+    ap.add_argument("--speed", type=float, default=1.0)
+    ap.add_argument("--write-app", action="store_true", help="вписать карту в index.html")
     a = ap.parse_args()
 
     import torch
@@ -175,7 +201,10 @@ def main():
 
     if man:
         json.dump(man, open("/tmp/_manifest.json", "w"), ensure_ascii=False, indent=0)
-        print("\nкарта фраз → /tmp/_manifest.json  (вставить в объект AUD в index.html)")
+        if a.write_app:
+            write_app(man)
+        else:
+            print("\nкарта фраз → /tmp/_manifest.json (или запустите с --write-app)")
 
 if __name__ == "__main__":
     main()
