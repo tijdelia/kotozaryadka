@@ -150,6 +150,20 @@
   }
   .emblem canvas{width:100%;height:100%;display:block}
 
+  /* пузырьки: лопаем пальцами */
+  .popgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(8px,2.4vw,16px);width:min(92vw,460px)}
+  .bub{
+    aspect-ratio:1;border-radius:50%;border:0;padding:0;
+    background:radial-gradient(circle at 34% 28%, #fff 6%, var(--c) 72%);
+    box-shadow:0 3px 0 rgba(0,0,0,.10);
+    transition:transform .12s ease,box-shadow .12s ease,background .2s ease;
+  }
+  .bub.pop{
+    background:var(--line);
+    box-shadow:inset 0 4px 7px rgba(0,0,0,.16);
+    transform:scale(.88);
+  }
+
   .dots{display:flex;gap:8px;justify-content:center}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
   .dots i.on{background:var(--accent)}
@@ -323,25 +337,12 @@ const PLAN = {
   ]},
 
   finger:{ name:"Пальчики", tasks:[
-    {type:"rhyme", title:"Замок", tip:"Читайте вслух, ребёнок повторяет движения за вами.", lines:[
-      ["На двери висит замок","пальцы в замок"],
-      ["Кто открыть его бы смог?","тянем руки в стороны"],
-      ["Постучали","стучим ладонями"],
-      ["Покрутили","крутим кистями"],
-      ["Потянули","тянем"],
-      ["И открыли","расцепили"]
-    ]},
-    {type:"rhyme", title:"Апельсин", tip:"Последняя строка — с протяжным В-В-ВОЛК, это наш сегодняшний звук.", lines:[
-      ["Мы делили апельсин","катаем мячик в ладонях"],
-      ["Много нас, а он один","показываем пальцы"],
-      ["Эта долька для ежа","загибаем мизинец"],
-      ["Эта долька для стрижа","безымянный"],
-      ["Эта долька для утят","средний"],
-      ["Эта долька для котят","указательный"],
-      ["Эта долька для бобра","большой"],
-      ["А для ВОЛКА кожура","грозим пальцем"]
-    ]},
-    {type:"reps", title:"Кулак, ребро, ладонь", reps:6, tip:"Три позы подряд в одном темпе. Классическое упражнение на переключение."}
+    {type:"popit", title:"Лопни пузырьки", n:20,
+     tip:"Просите лопать разными пальцами, не только указательным: средним, безымянным, мизинцем. Тогда это настоящая тренировка на изоляцию пальцев, а не просто тыканье."},
+    {type:"trace", title:"Веди по дорожке", rounds:3,
+     tip:"Ведём одним пальцем, не отрывая его от экрана. Прямая подготовка руки к письму: дорожки от простой волны к зигзагу и петлям."},
+    {type:"hand", title:"Вся ладошка", reps:3,
+     tip:"Ставим сразу все пять пальцев в кружки и держим. Учит разводить пальцы и удерживать их раздельно — то, что в стишках делается «замком» и «растопыркой»."}
   ]},
 
   vowel:{ name:"Гласные", tasks:[
@@ -956,8 +957,168 @@ function finish(ms){
 function runTask(){
   cleanup();
   const t = RUN.block.tasks[RUN.i];
-  ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho,
-    tiles:tTiles, words:tWords, follow:tFollow})[t.type](t);
+  ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho, tiles:tTiles,
+    words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand})[t.type](t);
+}
+
+/* ===================== ИГРЫ ДЛЯ ПАЛЬЦЕВ =====================
+   Планшет сам по себе тренажёр мелкой моторики: пальцы уже на
+   экране. Смотреть чужие руки в ролике для этого не нужно.
+   ============================================================ */
+
+/* лопаем пузырьки — по одному, разными пальцами */
+function tPopit(t){
+  const hues=["#FF8FA3","#FFC46B","#8FD3A8","#8FBEE8","#C9A3E8"];
+  let left=t.n;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="popgrid" id="pg">${Array.from({length:t.n},(_,i)=>
+      `<button class="bub" style="--c:${hues[(i*3)%hues.length]}"></button>`).join("")}</div>`;
+  document.querySelectorAll("#pg .bub").forEach(b=>{
+    b.addEventListener("pointerdown",e=>{
+      e.preventDefault();
+      if(b.classList.contains("pop")) return;
+      b.classList.add("pop"); ac();
+      tone(320+Math.random()*300,.085,.09); buzz(10);
+      if(--left<=0) finish(600);
+    });
+  });
+}
+
+/* дорожки: ведём пальцем, не отрывая */
+const TRACKS=[
+  [[.10,.50],[.30,.20],[.50,.80],[.70,.22],[.90,.50]],
+  [[.10,.78],[.28,.24],[.44,.78],[.60,.24],[.76,.78],[.90,.36]],
+  [[.12,.30],[.42,.16],[.62,.50],[.40,.78],[.20,.60],[.52,.34],[.88,.62]]
+];
+function samples(pts,w,h,n){
+  const P=pts.map(([x,y])=>[x*w,y*h]), out=[];
+  const at=(i)=>P[Math.max(0,Math.min(P.length-1,i))];
+  for(let s=0;s<P.length-1;s++){
+    const p0=at(s-1),p1=at(s),p2=at(s+1),p3=at(s+2);
+    for(let k=0;k<n;k++){
+      const u=k/n, u2=u*u, u3=u2*u;
+      out.push([
+        .5*((2*p1[0])+(-p0[0]+p2[0])*u+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*u2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*u3),
+        .5*((2*p1[1])+(-p0[1]+p2[1])*u+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*u2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*u3)
+      ]);
+    }
+  }
+  out.push(at(P.length-1));
+  return out;
+}
+function tTrace(t){
+  let round=0, idx=0, down=false, pts=[];
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.rounds)}`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const TOL=42;
+
+  function build(){ pts=samples(TRACKS[round%TRACKS.length],cw,ch,26); idx=0; paint(); }
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    const line=(from,to,color,width)=>{
+      ctx.strokeStyle=color; ctx.lineWidth=width; ctx.lineCap="round"; ctx.lineJoin="round";
+      ctx.beginPath(); ctx.moveTo(pts[from][0],pts[from][1]);
+      for(let i=from+1;i<=to;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+      ctx.stroke();
+    };
+    line(0,pts.length-1,"#E4E1DA",30);
+    if(idx>0) line(0,idx,ACC,30);
+    const s=pts[0], e=pts[pts.length-1];
+    ctx.fillStyle=idx>0?ACC:INK; ctx.beginPath(); ctx.arc(s[0],s[1],15,0,7); ctx.fill();
+    ctx.fillStyle=INK; ctx.beginPath();                     // звезда на финише
+    for(let i=0;i<10;i++){ const r=i%2?7:17, a=-Math.PI/2+i*Math.PI/5;
+      const x=e[0]+Math.cos(a)*r, y=e[1]+Math.sin(a)*r; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.closePath(); ctx.fill();
+    if(idx>0&&idx<pts.length-1){                            // где палец сейчас
+      ctx.fillStyle="#fff"; ctx.strokeStyle=ACC; ctx.lineWidth=5;
+      ctx.beginPath(); ctx.arc(pts[idx][0],pts[idx][1],13,0,7); ctx.fill(); ctx.stroke();
+    }
+  }
+  function move(e){
+    if(!down) return;
+    const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+    /* ищем только вперёд и недалеко — чтобы нельзя было перепрыгнуть к финишу */
+    for(let i=idx;i<Math.min(pts.length,idx+30);i++){
+      const dx=pts[i][0]-x, dy=pts[i][1]-y;
+      if(dx*dx+dy*dy < TOL*TOL) idx=i;
+    }
+    paint();
+    if(idx>=pts.length-2){
+      down=false; round++; markDots(round); okSnd(); buzz(30);
+      if(round>=t.rounds){ finish(700); return; }
+      later(build,500);
+    }
+  }
+  box.addEventListener("pointerdown",e=>{
+    e.preventDefault(); ac();
+    const r=cv.getBoundingClientRect();
+    const dx=pts[0][0]-(e.clientX-r.left), dy=pts[0][1]-(e.clientY-r.top);
+    if(idx>0 || dx*dx+dy*dy < (TOL*1.6)*(TOL*1.6)){ down=true; move(e); }
+  });
+  box.addEventListener("pointermove",move);
+  const up=()=>{ down=false; };
+  addEventListener("pointerup",up); addEventListener("pointercancel",up);
+  CLEAN.push(()=>{ removeEventListener("pointerup",up); removeEventListener("pointercancel",up); });
+  const refit=()=>{ f=fitCanvas(cv); ctx=f.ctx; cw=f.w; ch=f.h; build(); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>removeEventListener("resize",refit));
+  build();
+}
+
+/* подушечки пальцев веером: большой ниже и сбоку, средний выше всех */
+const HAND=[[.14,.74],[.32,.40],[.50,.29],[.68,.38],[.85,.57]];
+const handSpots=(cw,ch)=>HAND.map(([x,y])=>({x:x*cw, y:y*ch, on:false}));
+
+/* вся ладошка: пять пальцев в кружки одновременно */
+function tHand(t){
+  let rep=0, held=0, live=new Map();
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.reps)}
+    <div class="hint">Поставь все пять пальчиков сразу</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h, spots=[];
+  const R=Math.min(cw,ch)*0.11;
+  const place=()=>{ spots=handSpots(cw,ch); };
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    spots.forEach(s=>{
+      ctx.fillStyle=s.on?ACC:"#F1EFEA";
+      ctx.strokeStyle=s.on?ACC:"#DCD8D0"; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.arc(s.x,s.y,R,0,7); ctx.fill(); ctx.stroke();
+    });
+  }
+  function check(){
+    const r=cv.getBoundingClientRect();
+    spots.forEach(s=>{
+      s.on=false;
+      live.forEach(p=>{
+        const dx=s.x-(p.x-r.left), dy=s.y-(p.y-r.top);
+        if(dx*dx+dy*dy < (R+16)*(R+16)) s.on=true;
+      });
+    });
+    paint();
+    const all=spots.every(s=>s.on);
+    if(all && !held){ held=performance.now(); }
+    if(!all) held=0;
+    if(held && performance.now()-held>500){
+      held=0; live.clear(); rep++; markDots(rep); okSnd(); buzz(40); paint();
+      if(rep>=t.reps) finish(800);
+    }
+  }
+  box.addEventListener("pointerdown",e=>{ e.preventDefault(); ac(); live.set(e.pointerId,{x:e.clientX,y:e.clientY}); check(); });
+  box.addEventListener("pointermove",e=>{ if(live.has(e.pointerId)){ live.set(e.pointerId,{x:e.clientX,y:e.clientY}); check(); } });
+  const off=e=>{ live.delete(e.pointerId); check(); };
+  addEventListener("pointerup",off); addEventListener("pointercancel",off);
+  const tick=setInterval(check,120);              // на случай, если палец лежит неподвижно
+  CLEAN.push(()=>{ clearInterval(tick); removeEventListener("pointerup",off); removeEventListener("pointercancel",off); });
+  const refit=()=>{ f=fitCanvas(cv); ctx=f.ctx; cw=f.w; ch=f.h; place(); paint(); };
+  addEventListener("resize",refit);
+  CLEAN.push(()=>removeEventListener("resize",refit));
+  place(); paint();
 }
 
 /* повторяем за роликом: картинка раскрашивается сама, счёта нет */
