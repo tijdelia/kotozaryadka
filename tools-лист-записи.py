@@ -5,9 +5,10 @@
 Оба файла делаются из одного источника — самого index.html, поэтому разъехаться
 не могут. Родитель открывает только страницу; список нужен скрипту нарезки.
 
-    python3 tools-лист-записи.py
+    python3 tools-лист-записи.py            # звуки и слова: 27 фраз
+    python3 tools-лист-записи.py --похвала  # похвала: 22 фразы
 """
-import importlib.util, os, re
+import argparse, importlib.util, os, re
 
 _s = importlib.util.spec_from_file_location(
     "gen", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools-озвучка2.py"))
@@ -28,6 +29,15 @@ NOTE = {
 }
 
 
+# похвалу читают обычным голосом — она звучит в приложении чаще всего
+PRAISE_GROUPS = [("Похвала", "Обычным голосом, тепло, как говорите сыну на самом деле. "
+                             "Не диктуйте — хвалите.", "обычно")]
+
+
+def collect_praise():
+    return [[t for t, r in gen.phrases_from_app() if r == "norm"]]
+
+
 def collect():
     items = gen.phrases_from_app()
     slow = [t for t, r in items if r == "slow"]
@@ -40,16 +50,26 @@ def collect():
 
 
 def main():
-    groups = collect()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--похвала", action="store_true", dest="praise")
+    a = ap.parse_args()
+
+    if a.praise:
+        groups, gdef = collect_praise(), PRAISE_GROUPS
+        list_name, page_name, title = "похвала-для-записи.txt", "zapis2.html", "Запись похвалы"
+    else:
+        groups, gdef = collect(), GROUPS
+        list_name, page_name, title = "звуки-для-записи.txt", "zapis.html", "Запись голоса"
+
     flat = [t for g in groups for t in g]
 
-    with open("звуки-для-записи.txt", "w", encoding="utf-8") as f:
+    with open(list_name, "w", encoding="utf-8") as f:
         f.write("# порядок строго как на странице записи, менять нельзя\n")
         f.write("\n".join(flat) + "\n")
 
     rows, n = [], 0
-    for (title, how, tag), g in zip(GROUPS, groups):
-        rows.append(f'<h2>{title}</h2><p class="how">{how}</p>')
+    for (gt, how, tag), g in zip(gdef, groups):
+        rows.append(f'<h2>{gt}</h2><p class="how">{how}</p>')
         for t in g:
             n += 1
             note = NOTE.get(t.lower(), "")
@@ -58,16 +78,17 @@ def main():
                 f'<span class="w {tag}">{t}</span>'
                 + (f'<span class="note">{note}</span>' if note else "") + "</div>")
 
-    html = HTML.replace("{{ROWS}}", "\n".join(rows)).replace("{{N}}", str(n))
-    open("zapis.html", "w", encoding="utf-8").write(html)
-    print(f"страница zapis.html и список звуки-для-записи.txt готовы: {n} фраз")
+    html = (HTML.replace("{{ROWS}}", "\n".join(rows))
+                .replace("{{N}}", str(n)).replace("{{TITLE}}", title))
+    open(page_name, "w", encoding="utf-8").write(html)
+    print(f"страница {page_name} и список {list_name} готовы: {n} фраз")
 
 
 HTML = """<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Котозарядка — запись голоса</title>
+<title>Котозарядка — {{TITLE}}</title>
 <style>
   :root{--paper:#F1EFEA;--card:#fff;--ink:#191713;--muted:#8C877D;--line:#E2DFD8;--accent:#FF4D6D}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -88,14 +109,14 @@ HTML = """<!doctype html>
   .n{font-size:13px;font-weight:800;color:var(--line);min-width:24px}
   .w{font-size:32px;font-weight:800;letter-spacing:-.01em;flex:1}
   .w.долго{color:var(--accent)}
-  .w.обычно{font-size:23px}
+  .w.обычно{font-size:24px}
   .note{font-size:13px;font-weight:600;color:var(--muted);flex-basis:100%;
         padding-left:38px;line-height:1.4}
   .end{margin-top:36px;background:var(--card);border-radius:18px;padding:18px}
   .end p{font-size:15px;line-height:1.6;font-weight:500;color:#3D3A34}
 </style>
 <main>
-  <h1>Запись голоса</h1>
+  <h1>{{TITLE}}</h1>
   <p class="lead">Всего {{N}} фраз, минуты три. Читайте сверху вниз одной записью,
      не останавливая её. <b>Крупным</b> — то, что говорить. Мелким серым — как.</p>
 
