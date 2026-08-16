@@ -97,20 +97,48 @@
   .title{font-size:clamp(21px,5vw,28px);font-weight:800;letter-spacing:-.02em;text-align:center;text-wrap:balance}
   .hint{font-size:14px;color:var(--muted);font-weight:600;text-align:center;max-width:32ch;line-height:1.45;text-wrap:balance}
 
-  /* видео */
-  .video{
-    position:relative;width:100%;
-    max-width:min(100%, calc(40dvh * 16 / 9));
-    aspect-ratio:16/9;background:var(--dark);
-    border-radius:18px;overflow:hidden;
+  /* ---------------- ВИДЕО УПРАЖНЕНИЯ ----------------
+     Ролики лежат рядом с приложением и уже обрезаны до 4:3 —
+     чёрных полей нет, картинка занимает кадр целиком.
+     Ролик и значок упражнения видны одновременно: в портрете
+     столбиком, в альбомной ориентации рядом.                  */
+  .follow{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(10px,2.4vh,20px);width:100%;flex:1;min-height:0;
   }
-  .video iframe{width:100%;height:100%;border:0;display:block}
-  .vshield{position:absolute;inset:0;width:100%;height:100%;background:transparent;display:grid;place-items:center;transition:background .18s}
-  .vshield .vplay{width:0;height:0;border-left:26px solid #fff;border-top:17px solid transparent;border-bottom:17px solid transparent;opacity:0;transition:opacity .18s}
-  .vshield.paused{background:var(--dark)}
-  .vshield.paused .vplay{opacity:.9}
-  .vstart{position:absolute;inset:0;display:grid;place-items:center;background:var(--dark);color:#fff}
-  .vstart .vplay{width:0;height:0;border-left:26px solid #fff;border-top:17px solid transparent;border-bottom:17px solid transparent}
+  .follow > *{flex:none}
+  .video{
+    position:relative;background:var(--dark);
+    width:min(100%, calc(54dvh * 4 / 3));aspect-ratio:4/3;
+    border-radius:20px;overflow:hidden;
+  }
+  .video video{width:100%;height:100%;display:block;object-fit:cover;background:var(--dark)}
+  .vshield{
+    position:absolute;inset:0;width:100%;height:100%;
+    background:transparent;display:grid;place-items:center;transition:background .18s;
+  }
+  .vshield .vplay{
+    width:0;height:0;opacity:0;transition:opacity .18s;
+    border-left:30px solid #fff;border-top:20px solid transparent;border-bottom:20px solid transparent;
+    filter:drop-shadow(0 2px 10px rgba(0,0,0,.5));
+  }
+  .vshield.paused{background:rgba(16,15,13,.55)}
+  .vshield.paused .vplay{opacity:1}
+  .vsnd{
+    position:absolute;right:10px;bottom:10px;width:44px;height:44px;border-radius:50%;
+    background:rgba(16,15,13,.62);color:#fff;display:grid;place-items:center;
+  }
+  .vsnd[hidden]{display:none}
+  .vsnd svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  @media (orientation:landscape){
+    /* в альбомной ориентации экран занятия выходит за колонку 760px,
+       иначе ролик рядом со значком пришлось бы уменьшать */
+    #s-run{width:100vw;margin-left:calc(50% - 50vw)}
+    .follow{flex-direction:row;gap:clamp(12px,3vw,28px)}
+    .video{width:auto;height:min(74dvh,100%);max-width:calc(100% - 230px)}
+    .follow .emblem{width:min(22vw,200px)}
+  }
 
   /* кольцо — единственный орган управления */
   .dial{position:relative;width:min(46vw,30dvh);aspect-ratio:1;display:grid;place-items:center}
@@ -365,7 +393,9 @@
     </div>
 
     <h3>Что показывают ролики</h3>
-    <p>У каждого упражнения свой ролик канала <a href="https://www.youtube.com/playlist?list=PLTv7byFa-G9MvX0-WhGIF2WTbPJ28dvZl" target="_blank" rel="noopener">«УРОКИ ЛОГОПЕДА»</a> — 20–30 секунд, крупный план рта. Ролик зациклен и играет внутри приложения. Касание по видео — пауза.</p>
+    <p>У каждого упражнения свой ролик — крупный план рта, 7–34 секунды. Ролики лежат прямо в приложении, в папке <code>video</code>: обрезаны до кадра без чёрных полей, ничего не грузится с YouTube и не нужен интернет после первого открытия.</p>
+    <p>Ролик включается сам, зациклен и идёт, пока рядом раскрашивается значок упражнения. Кликать не нужно ничего: нажали плитку на главном — и все десять упражнений идут подряд сами. Касание по видео — пауза, ещё касание — дальше. Если браузер не разрешил звук сразу, в углу ролика появится кнопка с динамиком.</p>
+    <p class="quiet">Новый ролик кладём в папку <code>video</code> и дописываем в список <code>V</code> в начале файла. Если по краям чёрные поля, их надо срезать — иначе картинка будет мелкой.</p>
 
     <h3>Подсказки к упражнениям</h3>
     <div id="tips"></div>
@@ -400,10 +430,14 @@
    tip — подсказка родителю (видна только на родительском экране)
    ============================================================ */
 
+/* ролики лежат в папке video рядом с приложением: обрезаны до 4:3,
+   без чёрных полей, со звуком логопеда */
 const V = {
-  lyagushka:"fRnFyoJ3vpg", blinchik:"KOUc9TVIb6Y", testo:"gTJk2X2S53Q",
-  kacheli:"oew5QCBE6j4", chasiki:"RvBaiajxjDI", chashka:"eBrmIfcR5vk",
-  parus:"N1-nQpaQ2aE", gribok:"o3z7-WrdPFA", loshadka:"4eSkIzRFPqQ"
+  lyagushka:"video/lyagushka.mp4", slon:"video/slon.mp4",
+  blinchik :"video/blinchik.mp4",  testo:"video/testo.mp4",
+  kacheli  :"video/kacheli.mp4",   chasiki:"video/chasiki.mp4",
+  chashka  :"video/chashka.mp4",   parus:"video/parus.mp4",
+  gribok   :"video/gribok.mp4",    loshadka:"video/loshadka.mp4"
 };
 /* ============================================================
    НАКЛЕЙКИ
@@ -477,16 +511,18 @@ const PLAN = {
   ]},
 
   artic:{ name:"Язычок", tasks:[
-    {type:"follow", title:"Улыбка и хоботок", emblem:"frogeleph", dur:45, vid:V.lyagushka,
-     tip:"Чередуем: широкая улыбка с сомкнутыми зубами — губы вперёд трубочкой. Челюсть неподвижна, работают только губы. В ролике их зовут лягушка и слоник."},
-    {type:"follow", title:"Блинчик",  emblem:"pancake",  dur:35, vid:V.blinchik,  tip:"Широкий язык спокойно лежит на нижней губе и не дрожит. Дрожит — расслабляем «тестом»."},
-    {type:"follow", title:"Тесто",    emblem:"dough",    dur:35, vid:V.testo,     tip:"Шлёпаем губами «пя-пя-пя», потом покусываем «та-та-та». Упражнение расслабляет язык."},
-    {type:"follow", title:"Качели",   emblem:"swing",    dur:40, vid:V.kacheli,   tip:"Рот открыт всё время, работает только язык — нижняя челюсть не помогает."},
-    {type:"follow", title:"Часики",   emblem:"clock",    dur:45, vid:V.chasiki,   tip:"Язык узкий, тянется к уголкам губ. Челюсть неподвижна."},
-    {type:"follow", title:"Чашка",    emblem:"cup",      dur:35, vid:V.chashka,   tip:"Широкий язык во рту, края подняты. Готовит верхний подъём для Ш и Р."},
-    {type:"follow", title:"Парус",    emblem:"sail",     dur:35, vid:V.parus,     tip:"Кончик упирается в бугорки за верхними зубами, а не в сами зубы. Рот открыт."},
-    {type:"follow", title:"Грибок",   emblem:"mushroom", dur:35, vid:V.gribok,    tip:"Язык присосан к нёбу, рот открывается шире. Растягивает подъязычную связку."},
-    {type:"follow", title:"Лошадка",  emblem:"horse",    dur:40, vid:V.loshadka,  tip:"Цокаем медленно и звонко. Нижняя челюсть стоит на месте."}
+    {type:"follow", title:"Лягушка",  emblem:"frog",     dur:29, vid:V.lyagushka,
+     tip:"Это «улыбка»: широкая улыбка с сомкнутыми зубами. Челюсть неподвижна, работают только губы."},
+    {type:"follow", title:"Слоник",   emblem:"eleph",    dur:30, vid:V.slon,
+     tip:"Это «хоботок»: губы вперёд трубочкой. Хорошо чередовать со «слоником» лягушку — туда-сюда."},
+    {type:"follow", title:"Блинчик",  emblem:"pancake",  dur:29, vid:V.blinchik,  tip:"Широкий язык спокойно лежит на нижней губе и не дрожит. Дрожит — расслабляем «тестом»."},
+    {type:"follow", title:"Тесто",    emblem:"dough",    dur:31, vid:V.testo,     tip:"Шлёпаем губами «пя-пя-пя», потом покусываем «та-та-та». Упражнение расслабляет язык."},
+    {type:"follow", title:"Качели",   emblem:"swing",    dur:32, vid:V.kacheli,   tip:"Рот открыт всё время, работает только язык — нижняя челюсть не помогает."},
+    {type:"follow", title:"Часики",   emblem:"clock",    dur:33, vid:V.chasiki,   tip:"Язык узкий, тянется к уголкам губ. Челюсть неподвижна."},
+    {type:"follow", title:"Чашка",    emblem:"cup",      dur:30, vid:V.chashka,   tip:"Широкий язык во рту, края подняты. Готовит верхний подъём для Ш и Р."},
+    {type:"follow", title:"Парус",    emblem:"sail",     dur:34, vid:V.parus,     tip:"Кончик упирается в бугорки за верхними зубами, а не в сами зубы. Рот открыт."},
+    {type:"follow", title:"Грибок",   emblem:"mushroom", dur:33, vid:V.gribok,    tip:"Язык присосан к нёбу, рот открывается шире. Растягивает подъязычную связку."},
+    {type:"follow", title:"Лошадка",  emblem:"horse",    dur:33, vid:V.loshadka,  tip:"Цокаем медленно и звонко. Нижняя челюсть стоит на месте."}
   ]},
 
   /* игр больше, чем нужно на одно занятие: каждый раз берём четыре
@@ -799,38 +835,69 @@ $("#fromAlbum").onclick = () => { tapSnd(); goHome(); };
 $("#albPrev").onclick   = () => flip(-1);
 $("#albNext").onclick   = () => flip(1);
 
-/* ---------- плеер ---------- */
-function ytSrc(id, autoplay){
-  let u="https://www.youtube.com/embed/"+id+
-        "?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3"+
-        "&controls=0&disablekb=1&fs=0&enablejsapi=1&loop=1&playlist="+id;
-  if(autoplay) u+="&autoplay=1";
-  return u;
+/* ============================================================
+   ПЛЕЕР
+   Ролик один на всё приложение и никогда не пересоздаётся:
+   браузер разрешает запускать со звуком только тот элемент,
+   которого уже касались пальцем. Первое касание — тап по плитке
+   на главном, дальше ролики меняются сами, без единого клика.
+   ============================================================ */
+let VID=null;
+function theVideo(){
+  if(VID) return VID;
+  VID=document.createElement("video");
+  VID.loop=true; VID.preload="auto"; VID.controls=false;
+  VID.playsInline=true;
+  VID.setAttribute("playsinline","");
+  VID.setAttribute("webkit-playsinline","");
+  VID.setAttribute("disablepictureinpicture","");
+  return VID;
 }
-function videoBlock(id){
+const SND_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8.5a5 5 0 010 7"/></svg>';
+const SND_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9.5l5 5M22 9.5l-5 5"/></svg>';
+
+function videoBlock(){
   return `<div class="video" id="vbox">
-     <div class="vstart" id="vstart"><span class="vplay"></span></div>
-   </div>`;
+      <button class="vshield" id="vsh"><span class="vplay"></span></button>
+      <button class="vsnd" id="vsnd" hidden aria-label="Включить звук">${SND_OFF}</button>
+    </div>`;
 }
-function wireVideo(id){
-  const start=$("#vstart"); if(!start) return;
-  start.onclick=()=>{
-    if(window.speechSynthesis) speechSynthesis.cancel();
-    $("#vbox").innerHTML=
-      `<iframe id="yt" src="${ytSrc(id,true)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-       <button class="vshield" id="vsh"><span class="vplay"></span></button>`;
-    let playing=true;
-    const sh=$("#vsh");
-    sh.onclick=()=>{
-      playing=!playing;
-      sh.classList.toggle("paused",!playing);
-      try{
-        document.getElementById("yt").contentWindow.postMessage(JSON.stringify({
-          event:"command", func: playing?"playVideo":"pauseVideo", args:[]
-        }),"*");
-      }catch(e){}
-    };
+function wireVideo(src){
+  const box=$("#vbox"); if(!box) return;
+  const v=theVideo();
+  box.insertBefore(v, box.firstChild);
+  if(window.speechSynthesis) speechSynthesis.cancel();
+
+  v.muted=false;
+  if(v.getAttribute("src")!==src){ v.setAttribute("src",src); v.load(); }
+  else { try{ v.currentTime=0; }catch(e){} }
+
+  /* NotAllowedError — браузер не пустил со звуком, включаем тихо.
+     AbortError прилетает, когда ролик сменили на лету (быстрое ⏭) — это не беда */
+  const go=()=>{
+    const p=v.play();
+    if(p&&p.catch) p.catch(err=>{ if(!err||err.name==="NotAllowedError") muteFallback(); });
   };
+  function muteFallback(){
+    v.muted=true;
+    const p=v.play(); if(p&&p.catch) p.catch(()=>{});
+    const b=$("#vsnd"); if(b) b.hidden=false;
+  }
+  go();
+
+  const sh=$("#vsh");
+  sh.onclick=()=>{
+    if(v.paused){ sh.classList.remove("paused"); go(); }
+    else{ v.pause(); sh.classList.add("paused"); }
+  };
+  const snd=$("#vsnd");
+  snd.onclick=e=>{
+    e.stopPropagation();
+    v.muted=!v.muted;
+    snd.innerHTML = v.muted?SND_OFF:SND_ON;
+    if(v.paused) go();
+  };
+  CLEAN.push(()=>{ try{ v.pause(); }catch(e){} });
 }
 
 /* ---------- кольцо ---------- */
@@ -1068,30 +1135,44 @@ function inked(ctx,width,color,path){
 }
 
 const EM={
-  /* лягушка и слоник — улыбка и хоботок */
-  frogeleph(ctx,pale){
+  /* лягушка — улыбка */
+  frog(ctx,pale){
     const F=c=>pale?GREY:c;
     outline(ctx);
-    ctx.fillStyle=F("#7CC167");                        // лягушка
-    ctx.beginPath(); ctx.arc(54,116,38,0,7); ctx.fill(); ctx.stroke();
-    [[36,80],[70,80]].forEach(([x,y])=>{
-      ctx.fillStyle=F("#7CC167"); ctx.beginPath(); ctx.arc(x,y,15,0,7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(x,y+1,5.5,0,7); ctx.fill();
+    [[66,62],[134,62]].forEach(([x,y])=>{              // глаза-бугорки поверх головы
+      ctx.fillStyle=F("#7CC167"); ctx.beginPath(); ctx.arc(x,y,21,0,7); ctx.fill(); ctx.stroke();
     });
-    outline(ctx,3); ctx.beginPath(); ctx.arc(54,118,22,.25,Math.PI-.25); ctx.stroke();
-    ctx.fillStyle=F("#93A9BE"); outline(ctx);          // ухо позади головы
-    ctx.beginPath(); ctx.ellipse(129,97,20,26,-.1,0,7); ctx.fill(); ctx.stroke();
-    ctx.fillStyle=F("#A8BCCF"); ctx.beginPath();       // голова и хобот одним силуэтом
-    ctx.moveTo(128,74);
-    ctx.quadraticCurveTo(162,66,177,92);
-    ctx.quadraticCurveTo(185,110,179,128);
-    ctx.quadraticCurveTo(191,152,179,172);
-    ctx.quadraticCurveTo(173,186,187,190);
-    ctx.quadraticCurveTo(163,198,159,176);
-    ctx.quadraticCurveTo(163,152,155,134);
-    ctx.quadraticCurveTo(132,138,124,114);
+    ctx.fillStyle=F("#7CC167");                        // голова
+    ctx.beginPath(); ctx.arc(100,118,54,0,7); ctx.fill(); ctx.stroke();
+    [[66,60],[134,60]].forEach(([x,y])=>{
+      ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(x,y,7,0,7); ctx.fill();
+    });
+    outline(ctx,4.5);                                  // широкая улыбка
+    ctx.beginPath(); ctx.arc(100,110,34,.2*Math.PI,.8*Math.PI); ctx.stroke();
+  },
+  /* слоник — хоботок */
+  eleph(ctx,pale){
+    const F=c=>pale?GREY:c;
+    outline(ctx);
+    ctx.fillStyle=F("#93A9BE");                        // уши позади головы
+    [[42,96],[158,96]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.ellipse(x,y,27,35,0,0,7); ctx.fill(); ctx.stroke();
+    });
+    ctx.fillStyle=F("#A8BCCF");                        // голова и хобот одним силуэтом
+    ctx.beginPath();
+    ctx.moveTo(48,92);
+    ctx.quadraticCurveTo(48,32,100,32);
+    ctx.quadraticCurveTo(152,32,152,92);
+    ctx.quadraticCurveTo(150,132,122,140);             // правая щека сходит к хоботу
+    ctx.quadraticCurveTo(131,163,137,183);             // правая сторона хобота
+    ctx.quadraticCurveTo(133,197,118,193);             // круглый кончик
+    ctx.quadraticCurveTo(107,189,106,177);             // ...и обратно вверх
+    ctx.quadraticCurveTo(99,158,92,140);               // левая сторона хобота
+    ctx.quadraticCurveTo(50,132,48,92);                // левая щека
     ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(163,100,5,0,7); ctx.fill();
+    [[76,86],[124,86]].forEach(([x,y])=>{
+      ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(x,y,5.5,0,7); ctx.fill();
+    });
   },
   /* блинчик */
   pancake(ctx,pale){
@@ -1615,8 +1696,10 @@ function tHand(t){
 function tFollow(t){
   let prog=0, last=0, over=false;
   stage().innerHTML = `<div class="title">${t.title}</div>
-    ${t.vid?videoBlock(t.vid):""}
-    <div class="emblem" id="emb"><canvas id="ec"></canvas></div>`;
+    <div class="follow">
+      ${t.vid?videoBlock():""}
+      <div class="emblem" id="emb"><canvas id="ec"></canvas></div>
+    </div>`;
   if(t.vid) wireVideo(t.vid);
 
   const cv=$("#ec");
