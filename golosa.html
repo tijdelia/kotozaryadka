@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Котозарядка — выбор голоса</title>
+<style>
+  :root{--paper:#F1EFEA;--card:#fff;--ink:#191713;--muted:#8C877D;--line:#E2DFD8;--accent:#FF4D6D;--good:#12A06A}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       font-weight:600;-webkit-font-smoothing:antialiased;padding:26px 18px 60px}
+  main{max-width:600px;margin:0 auto}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  p{font-size:15px;line-height:1.6;color:#3D3A34;font-weight:500;margin-top:10px}
+  .q{font-size:13px;color:var(--muted);margin-top:8px}
+  .v{background:var(--card);border-radius:20px;padding:16px 18px;margin-top:12px;
+     display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .v .nm{font-size:18px;font-weight:800;letter-spacing:-.02em;flex:1;min-width:120px}
+  .v .tag{font-size:12px;font-weight:700;color:#fff;background:var(--good);border-radius:99px;padding:3px 9px}
+  .v audio{width:100%;height:38px}
+  .v.now{box-shadow:inset 0 0 0 2px var(--good)}
+</style>
+<main>
+  <h1>Какой голос поставить?</h1>
+  <p>Все пять — нейросеть Silero, работает офлайн прямо в приложении. Каждый читает одно и то же:
+     похвалу, слоги на В и слова. Послушайте и скажите, какой нравится — переключу.</p>
+  <p class="q">Сейчас в приложении стоит Ксюша.</p>
+
+  <div class="v now"><span class="nm">Ксюша</span><span class="tag">сейчас</span>
+    <audio controls preload="none" src="golosa/xenia.mp3"></audio></div>
+  <div class="v"><span class="nm">Бая</span>
+    <audio controls preload="none" src="golosa/baya.mp3"></audio></div>
+  <div class="v"><span class="nm">Ксения</span>
+    <audio controls preload="none" src="golosa/kseniya.mp3"></audio></div>
+  <div class="v"><span class="nm">Айдар</span><span class="tag" style="background:var(--muted)">мужской</span>
+    <audio controls preload="none" src="golosa/aidar.mp3"></audio></div>
+  <div class="v"><span class="nm">Евгений</span><span class="tag" style="background:var(--muted)">мужской</span>
+    <audio controls preload="none" src="golosa/eugene.mp3"></audio></div>
+
+  <p style="margin-top:26px">Отдельно — тянущиеся гласные. Ни один синтезатор так не умеет:
+     это синтезированная гласная, сшитая по периодам голоса до четырёх секунд.</p>
+  <div class="v"><span class="nm">А, У, И</span>
+    <audio controls preload="none" src="audio/a-a-a-a.mp3"></audio>
+    <audio controls preload="none" src="audio/u-u-u-u.mp3"></audio>
+    <audio controls preload="none" src="audio/i-i-i-i.mp3"></audio></div>
+
+  <p class="q" style="margin-top:26px"><a href="./" style="color:var(--ink)">← вернуться в Котозарядку</a></p>
+</main>
+</html>

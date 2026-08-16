@@ -210,6 +210,25 @@
   .pad.lit{background:var(--accent);box-shadow:inset 0 0 0 3px var(--accent)}
   .pad:active{transform:scale(.94)}
 
+  /* «В или Ф»: загорается та буква, которую ребёнок на самом деле сказал */
+  .pair{display:flex;gap:clamp(12px,4vw,26px);width:min(92vw,460px)}
+  .pcard{
+    flex:1;aspect-ratio:1;border-radius:26px;background:var(--card);
+    display:grid;place-items:center;position:relative;
+    transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+  }
+  .pcard b{font-size:min(22vw,15dvh,96px);line-height:1;font-weight:800;letter-spacing:-.04em;transition:color .18s}
+  .pcard small{position:absolute;bottom:9%;font-size:13px;font-weight:700;color:var(--muted)}
+  .pcard.lit{transform:scale(1.05)}
+  .pcard.v.lit{background:var(--good);box-shadow:0 10px 28px rgba(18,160,106,.32)}
+  .pcard.f.lit{background:#8FBEE8;box-shadow:0 10px 28px rgba(143,190,232,.36)}
+  .pcard.lit b,.pcard.lit small{color:#fff}
+
+  /* «слушаю» — ребёнку видно, что микрофон живой */
+  .ear{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600}
+  .ear i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:background .1s,transform .1s}
+  .ear i.hot{background:var(--accent);transform:scale(1.5)}
+
   .dots{display:flex;gap:8px;justify-content:center}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
   .dots i.on{background:var(--accent)}
@@ -439,12 +458,18 @@
     <h3>Голос приложения</h3>
     <p>Все 118 фраз — похвала, гласные, слоги, слова и названия наклеек — <b>заранее озвучены нейросетью Silero</b> и лежат в папке <code>audio</code>. Это не синтезатор планшета: он читает по буквам и звучит роботом. Здесь один и тот же живой голос на любом устройстве, и работает без интернета.</p>
     <p>Тянущиеся звуки «а-а-а-а», «у-у-у-у», «и-и-и-и» тоже настоящие: гласная синтезирована и растянута до четырёх секунд по периодам голоса, поэтому она тянется ровно, как живая. Синтезатор планшета так не умеет вовсе.</p>
+    <p><a href="golosa.html">Послушать все пять голосов и выбрать другой →</a></p>
     <p><b>Свой голос лучше любого синтеза.</b> Нажмите ● и скажите фразу — приложение будет говорить ею вместо готовой. Особенно это стоит сделать для «в-в-в-в»: этот звук пока не озвучен, потому что тянущийся согласный без живого голоса выходит неубедительно.</p>
     <div id="vrec"></div>
 
     <h3>Запасной вариант</h3>
     <p>Если готовый файл почему-то не загрузился, говорит синтез планшета. Русские голоса на разных устройствах звучат очень по-разному — послушайте и выберите приятнее:</p>
     <div id="vlist"></div>
+
+    <h3>Настройка звуков</h3>
+    <p>В играх «Заведи вертолёт» и «В или Ф» приложение слушает микрофон. Оно <b>не оценивает правильность</b> — этого не умеет ни одна программа на детской речи с нарушениями, и врать ребёнку хуже, чем молчать. Оно измеряет ровно одно: дрожат ли голосовые связки. Именно этим В отличается от Ф, и это физика, а не догадка.</p>
+    <p>Чтобы сравнивать сына <b>с ним самим, а не с чужой нормой</b>, запишите два образца: как он говорит В и как он говорит Ф. Порог встанет ровно между ними. Нажмите и держите полторы секунды, пока он тянет звук.</p>
+    <div id="cal"></div>
 
     <h3>Настройки</h3>
     <button class="row" id="swVoice">Голос подсказок и похвалы <span class="sw"></span></button>
@@ -599,7 +624,10 @@ const PLAN = {
 
   sound:{ name:"Звук В", tasks:[
     {type:"wait", title:"Губка", sec:5, reps:2, tip:"Верхние зубы прикусывают нижнюю губу. Это и есть позиция звука В."},
-    {type:"hold", title:"Мотор", sec:4, reps:3, voice:"в-в-в-в", tip:"Тянем ФФФ и, не прерывая выдоха, включаем голос — получается ВВВ."},
+    {type:"voice", title:"Заведи вертолёт", sec:3, reps:3,
+     tip:"Вертолёт взлетает, пока работает голос. Приложение слушает не «правильно ли», а включены ли голосовые связки — это единственное, чем В отличается от Ф. Тянем ФФФ и, не прерывая выдоха, включаем голос: получается ВВВ."},
+    {type:"pair", title:"В или Ф", a:"в", b:"ф", reps:6,
+     tip:"Ребёнок говорит звук — загорается та буква, которую он на самом деле произнёс. Это не оценка: Ф загорается без укоряющего звука, просто «ты сказал ветерок». Положите его ладонь себе на горло, потом на своё — на В горло дрожит, на Ф нет. Точность резко выше, если сделать «Настройку звуков» ниже."},
     {type:"tiles", title:"Слоги", cols:4, tip:"Нажал — повторил вслух за голосом.", items:["ВА","ВО","ВУ","ВЫ","АВА","ОВО","УВУ","ЫВЫ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["💧","ВОДА"],["💨","ВЕТЕР"],["🐺","ВОЛК"],["🍴","ВИЛКА"],
@@ -754,26 +782,76 @@ function say(t, force){
 }
 
 /* ---------- микрофон ---------- */
+/* Три величины с микрофона:
+   rms      — громкость, для дыхания;
+   MIC.voiced — работают ли голосовые связки (0…1). В и Ф — один и тот же
+              звук, отличаются только этим, поэтому величина ключевая;
+   MIC.cen  — спектральный центр, отличает свистящие от шипящих.
+   Всё считается прямо в браузере: ни модели, ни сервера, ни интернета. */
 let micLvl=0, micOn=false, micBase=.01;
+const MIC = {voiced:0, f0:0, cen:0, lowr:0};
 async function initMic(){
   if(micOn) return true;
   try{
     const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     const c=ac(); if(!c) return false;
-    const an=c.createAnalyser(); an.fftSize=512;
+    const an=c.createAnalyser(); an.fftSize=2048; an.smoothingTimeConstant=0;
     c.createMediaStreamSource(st).connect(an);
     const buf=new Float32Array(an.fftSize);
+    const spec=new Float32Array(an.frequencyBinCount);
+    const SRr=c.sampleRate, D=4;                       // прореживаем вчетверо: для голоса хватает
+    const dn=new Float32Array(an.fftSize/D);
+    const lo=Math.floor((SRr/D)/500), hi=Math.floor((SRr/D)/110);   // 110…500 Гц — детский голос
+    const bw=SRr/2/spec.length;
+    const i0=Math.max(1,Math.floor(200/bw)), i1=Math.min(spec.length-1,Math.floor(8000/bw));
     let cal=[], t0=performance.now();
-    (function loop(){
+    setInterval(()=>{
       an.getFloatTimeDomainData(buf);
       let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]*buf[i];
       micLvl=Math.sqrt(s/buf.length);
       if(performance.now()-t0<1200) cal.push(micLvl);
       else if(cal.length){ micBase=cal.reduce((a,b)=>a+b,0)/cal.length; cal=[]; }
-      requestAnimationFrame(loop);
-    })();
+
+      for(let i=0,j=0;j<dn.length;i+=D,j++) dn[j]=(buf[i]+buf[i+1]+buf[i+2]+buf[i+3])/4;
+      let mean=0; for(let i=0;i<dn.length;i++) mean+=dn[i]; mean/=dn.length;
+      let e0=0; for(let i=0;i<dn.length;i++){ const v=dn[i]-mean; e0+=v*v; }
+      let bv=0, bl=0;
+      if(e0>1e-9){
+        for(let l=lo;l<=hi;l++){
+          let a=0; for(let i=0;i+l<dn.length;i++) a+=(dn[i]-mean)*(dn[i+l]-mean);
+          const v=a/(e0*(1-l/dn.length));
+          if(v>bv){ bv=v; bl=l; }
+        }
+      }
+      MIC.voiced=Math.max(0,Math.min(1,bv));
+      MIC.f0 = bl ? (SRr/D)/bl : 0;
+
+      an.getFloatFrequencyData(spec);
+      let num=0, den=0, low=0, high=0;
+      for(let i=i0;i<=i1;i++){
+        const f=i*bw, p=Math.pow(10,spec[i]/10);
+        num+=p*f; den+=p;
+        if(f>=120 && f<=520) low+=p; else if(f>=1500 && f<=7500) high+=p;
+      }
+      MIC.cen  = den>0 ? num/den : 0;
+      MIC.lowr = (low+high)>0 ? low/(low+high) : 0;   // «голосовая полоса»: у В почти вся энергия внизу
+    },33);
     micOn=true; return true;
   }catch(e){ return false; }
+}
+const loud  = () => micLvl > Math.max(micBase*2.6, .012);
+/* без калибровки — грубый, но рабочий порог; с калибровкой сравниваем
+   с его собственными В и Ф, а не с чужой нормой */
+function nearer(a,b){
+  const d=x=> Math.abs(MIC.voiced-x.voiced)/.35
+            + Math.abs(Math.log(Math.max(MIC.cen,50))-Math.log(Math.max(x.cen,50)))/.7
+            + Math.abs(MIC.lowr-(x.lowr!==undefined?x.lowr:.8))/.30;
+  return d(a) <= d(b) ? 0 : 1;
+}
+function isVoiced(){
+  const c=S.cal||{};
+  if(c["в"]&&c["ф"]) return nearer(c["в"],c["ф"])===0;
+  return MIC.voiced>.40 && MIC.lowr>.75;
 }
 const blowing = () => micOn && S.mic && micLvl > Math.max(micBase*3.2,.028);
 
@@ -1488,7 +1566,8 @@ function runTask(){
   const t = RUN.block.tasks[RUN.i];
   ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho, tiles:tTiles,
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
-    pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift})[t.type](t);
+    pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
+    voice:tVoice, pair:tPair})[t.type](t);
 }
 
 /* ===================== ИГРЫ ДЛЯ ПАЛЬЦЕВ =====================
@@ -1497,6 +1576,119 @@ function runTask(){
    ============================================================ */
 
 /* лопаем пузырьки — по одному, разными пальцами */
+/* ===================== ИГРЫ НА ГОЛОС =====================
+   Приложение не оценивает, правильно ли произнесён звук — этого не
+   умеет ни одна модель на детской речи с нарушениями. Оно измеряет
+   то, что измеримо честно: работают ли голосовые связки и сколько
+   ребёнок тянул звук. Остальное — дело логопеда.
+   ========================================================= */
+
+/* вертолёт взлетает, пока звучит голос */
+function tVoice(t){
+  const my=TICK;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.reps)}
+    <div class="ear" id="ear"><i></i><span id="est">включаю микрофон…</span></div>`;
+  const cv=$("#cv"); let {ctx,w:cw,h:ch}=fitCanvas(cv);
+  let prog=0, rep=0, last=0, over=false, ok=false, spin=0, ready=false;
+  initMic().then(g=>{
+    if(my!==TICK) return;
+    ready=g;
+    $("#est").textContent = g ? "скажи в-в-в" : "микрофон не дали — держи картинку пальцем";
+    if(!g){ const sc=$("#scene");
+      const d=()=>ok=true, u=()=>ok=false;
+      sc.addEventListener("pointerdown",e=>{e.preventDefault();ac();d();});
+      addEventListener("pointerup",u); CLEAN.push(()=>removeEventListener("pointerup",u));
+    }
+  });
+  const id=setInterval(()=>{
+    if(my!==TICK) return;
+    const now=performance.now(), dt=now-(last||now); last=now;
+    if(ready) ok = loud() && isVoiced();
+    const e=$("#ear"); if(e) e.firstElementChild.classList.toggle("hot", ready ? loud() : ok);
+    if(!over){
+      prog = ok ? prog+dt : Math.max(0, prog-dt*1.5);
+      if(prog>=t.sec*1000){
+        rep++; markDots(rep); prog=0; okSnd(); buzz(30);
+        if(rep>=t.reps){ over=true; finish(1100); }
+      }
+    }
+    spin += ok ? .55 : .06;
+    heli(ctx,cw,ch,Math.min(1,prog/(t.sec*1000)),ok,spin);
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+function heli(ctx,w,h,p,on,spin){
+  ctx.clearRect(0,0,w,h);
+  const cx=w/2, base=h*.80, y=base-(h*.46)*p, sh=on?Math.sin(spin*3)*1.6:0;
+  ctx.save(); ctx.translate(cx+sh,y);
+  ctx.strokeStyle=INK; ctx.lineWidth=4; ctx.lineJoin="round"; ctx.lineCap="round";
+  const R=Math.min(w,h)*.15;
+  ctx.fillStyle=on?ACC:"#fff";
+  ctx.beginPath(); ctx.ellipse(0,0,R*1.25,R*.85,0,0,7); ctx.fill(); ctx.stroke();     // кабина
+  ctx.beginPath(); ctx.moveTo(R*1.15,-R*.15); ctx.lineTo(R*2.5,-R*.35);               // хвост
+  ctx.lineTo(R*2.5,-R*.05); ctx.lineTo(R*1.15,R*.15); ctx.closePath();
+  ctx.fillStyle=on?ACC:"#fff"; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(R*2.5,-R*.9); ctx.lineTo(R*2.5,R*.1); ctx.stroke();     // киль
+  ctx.beginPath(); ctx.arc(0,-R*.4,R*.42,Math.PI,0); ctx.fillStyle="#BFE0F5"; ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-R*.8,R*.85); ctx.lineTo(R*.9,R*.85); ctx.stroke();     // полозья
+  ctx.beginPath(); ctx.moveTo(-R*.45,R*.72); ctx.lineTo(-R*.45,R*.85);
+  ctx.moveTo(R*.5,R*.72); ctx.lineTo(R*.5,R*.85); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-R*.82); ctx.lineTo(0,-R*1.02); ctx.stroke();         // мачта
+  ctx.save(); ctx.translate(0,-R*1.04); ctx.scale(Math.cos(spin),1);                  // винт
+  ctx.beginPath(); ctx.moveTo(-R*2,0); ctx.lineTo(R*2,0); ctx.lineWidth=5; ctx.stroke();
+  ctx.restore(); ctx.restore();
+  if(p>0){                                                                            // земля и высота
+    ctx.strokeStyle="#E4E1DA"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(w*.12,base+Math.min(w,h)*.14); ctx.lineTo(w*.88,base+Math.min(w,h)*.14); ctx.stroke();
+  }
+}
+
+/* какую букву он на самом деле сказал */
+function tPair(t){
+  const my=TICK;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="pair">
+      <div class="pcard v" id="c0"><b>${t.a.toUpperCase()}</b><small>голос</small></div>
+      <div class="pcard f" id="c1"><b>${t.b.toUpperCase()}</b><small>ветерок</small></div>
+    </div>
+    ${dotsHTML(t.reps)}
+    <div class="ear" id="ear"><i></i><span id="est">включаю микрофон…</span></div>`;
+  let rep=0, on=false, acc={v:0,c:0,l:0,n:0}, t0=0, cool=0, ready=false;
+  initMic().then(g=>{ if(my!==TICK) return; ready=g;
+    $("#est").textContent = g ? `скажи ${t.a}` : "нужен микрофон — дайте доступ в настройках"; });
+  const light=(i)=>{
+    const c=$("#c"+i); if(!c) return;
+    c.classList.add("lit"); later(()=>c.classList.remove("lit"),900);
+  };
+  const id=setInterval(()=>{
+    if(my!==TICK || !ready) return;
+    const now=performance.now();
+    const hot=loud();
+    $("#ear").firstElementChild.classList.toggle("hot",hot);
+    if(hot && now>cool){
+      if(!on){ on=true; t0=now; acc={v:0,c:0,l:0,n:0}; }
+      acc.v+=MIC.voiced; acc.c+=MIC.cen; acc.l+=MIC.lowr; acc.n++;
+    }else if(on){
+      on=false;
+      if(now-t0>150 && acc.n>3){
+        const c=S.cal||{};
+        const saved={voiced:MIC.voiced,cen:MIC.cen,lowr:MIC.lowr};
+        MIC.voiced=acc.v/acc.n; MIC.cen=acc.c/acc.n; MIC.lowr=acc.l/acc.n;   // решаем по среднему за всю попытку
+        const good = (c[t.a]&&c[t.b]) ? nearer(c[t.a],c[t.b])===0 : isVoiced();
+        Object.assign(MIC,saved);
+        light(good?0:1);
+        if(good){ rep++; markDots(rep); okSnd(); buzz(30);
+          if(rep>=t.reps){ later(()=>finish(900),700); clearInterval(id); }
+        }else{ tone(360,.1,.04); }                        // не ошибка, просто другой звук
+        cool=now+900;
+      }
+    }
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+
 function tPopit(t){
   const hues=["#FF8FA3","#FFC46B","#8FD3A8","#8FBEE8","#C9A3E8"];
   let left=t.n;
@@ -2099,7 +2291,7 @@ function openParent(){
       .map(t=>`<li><b>${t.title}.</b> ${t.tip}</li>`).join("");
     return `<p style="margin-top:14px"><b>${PLAN[k].name}</b></p><ul>${rows}</ul>`;
   }).join("");
-  paintVoiceList(); paintRec();
+  paintVoiceList(); paintRec(); paintCal();
   $("#swVoice").classList.toggle("on", !!S.voice);
   $("#swMic").classList.toggle("on", !!S.mic);
   $("#stats").textContent =
@@ -2114,6 +2306,42 @@ $("#swMic").onclick=async()=>{
   } else S.mic=false;
   save(); $("#swMic").classList.toggle("on",!!S.mic);
 };
+/* ---------- калибровка звуков по самому ребёнку ---------- */
+const CALS=[{k:"в",n:"Звук В — «заведи мотор», горло дрожит"},
+            {k:"ф",n:"Звук Ф — «ветерок», горло молчит"}];
+function paintCal(){
+  const c=S.cal||{};
+  $("#cal").innerHTML = CALS.map(x=>{
+    const has=c[x.k];
+    return `<div class="vrow${has?" has":""}" data-k="${x.k}">
+      <span class="vtx">${x.n}</span>
+      <button class="vb rec" aria-label="Записать образец">${IC_REC}</button>
+      ${has?`<button class="vb del" aria-label="Стереть">${IC_DEL}</button>`:""}
+    </div>`;
+  }).join("") + (c["в"]&&c["ф"]
+    ? `<p class="quiet">Настроено. Голос на В: ${c["в"].voiced.toFixed(2)}, на Ф: ${c["ф"].voiced.toFixed(2)} —
+       чем больше разрыв, тем увереннее приложение различает. Меньше 0,1 — образцы вышли похожими, перезапишите.</p>`
+    : `<p class="quiet">Пока не настроено: игры работают на общем пороге, это заметно грубее.</p>`);
+  $("#cal").querySelectorAll(".vrow").forEach(row=>{
+    const k=row.dataset.k;
+    const del=row.querySelector(".del");
+    if(del) del.onclick=()=>{ if(S.cal) delete S.cal[k]; save(); paintCal(); };
+    row.querySelector(".rec").onclick=async()=>{
+      const btn=row.querySelector(".rec");
+      if(!await initMic()){ alert("Микрофон не разрешён. Дайте доступ и попробуйте ещё раз."); return; }
+      btn.classList.add("on"); btn.innerHTML=IC_STOP;
+      const acc={v:0,c:0,l:0,n:0};
+      const id=setInterval(()=>{ if(loud()){ acc.v+=MIC.voiced; acc.c+=MIC.cen; acc.l+=MIC.lowr; acc.n++; } },33);
+      setTimeout(()=>{
+        clearInterval(id); btn.classList.remove("on"); btn.innerHTML=IC_REC;
+        if(acc.n<8){ alert("Звука почти не было слышно. Поднесите планшет ближе и попробуйте ещё раз."); return; }
+        S.cal=S.cal||{}; S.cal[k]={voiced:acc.v/acc.n, cen:acc.c/acc.n, lowr:acc.l/acc.n};
+        save(); paintCal(); okSnd();
+      },1500);
+    };
+  });
+}
+
 /* ---------- выбор синтезированного голоса ---------- */
 function paintVoiceList(){
   const box=$("#vlist"), list=ruVoices();
