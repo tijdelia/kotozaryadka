@@ -164,6 +164,16 @@
     transform:scale(.88);
   }
 
+  /* барабанчики */
+  .drums{display:flex;gap:clamp(14px,4vw,28px);width:min(92vw,460px)}
+  .pad{
+    flex:1;aspect-ratio:1;border-radius:50%;border:0;
+    background:var(--card);box-shadow:inset 0 0 0 3px var(--line);
+    transition:transform .1s ease,background .12s ease,box-shadow .12s ease;
+  }
+  .pad.lit{background:var(--accent);box-shadow:inset 0 0 0 3px var(--accent)}
+  .pad:active{transform:scale(.94)}
+
   .dots{display:flex;gap:8px;justify-content:center}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
   .dots i.on{background:var(--accent)}
@@ -336,7 +346,17 @@ const PLAN = {
     {type:"follow", title:"Лошадка",  emblem:"horse",    dur:40, vid:V.loshadka,  tip:"Цокаем медленно и звонко. Нижняя челюсть стоит на месте."}
   ]},
 
-  finger:{ name:"Пальчики", tasks:[
+  /* игр больше, чем нужно на одно занятие: каждый раз берём четыре
+     случайные, чтобы блок не приедался и оставался коротким */
+  finger:{ name:"Пальчики", pick:4, tasks:[
+    {type:"pinch", title:"Собери ягоды", n:5,
+     tip:"Щипковый захват большим и указательным — с него начинается правильное держание карандаша. Пусть берёт ягоду именно двумя пальцами, а не всей горстью."},
+    {type:"twist", title:"Заведи ключик", reps:3,
+     tip:"Кручение кистью. Можно двумя пальцами или одним по кругу — оба способа засчитываются."},
+    {type:"drum", title:"Барабанчики", reps:14,
+     tip:"Чередование рук или пальцев в ритме. Просите бить двумя разными пальцами одной руки — сложнее и полезнее."},
+    {type:"lift", title:"Подними пальчик", reps:4,
+     tip:"Самое трудное и самое ценное: вся ладонь лежит, поднимается только один палец. Учит управлять пальцами по отдельности."},
     {type:"popit", title:"Лопни пузырьки", n:20,
      tip:"Просите лопать разными пальцами, не только указательным: средним, безымянным, мизинцем. Тогда это настоящая тренировка на изоляцию пальцев, а не просто тыканье."},
     {type:"trace", title:"Веди по дорожке", rounds:3,
@@ -468,7 +488,11 @@ function buildHome(){
 /* ---------- прохождение блока ---------- */
 let RUN=null;
 function startBlock(k){
-  RUN={key:k, block:PLAN[k], i:0};
+  const b=PLAN[k];
+  let tasks=b.tasks;
+  if(b.pick && b.pick<tasks.length)
+    tasks=tasks.slice().sort(()=>Math.random()-.5).slice(0,b.pick);
+  RUN={key:k, block:{name:b.name, tasks}, i:0};
   show("run"); paintProg(); runTask();
 }
 function paintProg(){
@@ -958,7 +982,8 @@ function runTask(){
   cleanup();
   const t = RUN.block.tasks[RUN.i];
   ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho, tiles:tTiles,
-    words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand})[t.type](t);
+    words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
+    pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift})[t.type](t);
 }
 
 /* ===================== ИГРЫ ДЛЯ ПАЛЬЦЕВ =====================
@@ -1066,6 +1091,194 @@ function tTrace(t){
   addEventListener("resize",refit);
   CLEAN.push(()=>removeEventListener("resize",refit));
   build();
+}
+
+/* следим за всеми касаниями сразу: координаты уже внутри канвы */
+function trackPointers(box, onChange){
+  const live=new Map(), cv=box.querySelector("canvas");
+  const put=e=>{ const r=cv.getBoundingClientRect();
+    live.set(e.pointerId,{x:e.clientX-r.left, y:e.clientY-r.top}); onChange(live); };
+  const del=e=>{ live.delete(e.pointerId); onChange(live); };
+  box.addEventListener("pointerdown",e=>{ e.preventDefault(); ac(); put(e); });
+  box.addEventListener("pointermove",e=>{ if(live.has(e.pointerId)) put(e); });
+  addEventListener("pointerup",del); addEventListener("pointercancel",del);
+  CLEAN.push(()=>{ removeEventListener("pointerup",del); removeEventListener("pointercancel",del); });
+  return live;
+}
+
+/* щипок: двумя пальцами берём ягоду и кладём в корзинку.
+   Тот самый щипковый захват, с которого начинается держание карандаша. */
+function tPinch(t){
+  let got=0, hold=false, fly=0, bx=0, by=0;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.n)}
+    <div class="hint">Сожми ягодку двумя пальчиками</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const R=Math.min(cw,ch)*0.10;
+  const place=()=>{ bx=cw*(.2+Math.random()*.6); by=ch*(.16+Math.random()*.42); };
+  place();
+
+  const live=trackPointers(box,pts=>{
+    if(fly) return;
+    const a=[...pts.values()];
+    if(a.length<2){ hold=false; return; }
+    const [p,q]=a, mx=(p.x+q.x)/2, my=(p.y+q.y)/2;
+    const d=Math.hypot(p.x-q.x,p.y-q.y);
+    const near=Math.hypot(mx-bx,my-by) < R*2.4;
+    if(near && d > R*2.2) hold=true;                 // пальцы по бокам — взяли
+    if(hold && near && d < R*1.15){                  // и сомкнули
+      hold=false; fly=performance.now(); got++; markDots(got); okSnd(); buzz(30);
+    }
+  });
+
+  const id=setInterval(()=>{
+    const now=performance.now();
+    ctx.clearRect(0,0,cw,ch);
+    const bkX=cw*0.5, bkY=ch*0.90;
+    ctx.fillStyle="#C98A5A"; outline(ctx);            // корзинка
+    ctx.beginPath(); ctx.moveTo(bkX-52,bkY-26);
+    ctx.quadraticCurveTo(bkX,bkY+34,bkX+52,bkY-26); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    let x=bx, y=by, r=R;
+    if(fly){                                          // ягода летит в корзинку
+      const k=Math.min(1,(now-fly)/450);
+      x=bx+(bkX-bx)*k; y=by+(bkY-30-by)*k; r=R*(1-k*.55);
+      if(k>=1){ fly=0; if(got>=t.n){ clearInterval(id); finish(700); return; } place(); }
+    }
+    ctx.fillStyle=hold?"#B0284A":"#E24B6B"; outline(ctx);
+    ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle="#5E8F4A"; ctx.lineWidth=5;       // веточка
+    ctx.beginPath(); ctx.moveTo(x,y-r); ctx.lineTo(x+r*.5,y-r*1.6); ctx.stroke();
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+
+/* кручение: поворачиваем ключик. Одним пальцем по кругу или двумя —
+   как удобнее; засчитываем накопленный угол. */
+function tTwist(t){
+  let turns=0, ang=0, prev=null;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.reps)}
+    <div class="hint">Крути по кругу</div>`;
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const cx=cw/2, cy=ch/2, R=Math.min(cw,ch)*0.26;
+
+  trackPointers(box,pts=>{
+    const a=[...pts.values()];
+    if(!a.length){ prev=null; return; }
+    const cur = a.length>=2
+      ? Math.atan2(a[1].y-a[0].y, a[1].x-a[0].x)      // угол между двумя пальцами
+      : Math.atan2(a[0].y-cy, a[0].x-cx);             // или вокруг центра
+    if(prev!==null){
+      let d=cur-prev;
+      while(d> Math.PI) d-=2*Math.PI;                 // через границу -π…π
+      while(d<-Math.PI) d+=2*Math.PI;
+      if(Math.abs(d)<1){ ang+=d; }
+      if(Math.abs(ang) >= Math.PI*1.5){
+        ang=0; turns++; markDots(turns); okSnd(); buzz(30);
+        if(turns>=t.reps) finish(700);
+      }
+    }
+    prev=cur;
+  });
+
+  const id=setInterval(()=>{
+    ctx.clearRect(0,0,cw,ch);
+    ctx.strokeStyle="#E4E1DA"; ctx.lineWidth=12;      // круговая направляющая
+    ctx.beginPath(); ctx.arc(cx,cy,R+26,0,7); ctx.stroke();
+    ctx.strokeStyle=ACC; ctx.lineCap="round";
+    ctx.beginPath(); ctx.arc(cx,cy,R+26,-Math.PI/2,-Math.PI/2+Math.abs(ang)); ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
+    ctx.fillStyle="#E8C07A"; outline(ctx);            // головка ключа
+    ctx.beginPath(); ctx.arc(0,0,R*.62,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#F1EFEA";
+    ctx.beginPath(); ctx.arc(0,0,R*.24,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#E8C07A"; ctx.beginPath();         // бородка
+    ctx.rect(R*.58,-9,R*.62,18); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.rect(R*.98,0,12,20); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+
+/* чередование: два барабанчика, бьём по очереди — то одним, то другим */
+function tDrum(t){
+  let n=0, side=0;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="drums">
+      <button class="pad lit" id="p0"></button>
+      <button class="pad" id="p1"></button>
+    </div>
+    <div class="counter"><span id="val">0</span><small> / ${t.reps}</small></div>
+    <div class="hint">Бей по тому, который горит</div>`;
+  const pads=[$("#p0"),$("#p1")];
+  pads.forEach((p,i)=>p.addEventListener("pointerdown",e=>{
+    e.preventDefault(); ac();
+    if(i!==side){ noSnd(); return; }
+    tone(i?300:440,.09,.09); buzz(12);
+    n++; $("#val").textContent=n;
+    side=1-side;
+    pads.forEach((q,k)=>q.classList.toggle("lit",k===side));
+    if(n>=t.reps) finish(600);
+  }));
+}
+
+/* изоляция: вся ладонь лежит, поднимаем один названный пальчик */
+function tLift(t){
+  let rep=0, target=0, up=0, spots=[];
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(t.reps)}
+    <div class="hint" id="ph">Положи всю ладошку</div>`;
+  const box=$("#scene"), cv=$("#cv"), ph=$("#ph");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const R=Math.min(cw,ch)*0.11;
+  spots=handSpots(cw,ch);
+  let phase=0;                                        // 0 — кладём руку, 1 — поднимаем палец
+
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    spots.forEach((s,i)=>{
+      const isT = phase===1 && i===target;
+      ctx.fillStyle = isT ? "#FFFFFF" : (s.on?ACC:"#F1EFEA");
+      ctx.strokeStyle = isT ? ACC : (s.on?ACC:"#DCD8D0");
+      ctx.lineWidth = isT ? 6 : 4;
+      ctx.beginPath(); ctx.arc(s.x,s.y,R,0,7); ctx.fill(); ctx.stroke();
+      if(isT){ ctx.strokeStyle=ACC; ctx.lineWidth=5;  // стрелка вверх: этот подними
+        ctx.beginPath(); ctx.moveTo(s.x,s.y+8); ctx.lineTo(s.x,s.y-10);
+        ctx.moveTo(s.x-9,s.y-2); ctx.lineTo(s.x,s.y-12); ctx.lineTo(s.x+9,s.y-2); ctx.stroke(); }
+    });
+  }
+  const live=trackPointers(box,pts=>{
+    spots.forEach(s=>{
+      s.on=false;
+      pts.forEach(p=>{ if(Math.hypot(s.x-p.x,s.y-p.y) < R+16) s.on=true; });
+    });
+    paint();
+  });
+  const id=setInterval(()=>{
+    const all=spots.every(s=>s.on);
+    if(phase===0 && all){
+      phase=1; target=Math.floor(Math.random()*5); up=0;
+      ph.textContent="Подними пальчик со стрелкой"; paint();
+    }
+    if(phase===1){
+      const ok = !spots[target].on && spots.every((s,i)=>i===target||s.on);
+      if(ok && !up) up=performance.now();
+      if(!ok) up=0;
+      if(up && performance.now()-up>400){
+        up=0; phase=0; rep++; markDots(rep); okSnd(); buzz(40);
+        ph.textContent="Положи всю ладошку"; paint();
+        if(rep>=t.reps){ clearInterval(id); finish(800); }
+      }
+    }
+  },100);
+  CLEAN.push(()=>clearInterval(id));
+  paint();
 }
 
 /* подушечки пальцев веером: большой ниже и сбоку, средний выше всех */
