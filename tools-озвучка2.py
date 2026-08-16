@@ -28,6 +28,18 @@ MODELS = {
                               pe_attn_head=None)),
 }
 
+# Два режима речи. Похвалу мама читает своим обычным темпом — он живой и
+# приятный. А то, за чем ребёнок повторяет, нужно произносить заметно
+# медленнее и отчётливее: на обычной скорости «вода» проскакивает так,
+# что пятилетка с нарушениями просто не расслышит звуки.
+SPEED = {"norm": 1.0, "name": 0.85, "slow": 0.62}
+# слогов в секунду: похвалу оставляем как прочитала мама, а то, за чем
+# ребёнок повторяет, приводим к неторопливому темпу принудительно
+RATE  = {"slow": 2.6, "name": 3.2}
+
+# тянущиеся звуки моделью не синтезируются вовсе: сшиваем их из гласной
+HOLD = {"а-а-а-а": "а", "у-у-у-у": "у", "и-и-и-и": "и"}
+
 PROBE = [
     "Ты постарался, у тебя получается! Молодец, что попробовал.",
     "Скажи за мной: ва, во, ву, вы.",
@@ -43,29 +55,66 @@ def slug(s):
     return re.sub(r'-+', '-', o).strip('-')[:40] or 'x'
 
 def phrases_from_app(path="index.html"):
-    """Единственный источник правды — сам index.html, чтобы списки не разъезжались."""
+    """Единственный источник правды — сам index.html, чтобы списки не разъезжались.
+    Возвращает список (текст, режим речи)."""
     s = open(path, encoding="utf-8").read()
-    out = []
-    def add(t):
+    out, seen = [], set()
+    def add(t, reg):
         t = t.strip()
-        if t and t.lower() not in {x.lower() for x in out}: out.append(t)
+        if t and t.lower() not in seen:
+            seen.add(t.lower()); out.append((t, reg))
+
     for arr in ("PRAISE", "SHORT"):
         blk = s[s.index("const %s" % arr):]
         blk = blk[:blk.index("];") + 1] if "];" in blk[:2000] else blk[:2000]
-        for m in re.finditer(r'"([^"]+)"', blk): add(m.group(1))
+        for m in re.finditer(r'"([^"]+)"', blk): add(m.group(1), "norm")
+    add("Ты сделал всё!", "norm"); add("Ничего, слушай ещё разок", "norm")
+
     plan = s[s.index("const PLAN"):s.index("const VOW")]
-    for m in re.finditer(r'voice:"([^"]+)"', plan): add(m.group(1))
-    for m in re.finditer(r'say:"([^"]+)"', plan): add(m.group(1))
-    # слова с картинками: ["💧","ВОДА"] — произносим второй элемент, не эмодзи
-    for p in re.finditer(r'\["[^"]*","([^"]+)"\]', plan): add(p.group(1))
-    # слоги: items:["ВА","ВО",…] — без вложенных скобок
+    # всё, за чем ребёнок повторяет, — медленно
+    for m in re.finditer(r'voice:"([^"]+)"', plan): add(m.group(1), "slow")
+    for m in re.finditer(r'say:"([^"]+)"', plan):   add(m.group(1), "slow")
+    for p in re.finditer(r'\["[^"]*","([^"]+)"\]', plan): add(p.group(1), "slow")
     for m in re.finditer(r'items:\[([^\[\]]+)\]', plan):
-        for p in re.finditer(r'"([^"]+)"', m.group(1)): add(p.group(1))
+        for p in re.finditer(r'"([^"]+)"', m.group(1)): add(p.group(1), "slow")
+    for v in re.findall(r'"([АОУИЭЫ])"', s[s.index("const VOW"):s.index("const VOW")+120]):
+        add(v, "slow")
+
+    # названия наклеек ребёнок тоже повторяет, но это награда, не урок
     for m in re.finditer(r'"[^"]+","([^"]+)"\]', s[s.index("const ALBUMS"):s.index("const ALL = []")]):
-        add(m.group(1))
-    for v in re.findall(r'"([АОУИЭЫ])"', s[s.index("const VOW"):s.index("const VOW")+120]): add(v)
-    add("Ты сделал всё!"); add("Ничего, слушай ещё разок")
+        add(m.group(1), "name")
     return out
+
+
+def period(x, sr):
+    x = x - x.mean(); n = len(x)
+    ac = np.correlate(x, x, "full")[n - 1:]
+    lo, hi = int(sr / 400), int(sr / 70)
+    return lo + int(np.argmax(ac[lo:hi]))
+
+
+def sustain(a, sr, seconds):
+    """Тянущаяся гласная: берём установившуюся середину и сшиваем её саму с
+    собой по границам периодов голоса. Ни одна модель тянуть звук не умеет."""
+    a = trim(a, 0.05)
+    m = len(a) // 2
+    P = period(a[max(0, m - 2048):m + 2048], sr)
+    K = max(1, int(0.12 * sr // P))
+    st = max(0, m - K * P // 2)
+    chunk = a[st:st + K * P]
+    if len(chunk) < P * 2: return a
+    xf = P
+    out, body = list(a[:st]), []
+    while (len(out) + len(body)) / sr < seconds - 0.2:
+        if not body: body = list(chunk)
+        else:
+            f = np.linspace(0, 1, xf)
+            body[-xf:] = list(np.array(body[-xf:]) * (1 - f) + chunk[:xf] * f)
+            body += list(chunk[xf:])
+    out = np.array(out + body + list(a[st + K * P:]), dtype=np.float32)
+    r = int(0.12 * sr); out[-r:] *= np.linspace(1, 0, r)
+    return out * (1 + 0.03 * np.sin(2 * np.pi * 4.5 * np.arange(len(out)) / sr))
+
 
 def save_mp3(path, a, sr):
     a = np.asarray(a, dtype=np.float32)
@@ -83,6 +132,47 @@ def trim(a, rel=0.02):
     i = np.where(e > e.max() * rel)[0]
     if not len(i): return a
     return a[max(0, i[0] - 600): i[-1] + 1200]
+
+SYL = "аеёиоуыэюя"
+
+def chunks(x, sr, thr=0.04, gap=0.16):
+    """Режет запись по паузам. Нужно, чтобы вынуть отдельный звук из фразы-зачина."""
+    win = int(sr * 0.02)
+    if len(x) < win * 3: return []
+    env = np.array([np.sqrt((x[i:i + win] ** 2).mean()) for i in range(0, len(x) - win, win)])
+    if env.max() < 1e-4: return []
+    hot = env > env.max() * thr
+    out, st, g = [], None, 0
+    for i, h in enumerate(hot):
+        if h:
+            if st is None: st = i
+            g = 0
+        elif st is not None:
+            g += 1
+            if g * 0.02 > gap:
+                out.append(x[max(0, st - 2) * win:(i - g + 2) * win]); st = None; g = 0
+    if st is not None: out.append(x[max(0, st - 2) * win:])
+    return [c for c in out if len(c) > sr * 0.10]
+
+def pace(a, sr, text, rate):
+    """Выравнивает темп до rate слогов в секунду. Модель на коротких словах
+    частит непредсказуемо — «корова» может проскочить за полсекунды, и
+    ребёнок не расслышит звуков. atempo тянет время, не трогая высоту голоса."""
+    n = max(1, sum(c in SYL for c in text.lower()))
+    have = len(a) / sr
+    want = n / rate + 0.30
+    if have <= 0.05 or have >= want: return a
+    f = max(0.5, have / want)
+    tmp, outp = "/tmp/_pace_in.wav", "/tmp/_pace_out.wav"
+    x = (np.clip(a, -1, 1) * 32767).astype("<i2")
+    with wave.open(tmp, "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr); w.writeframes(x.tobytes())
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", tmp,
+                    "-filter:a", f"atempo={f:.4f}", outp], check=True)
+    with wave.open(outp, "rb") as w:
+        y = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float32) / 32768
+    return y
+
 
 def write_app(man, path="index.html"):
     """Вписывает карту «фраза → файл» прямо в объект AUD внутри index.html.
@@ -147,7 +237,7 @@ def main():
     ap.add_argument("--probe", action="store_true")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--out", default="audio")
-    ap.add_argument("--speed", type=float, default=1.0)
+    ap.add_argument("--speed", type=float, default=0, help="0 — темп по режиму речи")
     ap.add_argument("--write-app", action="store_true", help="вписать карту в index.html")
     a = ap.parse_args()
 
@@ -183,28 +273,65 @@ def main():
     print("→ образец распознан как:", ref_text.strip()[:90])
 
     os.makedirs(a.out, exist_ok=True)
-    texts = PROBE if a.probe else phrases_from_app()
     if a.probe:
         os.makedirs("proby", exist_ok=True)
+        items = [(t, "norm") for t in PROBE]
+    else:
+        items = phrases_from_app()
 
-    man = {}
-    for i, t in enumerate(texts, 1):
-        wave_, sr, _ = infer_process(ref_audio, ref_text, stress(t), model, vocoder,
-                                     speed=a.speed, nfe_step=32, cross_fade_duration=0.15)
+    def raw(text, speed):
+        w, sr, _ = infer_process(ref_audio, ref_text, stress(text), model, vocoder,
+                                 speed=speed, nfe_step=32, cross_fade_duration=0.15)
+        return np.asarray(w, dtype=np.float32), sr
+
+    def speak(text, speed):
+        """Короткие слова синтез выдаёт как попало, а одну букву часто вовсе
+        тишиной: ему не за что зацепиться. Тогда произносим её внутри фразы-зачина
+        и вырезаем последний кусок между паузами."""
+        w, sr = raw(text, speed)
+        if float(np.abs(w).max()) > 0.02 and len(w) / sr > 0.12:
+            return w, sr
+        for carrier in ("Повтори за мной. %s.", "А теперь скажи. %s.", "Слушай. %s."):
+            w, sr = raw(carrier % text, speed)
+            cs = chunks(w, sr)
+            if len(cs) >= 2 and float(np.abs(cs[-1]).max()) > 0.02:
+                print("   через зачин:", text)
+                return cs[-1], sr
+        return w, sr
+
+    man, bad = {}, []
+    for i, (t, reg) in enumerate(items, 1):
+        sp = a.speed if a.speed else SPEED[reg]
+        fn = slug(t.strip().lower())
+        if not a.probe and os.path.exists(f"{a.out}/{fn}.mp3"):
+            man[t.strip().lower()] = fn                 # уже озвучено, пропускаем
+            continue
+
+        src = HOLD.get(t.lower(), t)              # «а-а-а-а» синтезируем как «а»
+        w, sr = speak(src, sp)
+        w = sustain(w, sr, 4.0) if t.lower() in HOLD else trim(w)
+        if reg in RATE and t.lower() not in HOLD:
+            w = pace(w, sr, t, RATE[reg])
+        if float(np.abs(w).max()) < 0.02:
+            bad.append(t); print("   НЕ ВЫШЛО:", t)     # один провал не рушит весь прогон
+            continue
+
         if a.probe:
-            save_mp3(f"proby/{a.model}_{i}.mp3", trim(wave_), sr)
+            save_mp3(f"proby/{a.model}_{i}.mp3", w, sr)
         else:
-            fn = slug(t)
-            save_mp3(f"{a.out}/{fn}.mp3", trim(wave_), sr)
+            save_mp3(f"{a.out}/{fn}.mp3", w, sr)
             man[t.strip().lower()] = fn
-        print(f"  {i}/{len(texts)}  {t[:52]}")
+        print(f"  {i}/{len(items)}  [{reg}] {t[:46]}  {len(w)/sr:.2f}с")
 
+    if bad:
+        print("\nне озвучились: " + ", ".join(bad))
     if man:
         json.dump(man, open("/tmp/_manifest.json", "w"), ensure_ascii=False, indent=0)
         if a.write_app:
             write_app(man)
         else:
             print("\nкарта фраз → /tmp/_manifest.json (или запустите с --write-app)")
+
 
 if __name__ == "__main__":
     main()
