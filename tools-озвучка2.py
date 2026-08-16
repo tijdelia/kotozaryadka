@@ -216,6 +216,18 @@ def patch_torchaudio():
     torchaudio.load = load
 
 
+# Короткая фраза модели не даётся: на «Вот это да!» ей не на чем построить
+# интонацию, а «Собака» выходит и вовсе тишиной. Поэтому короткое произносим
+# концом длинного предложения и зачин отрезаем — у концовки интонация
+# завершённая, в отличие от фразы, вырезанной из середины перечисления.
+# В зачинах нет запятых: лишние паузы внутри них сбивают поиск границы.
+CARRIERS = [
+    "Мы сегодня очень хорошо позанимались вместе.",
+    "Смотри как здорово мы с тобой поработали сегодня.",
+    "Я очень рада что мы с тобой сегодня позанимались.",
+]
+SHORT_LIMIT = 40          # короче — только через зачин
+
 VOWELS_RU = "аеёиоуыэюя"
 
 def clean_stress(s):
@@ -305,21 +317,52 @@ def main():
                                  speed=speed, nfe_step=32, cross_fade_duration=0.15)
         return np.asarray(w, dtype=np.float32), sr
 
+    def gaps(x, sr, thr=0.04, minlen=0.10):
+        win = int(sr * 0.02)
+        env = np.array([np.sqrt((x[i:i + win] ** 2).mean()) for i in range(0, len(x) - win, win)])
+        if env.max() < 1e-6: return []
+        hot = env > env.max() * thr
+        out, s0 = [], None
+        for i, h in enumerate(hot):
+            if not h:
+                if s0 is None: s0 = i
+            elif s0 is not None:
+                if (i - s0) * 0.02 >= minlen: out.append(((s0 + i) / 2) * 0.02)
+                s0 = None
+        return out
+
+    def via_carrier(text, speed, idx):
+        """Границу зачина ищем не по первой паузе — внутри зачина они тоже
+        есть, — а по той, что ближе к ожидаемому месту: доля зачина в длине
+        всего текста. Иначе в кусок попадает половина зачина."""
+        car = CARRIERS[idx % len(CARRIERS)]
+        tail = text if text.strip()[-1] in ".!?" else text + "."
+        w, sr = raw(car + " " + tail, speed)
+        g = gaps(w, sr)
+        if not g: return trim(w), sr
+        want = len(w) / sr * (len(car) / (len(car) + 1 + len(tail)))
+        cut = min(g, key=lambda t: abs(t - want))
+        # отступаем назад: срезать лишнюю тишину безопасно, а вот срезанный
+        # первый звук превращает «носорог» в «сорок» — и это не слышно по цифрам
+        start = max(0, int((cut - 0.14) * sr))
+        return trim(w[start:], 0.012), sr
+
     def speak(text, speed):
         """Короткие слова синтез выдаёт как попало, а одну букву часто вовсе
         тишиной: ему не за что зацепиться. Тогда произносим её внутри фразы-зачина
         и вырезаем последний кусок между паузами."""
-        for _ in range(3):                     # генерация случайна: осечку стоит перебросить
-            w, sr = raw(text, speed)
-            if float(np.abs(w).max()) > 0.05 and len(w) / sr > 0.15:
+        if len(text) >= SHORT_LIMIT:
+            for _ in range(3):                 # генерация случайна: осечку стоит перебросить
+                w, sr = raw(text, speed)
+                if float(np.abs(w).max()) > 0.05 and len(w) / sr > 0.15:
+                    return w, sr
+        for i in range(3):
+            w, sr = via_carrier(text, speed, speak.n + i)
+            if float(np.abs(w).max()) > 0.05 and 0.25 < len(w) / sr < 5.0:
+                speak.n += 1
                 return w, sr
-        for carrier in ("Повтори за мной. %s.", "А теперь скажи. %s.", "Слушай. %s."):
-            w, sr = raw(carrier % text, speed)
-            cs = chunks(w, sr)
-            if len(cs) >= 2 and float(np.abs(cs[-1]).max()) > 0.05:
-                print("   через зачин:", text)
-                return cs[-1], sr
         return w, sr
+    speak.n = 0
 
     def ends(t):
         t = t.strip()
