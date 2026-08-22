@@ -43,8 +43,9 @@ def collect():
     slow = [t for t, r in items if r == "slow"]
     hold  = [t for t in slow if t.lower() in gen.HOLD] + ["в-в-в-в"]
     vow   = [t for t in slow if len(t) == 1]
-    syl   = [t for t in slow if 2 <= len(t) <= 3 and t.isupper()]
-    words = [t for t in slow if len(t) > 3 and t.isupper()]
+    # «АВ-ВУ», «ФА-АФА» — это тоже слоги, хоть и длинные
+    syl   = [t for t in slow if t.isupper() and (2 <= len(t) <= 3 or "-" in t)]
+    words = [t for t in slow if t.isupper() and t not in syl and len(t) > 3]
     rest  = [t for t in slow if t not in hold + vow + syl + words]
     return [hold, vow, syl, words, rest]
 
@@ -52,6 +53,8 @@ def collect():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--похвала", action="store_true", dest="praise")
+    ap.add_argument("--часть", type=int, default=0, dest="part",
+                    help="номер части: список режется по 35 фраз")
     a = ap.parse_args()
 
     if a.praise:
@@ -62,6 +65,21 @@ def main():
         list_name, page_name, title = "звуки-для-записи.txt", "zapis.html", "Запись голоса"
 
     flat = [t for g in groups for t in g]
+
+    # длинный список режем на части: 97 фраз за один присест — перебор
+    CH = 35
+    total_parts = -(-len(flat) // CH)
+    if a.part:
+        lo, hi = (a.part - 1) * CH, a.part * CH
+        keep = set(flat[lo:hi])
+        if not keep:
+            raise SystemExit(f"части {a.part} нет: всего {-(-len(flat)//CH)}")
+        groups = [[t for t in g if t in keep] for g in groups]
+        flat = flat[lo:hi]
+        list_name = list_name.replace(".txt", f"-{a.part}.txt")
+        page_name = page_name.replace(".html", f"-{a.part}.html")
+        title += f" — часть {a.part} из {total_parts}"
+
 
     with open(list_name, "w", encoding="utf-8") as f:
         f.write("# порядок строго как на странице записи, менять нельзя\n")

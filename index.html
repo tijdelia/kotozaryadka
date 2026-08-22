@@ -62,14 +62,14 @@
 
   .grid{
     flex:none;
-    display:grid;grid-template-columns:1fr 1fr;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
     gap:12px;padding:0 16px;align-content:start;
   }
   .tile{
     background:var(--card);border-radius:var(--r);
     padding:22px 20px;
     display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:18px;
-    min-height:clamp(132px,21vh,180px);
+    min-height:clamp(118px,17vh,168px);
     position:relative;transition:transform .14s ease;
     text-align:left;
   }
@@ -77,7 +77,7 @@
   .tile.wide{grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center;justify-content:flex-start;gap:16px;padding:20px}
   .tile .glyph{color:var(--ink);display:grid;place-items:center;flex:none}
   .tile .glyph svg{width:52px;height:52px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  .tile .glyph .ltr{font-size:48px;font-weight:800;line-height:1;letter-spacing:-.04em}
+  .tile .glyph .ltr{font-size:clamp(30px,7vw,48px);font-weight:800;line-height:1;letter-spacing:-.04em;white-space:nowrap}
   .tile.wide .glyph svg{width:40px;height:40px}
   .tile.wide .glyph .ltr{font-size:38px}
   .tile .name{font-size:17px;font-weight:700}
@@ -220,6 +220,8 @@
   .pad:active{transform:scale(.94)}
 
   /* «В или Ф»: загорается та буква, которую ребёнок на самом деле сказал */
+  .bigplay{width:78px;height:78px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
+  .bigplay svg{width:32px;height:32px}
   .pair{display:flex;gap:clamp(14px,4vw,32px);width:min(96vw, calc(58dvh * 2))}
   .pcard{
     flex:1;aspect-ratio:1;border-radius:26px;background:var(--card);
@@ -234,7 +236,9 @@
   .pcard.lit b,.pcard.lit small{color:#fff}
 
   /* «слушаю» — ребёнку видно, что микрофон живой */
-  .ear{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600}
+  .ear{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:14px;font-weight:600;flex-wrap:wrap;justify-content:center}
+  .earbar{width:min(60vw,260px);height:12px;border-radius:99px;background:var(--line);overflow:hidden;flex:none}
+  .earbar b{display:block;height:100%;width:0;background:var(--line);transition:width .06s linear}
   .ear i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:background .1s,transform .1s}
   .ear i.hot{background:var(--accent);transform:scale(1.5)}
 
@@ -509,6 +513,8 @@
     <p class="quiet">Микрофон работает не во всех браузерах. Если доступ не дали — просто держим кольцо пальцем, пока ребёнок дует.</p>
     <p class="quiet" id="stats"></p>
     <button class="row" id="swReset">Снять галочки за сегодня</button>
+    <button class="row" id="swAlbumReset">Открыть первые наборы заново</button>
+    <p class="quiet">Стирает собранное в наборах «Зверята» и «Джунгли», чтобы их можно было собрать снова. Звёздочки и остальные наборы остаются. Всего наборов десять.</p>
     <p class="quiet">Звёздочки и наклейки при этом не пропадают — снимаются только отметки на плитках. Они и так снимаются сами каждое утро.</p>
 
     <h3>Новое домашнее задание</h3>
@@ -567,6 +573,26 @@ const ALBUMS = [
     ["☄️","Комета"],["🪐","Сатурн"],["🛸","Тарелка"],["👽","Пришелец"],
     ["🤖","Робот"],["🔭","Телескоп"],["🌍","Земля"],["🌈","Радуга"]
   ]},
+  {name:"Птицы", items:[
+    ["🦅","Орёл"],["🦆","Утка"],["🦢","Лебедь"],["🦉","Филин"],
+    ["🐓","Петух"],["🐔","Курица"],["🐣","Цыплёнок"],["🕊️","Голубь"],
+    ["🦃","Индюк"],["🦚","Павлин"],["🐦","Птичка"],["🪺","Гнездо"]
+  ]},
+  {name:"Букашки", items:[
+    ["🐝","Пчела"],["🦋","Бабочка"],["🐞","Божья коровка"],["🐌","Улитка"],
+    ["🐜","Муравей"],["🕷️","Паук"],["🦗","Кузнечик"],["🪲","Жук"],
+    ["🐛","Гусеница"],["🦂","Скорпион"],["🪱","Червяк"],["🕸️","Паутина"]
+  ]},
+  {name:"Погода", items:[
+    ["☀️","Солнышко"],["⛅","Облако"],["🌧️","Дождик"],["⛈️","Гроза"],
+    ["❄️","Снежинка"],["⛄","Снеговик"],["🌪️","Вихрь"],["🌫️","Туман"],
+    ["🌬️","Ветер"],["🔥","Огонь"],["💧","Капля"],["🌡️","Градусник"]
+  ]},
+  {name:"Дом", items:[
+    ["🏠","Дом"],["🚪","Дверь"],["🪟","Окно"],["🛏️","Кровать"],
+    ["🪑","Стул"],["🛁","Ванна"],["🚿","Душ"],["🧸","Мишка-игрушка"],
+    ["📚","Книжки"],["🕰️","Часы"],["🪥","Щётка"],["🧦","Носки"]
+  ]},
   {name:"Вкусное", items:[
     ["🍎","Яблоко"],["🍌","Банан"],["🍓","Клубника"],["🍉","Арбуз"],
     ["🍇","Виноград"],["🍒","Вишня"],["🥕","Морковка"],["🍪","Печенье"],
@@ -600,7 +626,10 @@ const GLYPH = {
   artic :'<svg viewBox="0 0 48 48"><path d="M7 24c6-10 28-10 34 0"/><path d="M7 24c6 10 28 10 34 0"/></svg>',
   finger:'<svg viewBox="0 0 48 48"><path d="M17 26V10a3 3 0 016 0v14"/><path d="M23 24V13a3 3 0 016 0v11"/><path d="M29 25v-8a3 3 0 016 0v13a12 12 0 01-12 12h-1a10 10 0 01-10-10V22a3 3 0 016 0"/></svg>',
   vowel :'<span class="ltr">А</span>',
-  sound :'<span class="ltr">В</span>'
+  sound :'<span class="ltr">В</span>',
+  fsound:'<span class="ltr">Ф</span>',
+  vf    :'<span class="ltr">В/Ф</span>',
+  ssound:'<span class="ltr">С</span>'
 };
 
 const PLAN = {
@@ -660,18 +689,62 @@ const PLAN = {
     {type:"echo", title:"Ещё длиннее", rounds:3, start:3, tip:"То же, но цепочка длиннее."}
   ]},
 
+  /* Материал по В и Ф — из тетради логопеда: слоги, слова и предложения
+     со снимков. Сочетания идут от простого к трудному, как в тетради. */
   sound:{ name:"Звук В", tasks:[
     {type:"wait", title:"Губка", sec:5, reps:2, tip:"Верхние зубы прикусывают нижнюю губу. Это и есть позиция звука В."},
     {type:"voice", title:"Заведи вертолёт", sec:3, reps:3,
-     tip:"Вертолёт взлетает, пока работает голос. Приложение слушает не «правильно ли», а включены ли голосовые связки — это единственное, чем В отличается от Ф. Тянем ФФФ и, не прерывая выдоха, включаем голос: получается ВВВ."},
-    {type:"pair", title:"В или Ф", a:"в", b:"ф", reps:6,
-     tip:"Ребёнок говорит звук — загорается та буква, которую он на самом деле произнёс. Это не оценка: Ф загорается без укоряющего звука, просто «ты сказал ветерок». Положите его ладонь себе на горло, потом на своё — на В горло дрожит, на Ф нет. Точность резко выше, если сделать «Настройку звуков» ниже."},
-    {type:"tiles", title:"Слоги", cols:4, tip:"Нажал — повторил вслух за голосом.", items:["ВА","ВО","ВУ","ВЫ","АВА","ОВО","УВУ","ЫВЫ"]},
+     tip:"Вертолёт взлетает, пока работает голос. Приложение слушает не «правильно ли», а включены ли голосовые связки — это единственное, чем В отличается от Ф."},
+    {type:"tiles", title:"Слоги", cols:5, tip:"Нажал — повторил вслух за голосом.",
+     items:["ВА","ВО","ВУ","ВЫ","ВЭ","АВА","ОВО","УВУ","ЫВЫ","ВУВ","ВЫВ","ВЭВ","АВ-ВУ","АВ-ВЫ","АВ-ВЭ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["💧","ВОДА"],["💨","ВЕТЕР"],["🐺","ВОЛК"],["🍴","ВИЛКА"],
-      ["🛁","ВАННА"],["🚁","ВЕРТОЛЁТ"],["🐄","КОРОВА"],["🦉","СОВА"]
+      ["🛁","ВАННА"],["🚁","ВЕРТОЛЁТ"],["🐄","КОРОВА"],["🦉","СОВА"],
+      ["🧻","ВАТА"],["🔩","ВИНТ"],["🧹","ВЕНИК"],["👁","ВИД"]
     ]},
-    {type:"reps", title:"Чистоговорка", reps:3, say:"Ва-ва-ва, вот высокая трава", tip:"Повторяем три раза, не торопясь."}
+    {type:"reps", title:"Чистоговорка", reps:3, say:"Вот кофта, вот муфта", tip:"Повторяем три раза, не торопясь."},
+    {type:"reps", title:"Ещё одна", reps:3, say:"Винт ввинтим и вывинтим", tip:"Из тетради. Трудная — начинайте медленно."}
+  ]},
+
+  fsound:{ name:"Звук Ф", tasks:[
+    {type:"wait", title:"Губка без голоса", sec:5, reps:2,
+     tip:"Та же позиция, что у В, но голос выключен: горло не дрожит. Дайте потрогать своё горло на В и на Ф."},
+    {type:"tiles", title:"Слоги", cols:5, tip:"Нажал — повторил вслух.",
+     items:["ФА","ФО","ФУ","ФЫ","ФЭ","АФА","ОФО","УФУ","ЫФЫ","АФ-ФА","ОФ-ФО","УФ-ФУ","ЫФ-ФЫ","ФА-АФА","ФО-ОФО"]},
+    {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
+      ["📷","ФОТО"],["🔊","ФОН"],["🌰","ФУНДУК"],["🍬","КОНФЕТА"],
+      ["☕","КОФЕ"],["💨","ФЕН"],["🎏","ФЛАГ"],["⛲","ФОНТАН"],
+      ["🥣","БУФЕТ"],["👰","ФАТА"],["🎩","ФАНТ"],["🦩","ФЛАМИНГО"]
+    ]},
+    {type:"reps", title:"Чистоговорка", reps:3, say:"В магнитофоне фон", tip:"Из тетради."},
+    {type:"reps", title:"Ещё одна", reps:3, say:"В буфете фундук и конфеты", tip:"Из тетради."}
+  ]},
+
+  /* Различение В и Ф — то, ради чего оба звука и ставились */
+  vf:{ name:"В или Ф", tasks:[
+    {type:"pair", title:"Скажи и посмотри", a:"в", b:"ф", reps:6,
+     tip:"Ребёнок говорит звук — загорается та буква, которую он на самом деле произнёс. Положите его ладонь себе на горло: на В оно дрожит, на Ф нет."},
+    {type:"sort", title:"Куда положить", a:"в", b:"ф", rounds:8, tip:
+     "Звучит слово — ребёнок выбирает букву, с которой оно начинается. Здесь приложение ничего не угадывает: оно само знает ответ, поэтому ошибиться не может. Это тренировка слуха, а не произношения.",
+     items:[["ВОДА",0],["ФОТО",1],["ВАТА",0],["ФОН",1],["ВОЛК",0],["ФУНДУК",1],
+            ["ВЕНИК",0],["ФЕН",1],["ВИНТ",0],["ФАТА",1],["ВАННА",0],["КОФЕ",1]]},
+    {type:"reps", title:"Вместе", reps:3, say:"Ватный кафтан", tip:"Здесь оба звука рядом — самое трудное."},
+    {type:"reps", title:"И ещё", reps:3, say:"В ванной комнате фонтан", tip:"Из тетради."}
+  ]},
+
+  ssound:{ name:"Звук С", tasks:[
+    {type:"wait", title:"Заборчик", sec:5, reps:2,
+     tip:"Зубы сомкнуты заборчиком, губы в улыбке, язык внизу за нижними зубами. Воздух идёт по желобку посередине языка."},
+    {type:"hold", toy:"candle", title:"Ветерок", sec:2, reps:3,
+     tip:"Долгий плавный выдох через желобок — тот же, что нужен для С. Ладонь ко рту: струя должна быть холодной и узкой."},
+    {type:"tiles", title:"Слоги", cols:5, tip:"Нажал — повторил вслух.",
+     items:["СА","СО","СУ","СЫ","СЭ","АСА","ОСО","УСУ","ЫСЫ","АС","ОС","УС","ЫС","СА-СО","СУ-СЫ"]},
+    {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
+      ["🧃","СОК"],["🍲","СУП"],["🦉","СОВА"],["🛷","САНКИ"],
+      ["👜","СУМКА"],["👃","НОС"],["🦊","ЛИСА"],["💇","КОСА"],
+      ["🌲","СОСНА"],["🚌","АВТОБУС"],["🐕","ПЁС"],["⭐","ЗВЕЗДА"]
+    ]},
+    {type:"reps", title:"Чистоговорка", reps:3, say:"Са-са-са, вот летит оса", tip:"Повторяем три раза, не торопясь."}
   ]}
 };
 
@@ -682,6 +755,10 @@ const KEY = "kotozaryadka-v2";
 const load = () => { try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; } };
 let S = Object.assign({done:[], voice:true, mic:false, stars:0, got:0, days:0, day:"", last:"", voiceName:"", blow:1}, load());
 if(S.since===undefined) S.since = (S.stars||0) % 3;      // перенос со старой схемы «три звезды»
+/* Собранное держим списком, а не числом: иначе нельзя ни открыть заново
+   пройденный набор, ни выдать наклейку из середины альбома. */
+if(!Array.isArray(S.own)) S.own = Array.from({length:S.got||0},(_,i)=>i);
+const owns = i => S.own.indexOf(i) >= 0;
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
 
 /* новый день — галочки на плитках снимаются сами, коллекция остаётся */
@@ -923,7 +1000,7 @@ function buildHome(){
 }
 function paintAlbumBtn(){
   $("#toAlbum").innerHTML =
-    `<span>${S.got ? ALL[(S.got-1)%ALL.length].e : "★"}</span><i>${S.got}</i>`;
+    `<span>${S.own.length ? ALL[S.own[S.own.length-1]].e : "★"}</span><i>${S.own.length}</i>`;
 }
 
 /* ---------- прохождение блока ---------- */
@@ -952,8 +1029,9 @@ function finishBlock(){
   S.stars++; S.since++;
   if(S.last !== today()){ S.last = today(); S.days = (S.days||0)+1; }
   let fresh = null;
-  if(S.since >= stepFor(S.stars-1) && S.got < ALL.length){
-    S.since = 0; S.got++; fresh = ALL[S.got-1];
+  if(S.since >= stepFor(S.stars-1) && S.own.length < ALL.length){
+    const next = ALL.findIndex((_,i)=>!owns(i));      // первая ещё не собранная
+    if(next >= 0){ S.since = 0; S.own.push(next); S.got = S.own.length; fresh = ALL[next]; }
   }
   save();
   showReward(fresh);
@@ -1001,7 +1079,7 @@ function showReward(fresh){
     ${fresh ? `<div class="sticker" id="stk"><span>${fresh.e}</span></div>
                <div class="sname" id="stn">${fresh.n}</div>` : ""}
     <div class="rbar">
-      ${S.got ? `<button class="bigbtn ghost" id="rAlbum" aria-label="Мои наклейки">${GRID4}</button>` : ""}
+      ${S.own.length ? `<button class="bigbtn ghost" id="rAlbum" aria-label="Мои наклейки">${GRID4}</button>` : ""}
       <button class="bigbtn" id="rDone" aria-label="Дальше">${ARROW}</button>
     </div>`;
   show("reward");
@@ -1053,18 +1131,19 @@ let PAGE=0;
 function openAlbum(fresh){
   cleanup();
   PAGE = fresh ? fresh.ai
-       : Math.min(ALBUMS.length-1, ALL[Math.max(0,Math.min(ALL.length-1,S.got-1))].ai);
+       : ALL[ALL.findIndex((_,i)=>!owns(i))>=0 ? ALL.findIndex((_,i)=>!owns(i)) : ALL.length-1].ai;
   paintAlbum(fresh);
   show("album");
 }
 function paintAlbum(fresh){
   const a=ALBUMS[PAGE], base=OFF[PAGE];
-  const have=Math.max(0, Math.min(a.items.length, S.got-base));
-  const next=ALL[S.got], need=stepFor(S.stars), lit=S.since;
+  const have=a.items.filter((_,i)=>owns(base+i)).length;
+  const ni=ALL.findIndex((_,i)=>!owns(i));
+  const next=ni>=0?ALL[ni]:null, need=stepFor(S.stars), lit=S.since;
   $("#albBody").innerHTML = `
     <div class="albhead"><h2>${a.name}</h2><span>${have} из ${a.items.length}</span></div>
     <div class="stickgrid" id="sg">${a.items.map(([e,n],i)=>{
-      const own = base+i < S.got;
+      const own = owns(base+i);
       const isNew = fresh && fresh.ai===PAGE && fresh.i===i;
       return `<button class="sl${own?"":" locked"}${isNew?" fresh":""}" data-i="${i}">
         <span>${e}</span><small>${n}</small></button>`;
@@ -1655,7 +1734,7 @@ function runTask(){
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
     pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
     voice:tVoice, pair:tPair,
-    spider:tSpider, wave:tWave, snail:tSnail})[t.type](t);
+    spider:tSpider, wave:tWave, snail:tSnail, sort:tSort})[t.type](t);
 }
 
 /* ===================== ИГРЫ ДЛЯ ПАЛЬЦЕВ =====================
@@ -1664,6 +1743,30 @@ function runTask(){
    ============================================================ */
 
 /* лопаем пузырьки — по одному, разными пальцами */
+/* Полоска громкости прямо в игре. Без неё «не реагирует» невозможно
+   отличить от «звук не доходит»: ребёнок говорит, а на экране пусто, и
+   непонятно, микрофон молчит или порог не тот. */
+function earHTML(){ return `<div class="ear" id="ear"><i></i><span id="est">…</span>
+  <span class="earbar"><b id="earfill"></b></span></div>`; }
+function earPaint(){
+  const f=$("#earfill"); if(!f) return;
+  f.style.width = Math.min(100, Math.round(micLvl/0.22*100)) + "%";
+  f.style.background = loud() ? "var(--good)" : "var(--line)";
+  const d=$("#ear"); if(d) d.firstElementChild.classList.toggle("hot", loud());
+}
+/* Разрешение на микрофон браузер даёт только внутри касания. Поэтому игра
+   начинается с явной кнопки: одно касание — и контекст, и доступ, и запуск. */
+function micGate(box, onReady){
+  const go=async e=>{
+    if(e) e.preventDefault();
+    ac();
+    const ok=await initMic();
+    onReady(ok);
+  };
+  box.addEventListener("pointerdown",go);
+  return go;
+}
+
 /* ===================== ИГРЫ НА ГОЛОС =====================
    Приложение не оценивает, правильно ли произнесён звук — этого не
    умеет ни одна модель на детской речи с нарушениями. Оно измеряет
@@ -1677,29 +1780,29 @@ function tVoice(t){
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${dotsHTML(t.reps)}
-    <div class="ear" id="ear"><i></i><span id="est">включаю микрофон…</span></div>`;
+    ${earHTML()}`;
   const cv=$("#cv"); let {ctx,w:cw,h:ch}=fitCanvas(cv);
   let prog=0, rep=0, last=0, over=false, ok=false, spin=0, ready=false;
   /* Звук в браузере просыпается только от касания, а вкладка могла его
      усыпить. Поэтому любое касание сцены будит и переспрашивает микрофон. */
-  const wake=()=>{ ac(); if(!micOn) initMic().then(g=>{ if(my===TICK && g){ ready=true;
-                     $("#est").textContent="скажи в-в-в"; } }); };
-  $("#scene").addEventListener("pointerdown",wake);
-  initMic().then(g=>{
+  $("#est").textContent="нажми на картинку";
+  const gate=micGate($("#scene"), g=>{
     if(my!==TICK) return;
     ready=g;
-    $("#est").textContent = g ? "скажи в-в-в" : "нажми на картинку, чтобы включить микрофон";
-    if(!g){ const sc=$("#scene");
+    $("#est").textContent = g ? "скажи в-в-в" : "микрофон не дали — держи картинку пальцем";
+    if(!g){                                   // без микрофона играем пальцем
+      const sc=$("#scene");
       const d=()=>ok=true, u=()=>ok=false;
-      sc.addEventListener("pointerdown",e=>{e.preventDefault();ac();d();});
+      sc.addEventListener("pointerdown",d);
       addEventListener("pointerup",u); CLEAN.push(()=>removeEventListener("pointerup",u));
     }
   });
+  later(()=>{ if(!micOn) gate(); }, 400);      // пробуем и сами: вдруг доступ уже дан
   const id=setInterval(()=>{
     if(my!==TICK) return;
     const now=performance.now(), dt=now-(last||now); last=now;
     if(ready) ok = loud() && isVoiced();
-    const e=$("#ear"); if(e) e.firstElementChild.classList.toggle("hot", ready ? loud() : ok);
+    earPaint();
     if(!over){
       prog = ok ? prog+dt : Math.max(0, prog-dt*1.5);
       if(prog>=t.sec*1000){
@@ -1747,13 +1850,12 @@ function tPair(t){
       <div class="pcard f" id="c1"><b>${t.b.toUpperCase()}</b><small>ветерок</small></div>
     </div>
     ${dotsHTML(t.reps)}
-    <div class="ear" id="ear"><i></i><span id="est">включаю микрофон…</span></div>`;
+    ${earHTML()}`;
   let rep=0, on=false, acc={v:0,c:0,l:0,n:0}, t0=0, cool=0, ready=false;
-  const wake=()=>{ ac(); if(!micOn) initMic().then(g=>{ if(my===TICK && g){ ready=true;
-                     $("#est").textContent=`скажи ${t.a}`; } }); };
-  $("#pair0").addEventListener("pointerdown",wake);
-  initMic().then(g=>{ if(my!==TICK) return; ready=g;
-    $("#est").textContent = g ? `скажи ${t.a}` : "нажми на букву, чтобы включить микрофон"; });
+  $("#est").textContent="нажми на букву";
+  const gate=micGate($("#pair0"), g=>{ if(my!==TICK) return; ready=g;
+    $("#est").textContent = g ? `скажи ${t.a}` : "микрофон не дали — дайте доступ в настройках браузера"; });
+  later(()=>{ if(!micOn) gate(); }, 400);
   const light=(i)=>{
     const c=$("#c"+i); if(!c) return;
     c.classList.add("lit"); later(()=>c.classList.remove("lit"),900);
@@ -1762,7 +1864,7 @@ function tPair(t){
     if(my!==TICK || !ready) return;
     const now=performance.now();
     const hot=loud();
-    $("#ear").firstElementChild.classList.toggle("hot",hot);
+    earPaint();
     if(hot && now>cool){
       if(!on){ on=true; t0=now; acc={v:0,c:0,l:0,n:0}; }
       acc.v+=MIC.voiced; acc.c+=MIC.cen; acc.l+=MIC.lowr; acc.n++;
@@ -1783,6 +1885,46 @@ function tPair(t){
     }
   },33);
   CLEAN.push(()=>clearInterval(id));
+}
+
+/* Различаем на слух, а не по микрофону: звучит слово — ребёнок кладёт его
+   к нужной букве. Это фонематический слух, основа всей работы над звуком,
+   и здесь приложение ничего не угадывает: оно само знает правильный ответ. */
+function tSort(t){
+  let n=0, lock=false, cur=null;
+  const pool=t.items.slice().sort(()=>Math.random()-.5).slice(0,t.rounds||8);
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <button class="bigplay" id="again" aria-label="Повторить">${IC_PLAY}</button>
+    <div class="pair" id="sortPair">
+      <div class="pcard v" id="s0"><b>${t.a.toUpperCase()}</b></div>
+      <div class="pcard f" id="s1"><b>${t.b.toUpperCase()}</b></div>
+    </div>
+    ${dotsHTML(pool.length)}
+    <div class="hint" id="sh">Послушай и выбери букву</div>`;
+  const ask=()=>{
+    cur=pool[n];
+    $("#sh").textContent="Послушай и выбери букву";
+    later(()=>say(cur[0]), 250);
+  };
+  $("#again").onclick=()=>{ if(cur) say(cur[0]); };
+  [0,1].forEach(i=>{
+    $("#s"+i).onclick=()=>{
+      if(lock||!cur) return;
+      const right = (cur[1]===i);
+      const card=$("#s"+i);
+      card.classList.add("lit"); lock=true;
+      if(right){
+        n++; markDots(n); okSnd(); buzz(30);
+        later(()=>{ card.classList.remove("lit"); lock=false;
+          if(n>=pool.length) finish(700); else ask(); }, 700);
+      }else{
+        tone(360,.12,.045);
+        $("#sh").textContent="Послушай ещё разок";
+        later(()=>{ card.classList.remove("lit"); lock=false; say(cur[0]); }, 700);
+      }
+    };
+  });
+  ask();
 }
 
 function tPopit(t){
@@ -2406,7 +2548,7 @@ function tFollow(t){
 const secOf = t => (t.sec||3) * (S.blow||1);
 
 function tHold(t){
-  let rep=0, prog=0, holding=false, last=0, over=false, lastP=0;
+  let rep=0, prog=0, holding=false, last=0, over=false, lastP=0, pause=false;
   const toyKind = t.toy;
   stage().innerHTML = `<div class="title">${t.title}</div>
     ${toyKind
@@ -2436,6 +2578,7 @@ function tHold(t){
     d.classList.toggle("holding", on);
     /* отпустил — откат быстрее, чем набор: выдох должен быть
        непрерывным, а не по кусочкам */
+    if(pause){ if(!toy) setDial(1); return; }      // держим кольцо полным
     prog = on ? prog+dt : Math.max(0, prog - dt*1.6);
     const cur = Math.min(1, prog/(secOf(t)*1000));
     /* Игрушка показывает общий путь, а не один выдох. Раньше шарик улетал
@@ -2446,11 +2589,16 @@ function tHold(t){
     lastP = p;
     if(toy) toy.draw(ctx,cw,ch,p,on,now);
     else { setDial(p); if(br) br.style.transform = "scale(" + (1 + 1.9*p) + ")"; }
-    if(prog >= secOf(t)*1000){
-      rep++; markDots(rep); prog=0;
-      okSnd(); buzz(30);
-      if(rep>=t.reps){ over=true; lastP=1; if(toy) toy.pop(); else setDial(0); finish(toy?1400:650); }
-      else if(!toy) setDial(0);
+    if(prog >= secOf(t)*1000 && !pause){
+      /* Кольцо должно на глазах дойти до конца и постоять полным: раньше
+         оно на 99% прыгало в ноль, и выходило, будто попытка не засчиталась. */
+      rep++; markDots(rep); okSnd(); buzz(30);
+      if(!toy) setDial(1);
+      if(rep>=t.reps){ over=true; lastP=1; if(toy) toy.pop(); finish(toy?1400:900); }
+      else{
+        pause=true;
+        later(()=>{ pause=false; prog=0; if(!toy) setDial(0); }, 550);
+      }
     }
   }, 33);
   const down=e=>{ e.preventDefault(); ac(); holding=true; if(t.voice) say(t.voice); };
@@ -2631,7 +2779,7 @@ function openParent(){
   $("#swVoice").classList.toggle("on", !!S.voice);
   $("#swMic").classList.toggle("on", !!S.mic);
   $("#stats").textContent =
-    `Дней с занятиями: ${S.days||0} · звёздочек: ${S.stars||0} · наклеек: ${S.got||0} из ${ALL.length}`;
+    `Дней с занятиями: ${S.days||0} · звёздочек: ${S.stars||0} · наклеек: ${S.own.length} из ${ALL.length}`;
   show("parent");
 }
 $("#swVoice").onclick=()=>{ S.voice=!S.voice; save(); $("#swVoice").classList.toggle("on",S.voice); if(!S.voice) stopVoice(); };
@@ -2828,6 +2976,16 @@ function releaseMic(){
   try{ if(MR && MR.state==="recording") MR.stop(); }catch(e){}
   if(MSTREAM){ try{ MSTREAM.getTracks().forEach(t=>t.stop()); }catch(e){} MSTREAM=null; }
 }
+
+$("#swAlbumReset").onclick=()=>{
+  let ok=true;
+  try{ ok=confirm("Открыть «Зверят» и «Джунгли» заново? Их наклейки нужно будет собрать снова."); }catch(e){}
+  if(!ok) return;
+  const upto=OFF[2];                                  // первые два набора
+  S.own=S.own.filter(i=>i>=upto); S.got=S.own.length;
+  save(); paintCal(); buildHome();
+  alert("Готово. В альбоме снова пусто на первых двух страницах.");
+};
 
 $("#swReset").onclick=()=>{
   let ok=true;
