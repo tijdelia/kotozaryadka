@@ -362,6 +362,10 @@
   .doc{overflow-y:auto;padding:0 22px 40px;font-weight:500}
   .doc > *{max-width:720px;margin-left:auto;margin-right:auto}
   .doc h2{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+  .jump{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+  .jump a{font-size:13px;font-weight:700;color:var(--ink);text-decoration:none;
+    background:var(--card);border-radius:99px;padding:8px 14px;white-space:nowrap}
+  .doc{scroll-behavior:smooth}
   .doc h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:26px 0 8px}
   .doc p,.doc li{font-size:15px;line-height:1.6;color:#3D3A34}
   .doc ul{padding-left:18px;display:flex;flex-direction:column;gap:6px}
@@ -455,6 +459,13 @@
     <h2>Родителям</h2>
     <p>Ребёнок сидит с планшетом, повторяет за видео и нажимает кольцо. Вы рядом: показываете сами и хвалите. На детских экранах намеренно нет текста и кнопок — только ролик и одно кольцо.</p>
 
+    <nav class="jump">
+      <a href="#j-mic">Проверка микрофона</a>
+      <a href="#j-cal">Настройка звуков</a>
+      <a href="#j-set">Настройки и правка альбома</a>
+      <a href="#j-voice">Голос приложения</a>
+    </nav>
+
     <h3>Как заниматься</h3>
     <ul>
       <li><b>10–15 минут</b> в день. Лучше два коротких подхода, чем один длинный.</li>
@@ -485,7 +496,7 @@
       <b>Хвалите за старание, а не за результат.</b> «Ты постарался», «ты сегодня долго держал язычок» работают лучше, чем «умница» и «правильно». Приложение говорит именно так — говорите так же.
     </div>
 
-    <h3>Голос приложения</h3>
+    <h3 id="j-voice">Голос приложения</h3>
     <p>Все 118 фраз — похвала, гласные, слоги, слова и названия наклеек — <b>заранее озвучены нейросетью Silero</b> и лежат в папке <code>audio</code>. Это не синтезатор планшета: он читает по буквам и звучит роботом. Здесь один и тот же живой голос на любом устройстве, и работает без интернета.</p>
     <p>Тянущиеся звуки «а-а-а-а», «у-у-у-у», «и-и-и-и» тоже настоящие: гласная синтезирована и растянута до четырёх секунд по периодам голоса, поэтому она тянется ровно, как живая. Синтезатор планшета так не умеет вовсе.</p>
     <p><a href="golosa.html">Послушать все пять голосов и выбрать другой →</a></p>
@@ -496,7 +507,7 @@
     <p>Если готовый файл почему-то не загрузился, говорит синтез планшета. Русские голоса на разных устройствах звучат очень по-разному — послушайте и выберите приятнее:</p>
     <div id="vlist"></div>
 
-    <h3>Проверка микрофона</h3>
+    <h3 id="j-mic">Проверка микрофона</h3>
     <p>Если игры «Заведи вертолёт» и «В или Ф» не отзываются — сначала сюда. Нажмите и говорите: полоска должна прыгать.</p>
     <button class="row" id="micTest">Проверить микрофон</button>
     <div id="micBox" hidden>
@@ -504,12 +515,12 @@
       <p class="quiet" id="micInfo">—</p>
     </div>
 
-    <h3>Настройка звуков</h3>
+    <h3 id="j-cal">Настройка звуков</h3>
     <p>В играх «Заведи вертолёт» и «В или Ф» приложение слушает микрофон. Оно <b>не оценивает правильность</b> — этого не умеет ни одна программа на детской речи с нарушениями, и врать ребёнку хуже, чем молчать. Оно измеряет ровно одно: дрожат ли голосовые связки. Именно этим В отличается от Ф, и это физика, а не догадка.</p>
     <p>Чтобы сравнивать сына <b>с ним самим, а не с чужой нормой</b>, запишите два образца: как он говорит В и как он говорит Ф. Порог встанет ровно между ними. Нажмите и держите полторы секунды, пока он тянет звук.</p>
     <div id="cal"></div>
 
-    <h3>Настройки</h3>
+    <h3 id="j-set">Настройки</h3>
     <button class="row" id="swVoice">Голос подсказок и похвалы <span class="sw"></span></button>
     <button class="row" id="swMic">Реагировать на дутьё в микрофон <span class="sw"></span></button>
     <div class="row" style="gap:8px"><span style="flex:1">Длина выдоха</span>
@@ -958,8 +969,10 @@ async function initMicOnce(){
        без единого ожидания перед ним. Safari разрешает доступ только внутри
        касания, а любое await это касание «теряет»: повторный запрос из
        запасной ветки он уже отклоняет, и выходит, что нажатие не работает.
-       Обработку звука отключаем потом, отдельно: она душит тихий Ф, но
-       без неё можно жить, а без микрофона нельзя. */
+       Обработку звука отключаем потом, отдельно: подавление шума душит
+       тихий Ф и С, а автоусиление подтягивает вместе с голосом и тишину,
+       из-за чего голос перестаёт отличаться от фона. Громкость сама по себе
+       нам не нужна: все пороги считаются в разах от фона, а не в единицах. */
     const st = await navigator.mediaDevices.getUserMedia({audio:true});
     try{
       const tr = st.getAudioTracks()[0];
@@ -992,7 +1005,15 @@ async function initMicOnce(){
       let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]*buf[i];
       micLvl=Math.sqrt(s/buf.length);
       if(performance.now()-t0<1200) cal.push(micLvl);
-      else if(cal.length){ micBase=cal.reduce((a,b)=>a+b,0)/cal.length; cal=[]; }
+      else{
+        if(cal.length){ micBase=cal.reduce((a,b)=>a+b,0)/cal.length; cal=[]; }
+        /* Фон надо мерить всё время, а не один раз на старте: если в первую
+           секунду ребёнок уже говорил или рядом шумели, порог встанет
+           слишком высоко и игра замолчит навсегда. Вниз идём быстро — это
+           наступила тишина; вверх очень медленно — это правда шум. */
+        micBase += (micLvl<micBase ? .05 : .0004) * (micLvl-micBase);
+        if(micBase<1e-4) micBase=1e-4;
+      }
 
       for(let i=0,j=0;j<dn.length;i+=D,j++) dn[j]=(buf[i]+buf[i+1]+buf[i+2]+buf[i+3])/4;
       let mean=0; for(let i=0;i<dn.length;i++) mean+=dn[i]; mean/=dn.length;
@@ -1027,7 +1048,19 @@ async function initMicOnce(){
     return false;
   }
 }
-const loud  = () => micLvl > Math.max(micBase*2.6, .012);
+const micThr = () => Math.max(micBase*2.5, .002);
+const loud   = () => micLvl > micThr();
+/* Полоску рисуем не в «абсолютной громкости», а относительно порога:
+   половина полоски — ровно та громкость, с которой игра начинает слышать.
+   Тогда то, что видно маме, и то, что слышит игра, — одно и то же. Раньше
+   полоска мерилась в долях от 0,22 — громкости крика в упор, — и обычный
+   детский голос двигал её на пятую часть: «реагирует, но очень тихо». */
+function micPct(){
+  /* Отсчитываем от фона, а не от нуля: в тишине полоска должна быть пустой,
+     иначе непонятно, это уже голос или просто комната шумит. */
+  const r = (micLvl-micBase) / Math.max(micThr()-micBase, 1e-6);
+  return Math.max(0, Math.min(100, r<=1 ? r*50 : 50 + Math.min(50,(r-1)/2*50)));
+}
 /* без калибровки — грубый, но рабочий порог; с калибровкой сравниваем
    с его собственными В и Ф, а не с чужой нормой */
 function nearer(a,b){
@@ -1041,7 +1074,7 @@ function isVoiced(){
   if(c["в"]&&c["ф"]) return nearer(c["в"],c["ф"])===0;
   return MIC.voiced>.40 && MIC.lowr>.75;
 }
-const blowing = () => micOn && S.mic && micLvl > Math.max(micBase*3.2,.028);
+const blowing = () => micOn && S.mic && micLvl > Math.max(micBase*3.0,.005);
 
 /* ---------- экраны ---------- */
 function show(id){
@@ -1853,7 +1886,7 @@ function earHTML(){ return `<div class="ear" id="ear"><i></i><span id="est">…<
   <span class="earbar"><b id="earfill"></b></span></div>`; }
 function earPaint(){
   const f=$("#earfill"); if(!f) return;
-  f.style.width = Math.min(100, Math.round(micLvl/0.22*100)) + "%";
+  f.style.width = Math.round(micPct()) + "%";
   f.style.background = loud() ? "var(--good)" : "var(--line)";
   const d=$("#ear"); if(d) d.firstElementChild.classList.toggle("hot", loud());
 }
@@ -3041,9 +3074,9 @@ function micTest(){
     let peak=0;
     MICT=setInterval(()=>{
       peak=Math.max(peak*0.96, micLvl);
-      bar.style.width=Math.min(100, Math.round(micLvl/0.25*100))+"%";
+      bar.style.width=Math.round(micPct())+"%";
       info.textContent =
-        `звук ${AC?AC.state:"нет"} · громкость ${micLvl.toFixed(3)} · фон ${micBase.toFixed(3)} · порог ${Math.max(micBase*2.6,.012).toFixed(3)}`
+        `звук ${AC?AC.state:"нет"} · громкость ${micLvl.toFixed(3)} · пик ${peak.toFixed(3)} · фон ${micBase.toFixed(3)} · порог ${micThr().toFixed(3)}`
         + ` · голос ${MIC.voiced.toFixed(2)} · низкие ${MIC.lowr.toFixed(2)}`
         + (loud() ? " · СЛЫШУ" : " · тихо");
     },100);
@@ -3085,13 +3118,15 @@ function paintCal(){
       if(!await initMic()){ alert("Микрофон не разрешён. Дайте доступ и попробуйте ещё раз."); return; }
       btn.classList.add("on"); btn.innerHTML=IC_STOP;
       const acc={v:0,c:0,l:0,n:0};
-      const id=setInterval(()=>{ if(loud()){ acc.v+=MIC.voiced; acc.c+=MIC.cen; acc.l+=MIC.lowr; acc.n++; } },33);
+      /* Порог здесь мягче игрового: образец пишется полторы секунды, и
+         терять его целиком из-за того, что ребёнок начал тихо, обидно. */
+      const id=setInterval(()=>{ if(micLvl>micBase*1.6){ acc.v+=MIC.voiced; acc.c+=MIC.cen; acc.l+=MIC.lowr; acc.n++; } },33);
       setTimeout(()=>{
         clearInterval(id); btn.classList.remove("on"); btn.innerHTML=IC_REC;
-        if(acc.n<8){ alert("Звука почти не было слышно. Поднесите планшет ближе и попробуйте ещё раз."); return; }
+        if(acc.n<6){ alert("Звука почти не было слышно. Держите планшет в 20–30 см ото рта и начинайте тянуть сразу, как нажали. Если и так тихо — загляните в «Проверку микрофона» выше: там видно, доходит ли звук вообще."); return; }
         S.cal=S.cal||{}; S.cal[k]={voiced:acc.v/acc.n, cen:acc.c/acc.n, lowr:acc.l/acc.n};
         save(); paintCal(); okSnd();
-      },1500);
+      },2000);
     };
   });
 }
