@@ -296,7 +296,7 @@
     border-radius:30px;display:grid;place-items:center;position:relative;
     box-shadow:0 14px 34px rgba(25,23,19,.13);opacity:0;
   }
-  .sticker span{font-size:min(26vw,15dvh,112px);line-height:1}
+  .sticker span{font-size:min(30vw,18dvh,150px);line-height:1}
   .sticker.in{animation:stickin .75s cubic-bezier(.2,1.5,.4,1) forwards}
   @keyframes stickin{0%{transform:scale(.15) rotate(-24deg);opacity:0}70%{opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
   .sname{font-size:17px;font-weight:700;color:var(--muted);opacity:0}
@@ -331,8 +331,8 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
     transition:transform .12s ease;
   }
-  .sl span{font-size:clamp(24px,7vw,38px);line-height:1}
-  .sl small{font-size:10px;font-weight:700;color:var(--muted);text-align:center;line-height:1.1}
+  .sl span{font-size:min(9vh,72px);line-height:1}
+  .sl small{font-size:clamp(10px,1.5vh,14px);font-weight:700;color:var(--muted);text-align:center;line-height:1.15}
   .sl:active{transform:scale(.94)}
   .sl.locked{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
   .sl.locked span{filter:grayscale(1);opacity:.2}
@@ -671,7 +671,7 @@ const PLAN = {
      tip:"Просите лопать разными пальцами, не только указательным: средним, безымянным, мизинцем. Тогда это настоящая тренировка на изоляцию пальцев, а не просто тыканье."},
     {type:"trace", title:"Веди по дорожке", rounds:3,
      tip:"Ведём одним пальцем, не отрывая его от экрана. Прямая подготовка руки к письму: дорожки от простой волны к зигзагу и петлям."},
-    {type:"spider", title:"Паучок", stones:9,
+    {type:"spider", title:"Паучок", stones:7,
      tip:"Попеременный шаг: передний палец стоит, задний переставляется вперёд. Пусть шагает указательным и средним одной руки — это подготовка к переключению между пальцами."},
     {type:"wave", title:"Волна", reps:3,
      tip:"Пальцы ложатся по очереди слева направо и остаются лежать — как играют гамму. Не чередование, а наслаивание: удерживать уже положенные и добавлять новый труднее, чем стучать."},
@@ -986,9 +986,9 @@ function buildHome(){
   const g=$("#grid"); g.innerHTML="";
   const keys=Object.keys(PLAN);
   keys.forEach((k,i)=>{
-    const p=PLAN[k], done=S.done.includes(k), last=(i===keys.length-1);
+    const p=PLAN[k], done=S.done.includes(k);
     const b=document.createElement("button");
-    b.className="tile"+(last?" wide":"")+(done?" done":"");
+    b.className="tile"+(done?" done":"");
     b.innerHTML=`<span class="glyph">${GLYPH[k]}</span><span class="name">${p.name}</span>
       ${done?'<span class="tick">✓</span>':""}`;
     b.onclick=()=>{ tapSnd(); startBlock(k); };
@@ -1977,8 +1977,8 @@ function tSpider(t){
   const N=t.stones||9;
   let idx=0, pts=[], stones=[];
   stage().innerHTML=`<div class="title">${t.title}</div>
-    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${fhintHTML()}
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${dotsHTML(N-1)}
     <div class="hint">Шагай двумя пальчиками по камушкам</div>`;
   const box=$("#scene"), cv=$("#cv");
@@ -1986,12 +1986,14 @@ function tSpider(t){
   /* радиус ограничен и шагом между камушками, и полями: иначе крайние
      срезаются краем сцены, а на узком экране они налезают друг на друга */
   const f0=1+Math.floor(Math.random()*3); showFinger([f0,f0+1]);
-  const R=()=>Math.min(Math.max(26, Math.min(cw,ch)*0.10), cw*0.72/(N-1)*0.62, cw*0.085);
+  const R=()=>Math.min(Math.max(26, Math.min(cw,ch)*0.10), cw*0.72/(N-1)*0.42, cw*0.085);
   const build=()=>{
     stones=[];
     for(let i=0;i<N;i++){
-      stones.push({x:cw*(0.14+0.72*i/(N-1)),
-                   y:ch*(0.50+(i%2?0.21:-0.21))});
+      /* зигзаг меряем от шага между камнями, а не от высоты сцены: иначе
+         на высоком экране путь распадается на два отдельных ряда */
+      const dy=(cw*0.72/(N-1))*0.62;
+      stones.push({x:cw*(0.14+0.72*i/(N-1)), y:ch*0.5+(i%2?dy:-dy)});
     }
   };
   const on=s=>pts.some(p=>Math.hypot(s.x-p.x,s.y-p.y)<R()*1.35);
@@ -2088,8 +2090,8 @@ function tWave(t){
 function tSnail(t){
   let round=0, idx=0, down=false, pts=[], fast=0, lastP=null, lastT=0;
   stage().innerHTML=`<div class="title">${t.title}</div>
-    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${fhintHTML()}
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
     ${dotsHTML(t.rounds)}
     <div class="hint" id="sh">Веди улитку медленно</div>`;
   const box=$("#scene"), cv=$("#cv");
@@ -2345,11 +2347,11 @@ function tTwist(t){
 function tDrum(t){
   let n=0, side=0;
   stage().innerHTML=`<div class="title">${t.title}</div>
+    ${fhintHTML()}
     <div class="drums">
       <button class="pad lit" id="p0"></button>
       <button class="pad" id="p1"></button>
     </div>
-    ${fhintHTML()}
     <div class="counter"><span id="val">0</span><small> / ${t.reps}</small></div>
     <div class="hint">Бей по тому, который горит</div>`;
   const d0=1+Math.floor(Math.random()*3); showFinger([d0,d0+1]);
