@@ -677,6 +677,12 @@ const PLAN = {
      tip:"Пальцы ложатся по очереди слева направо и остаются лежать — как играют гамму. Не чередование, а наслаивание: удерживать уже положенные и добавлять новый труднее, чем стучать."},
     {type:"snail", title:"Улитка", rounds:2,
      tip:"Здесь спешка не помогает: если вести быстро, улитка останавливается. Управление темпом и силой движения — то, без чего не выходит письмо."},
+    {type:"letter", title:"Печатные буквы", set:"print", pick:3,
+     letters:["А","О","У","И","Э","Ы","В","Ф","С"],
+     tip:"Порядок штрихов важнее красоты: привыкнет писать «А» снизу вверх — переучивать труднее, чем научить. Штрих начинается от точки с цифрой и ведётся одним движением."},
+    {type:"letter", title:"Письменные буквы", set:"cursive", pick:3,
+     letters:["а","о","у","и","э","ы","в","ф","с"],
+     tip:"Письменные упрощены до одного росчерка там, где это возможно. Сверьте начертания с прописями логопеда: в разных школах они немного разные."},
     {type:"hand", title:"Вся ладошка", reps:3,
      tip:"Ставим сразу все пять пальцев в кружки и держим. Учит разводить пальцы и удерживать их раздельно — то, что в стишках делается «замком» и «растопыркой»."}
   ]},
@@ -905,13 +911,39 @@ function say(t, force){
    Всё считается прямо в браузере: ни модели, ни сервера, ни интернета. */
 let micLvl=0, micOn=false, micBase=.01;
 const MIC = {voiced:0, f0:0, cen:0, lowr:0};
+let MICERR="";                       // почему не вышло — видно в проверке микрофона
 async function initMic(){
   if(micOn) return true;
+  MICERR="";
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    MICERR="браузер не умеет слушать микрофон"; return false; }
+  if(!window.isSecureContext){
+    MICERR="страница не по https — браузер не даст микрофон"; return false; }
   try{
-    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    const c=ac(); if(!c) return false;
+    let st=null;
+    /* Отключать обработку полезно — она душит тихий фрикативный звук. Но
+       часть устройств такие настройки отвергает совсем, поэтому если не
+       вышло, берём микрофон как есть. */
+    try{
+      st=await navigator.mediaDevices.getUserMedia(
+        {audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    }catch(e){
+      if(e && (e.name==="NotAllowedError"||e.name==="SecurityError")) throw e;
+      st=await navigator.mediaDevices.getUserMedia({audio:true});
+    }
+    const c=ac();
+    if(!c){ MICERR="не удалось запустить звук"; return false; }
+    /* Контекст мог остаться спящим: пока он спит, анализатор отдаёт нули. */
+    if(c.state==="suspended"){ try{ await c.resume(); }catch(e){} }
+    if(c.state!=="running"){ MICERR="звук не проснулся — коснитесь экрана и попробуйте снова"; return false; }
     const an=c.createAnalyser(); an.fftSize=2048; an.smoothingTimeConstant=0;
     c.createMediaStreamSource(st).connect(an);
+    /* Главное: анализатор нельзя оставлять тупиком. Узел без пути к выходу
+       часть браузеров (Safari в первую очередь) просто не обсчитывает — и
+       микрофон «не работает», хотя доступ дан и поток идёт. Ведём его в
+       выход через нулевую громкость: слышно ничего, а граф живой. */
+    const sink=c.createGain(); sink.gain.value=0;
+    an.connect(sink); sink.connect(c.destination);
     const buf=new Float32Array(an.fftSize);
     const spec=new Float32Array(an.frequencyBinCount);
     const SRr=c.sampleRate, D=4;                       // прореживаем вчетверо: для голоса хватает
@@ -952,7 +984,13 @@ async function initMic(){
       MIC.lowr = (low+high)>0 ? low/(low+high) : 0;   // «голосовая полоса»: у В почти вся энергия внизу
     },33);
     micOn=true; return true;
-  }catch(e){ return false; }
+  }catch(e){
+    MICERR = (e && e.name==="NotAllowedError") ? "доступ к микрофону запрещён"
+           : (e && e.name==="NotFoundError")   ? "микрофон не найден"
+           : (e && e.name==="NotReadableError")? "микрофон занят другой программой"
+           : ("сбой: " + (e && (e.name||e.message) || "неизвестно"));
+    return false;
+  }
 }
 const loud  = () => micLvl > Math.max(micBase*2.6, .012);
 /* без калибровки — грубый, но рабочий порог; с калибровкой сравниваем
@@ -1734,7 +1772,8 @@ function runTask(){
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
     pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
     voice:tVoice, pair:tPair,
-    spider:tSpider, wave:tWave, snail:tSnail, sort:tSort})[t.type](t);
+    spider:tSpider, wave:tWave, snail:tSnail, sort:tSort,
+    letter:tLetter})[t.type](t);
 }
 
 /* ===================== ИГРЫ ДЛЯ ПАЛЬЦЕВ =====================
@@ -1969,6 +2008,133 @@ function samples(pts,w,h,n){
   out.push(at(P.length-1));
   return out;
 }
+/* ===== БУКВЫ: ведём по штрихам в правильном порядке =====
+   Порядок штрихов — половина дела: если ребёнок привыкнет писать «А»
+   снизу вверх, переучивать труднее, чем научить. Каждый штрих начинается
+   с точки с номером и ведётся одним движением, не отрывая пальца.
+   Начертания печатных — как в букваре. Письменные упрощены до одного
+   росчерка там, где это возможно; сверьте их с прописями логопеда. */
+const GLYPHS={
+  print:{
+    "А":[[[.50,.08],[.17,.92]],[[.50,.08],[.83,.92]],[[.29,.63],[.71,.63]]],
+    "О":[[[.50,.07],[.20,.28],[.13,.50],[.20,.72],[.50,.93],[.80,.72],[.87,.50],[.80,.28],[.50,.07]]],
+    "У":[[[.16,.10],[.50,.56]],[[.86,.10],[.32,.95]]],
+    "И":[[[.20,.10],[.20,.90]],[[.20,.90],[.80,.10]],[[.80,.10],[.80,.90]]],
+    "Э":[[[.24,.20],[.48,.07],[.76,.24],[.82,.50],[.76,.76],[.48,.93],[.24,.80]],
+        [[.44,.50],[.80,.50]]],
+    "Ы":[[[.16,.10],[.16,.90]],
+         [[.16,.50],[.42,.48],[.54,.62],[.54,.77],[.42,.90],[.16,.90]],
+         [[.86,.10],[.86,.90]]],
+    "В":[[[.22,.09],[.22,.91]],
+         [[.22,.09],[.58,.11],[.71,.26],[.60,.45],[.22,.49]],
+         [[.22,.49],[.64,.51],[.78,.69],[.63,.89],[.22,.91]]],
+    "Ф":[[[.50,.04],[.50,.96]],
+         [[.50,.20],[.24,.31],[.18,.50],[.24,.69],[.50,.80],[.76,.69],[.82,.50],[.76,.31],[.50,.20]]],
+    "С":[[[.80,.22],[.60,.09],[.34,.14],[.18,.34],[.18,.66],[.34,.86],[.60,.91],[.80,.78]]]
+  },
+  cursive:{
+    "а":[[[.66,.34],[.56,.26],[.40,.26],[.30,.38],[.30,.56],[.40,.68],[.56,.68],[.66,.58],[.66,.34],
+          [.66,.62],[.74,.72]]],
+    "о":[[[.66,.34],[.56,.26],[.40,.26],[.30,.38],[.30,.56],[.40,.68],[.56,.68],[.66,.58],[.66,.36],[.62,.28]]],
+    "у":[[[.28,.28],[.34,.52],[.44,.62],[.54,.56],[.60,.28],
+          [.56,.62],[.50,.84],[.38,.94],[.26,.90]]],
+    /* у письменной «и» вершины острые, а низ круглый: сплайн сам скругляет
+       всё подряд, поэтому у вершин точки ставим вплотную, а внизу разводим */
+    /* Вершины письменной «и» — острые углы, низ круглый. Сплайн скругляет
+       всё, поэтому вершину задаём сдвоенной точкой: касательная там
+       обнуляется и получается угол. */
+    "и":[[[.18,.66],[.31,.27],[.31,.27],[.36,.55],[.43,.66],[.50,.62],
+          [.60,.27],[.60,.27],[.65,.55],[.72,.66],[.79,.61],[.84,.53]]],
+    "э":[[[.32,.32],[.44,.24],[.58,.28],[.64,.40],[.54,.48],[.42,.48],
+          [.56,.50],[.66,.58],[.60,.70],[.44,.74],[.32,.66]]],
+    "ы":[[[.20,.28],[.20,.64],[.30,.72],[.42,.66],[.42,.54],[.30,.50],[.20,.52]],
+         [[.64,.30],[.64,.72],[.74,.66]]],
+    "в":[[[.36,.72],[.42,.34],[.50,.18],[.56,.26],[.50,.44],[.42,.56],
+          [.56,.52],[.66,.60],[.62,.70],[.48,.74],[.38,.70]]],
+    "ф":[[[.50,.14],[.50,.90]],
+         [[.50,.32],[.36,.34],[.30,.46],[.36,.58],[.50,.60],[.64,.58],[.70,.46],[.64,.34],[.50,.32]]],
+    "с":[[[.68,.34],[.56,.26],[.40,.28],[.30,.42],[.32,.60],[.44,.70],[.60,.70],[.70,.62]]]
+  }
+};
+
+function tLetter(t){
+  const set=GLYPHS[t.set]||GLYPHS.print;
+  const all=(t.letters||Object.keys(set)).filter(k=>set[k]);
+  const list=all.slice().sort(()=>Math.random()-.5).slice(0,t.pick||3);
+  let li=0, si=0, idx=0, pts=[], down=false, doneStrokes=[];
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    ${fhintHTML()}
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(list.length)}
+    <div class="hint" id="lh">Веди от точки с цифрой</div>`;
+  showFinger([1]);                                   // букву ведём указательным
+  const box=$("#scene"), cv=$("#cv");
+  let f=fitCanvas(cv), ctx=f.ctx, cw=f.w, ch=f.h;
+  const BOX=()=>{ const m=Math.min(cw,ch)*0.86; return {s:m, x:(cw-m)/2, y:(ch-m)/2}; };
+  const TOL=()=>Math.max(34, Math.min(cw,ch)*0.11);
+  const strokeOf=(k)=>{
+    const b=BOX(), raw=set[list[li]][k];
+    return samples(raw.map(([x,y])=>[b.x/cw+x*b.s/cw, b.y/ch+y*b.s/ch]), cw, ch, 14);
+  };
+  function build(){
+    pts=strokeOf(si); idx=0;
+    box.dataset.letter=list[li]; box.dataset.stroke=si;   // видно снаружи, что сейчас на экране
+  }
+  function paint(){
+    ctx.clearRect(0,0,cw,ch);
+    const b=BOX(), n=set[list[li]].length;
+    for(let k=0;k<n;k++){
+      const p=strokeOf(k), done=doneStrokes.indexOf(k)>=0, now=k===si;
+      ctx.lineCap="round"; ctx.lineJoin="round";
+      ctx.strokeStyle = done? "#CFEBDD" : (now? "#EFEDE7" : "#F4F3F0");
+      ctx.lineWidth = TOL()*1.25; ctx.setLineDash([]);
+      ctx.beginPath(); p.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.stroke();
+      if(done||now){
+        ctx.strokeStyle = done? GOOD : "#D9D4CA";
+        ctx.lineWidth = 7; ctx.setLineDash(done?[]:[4,16]);
+        ctx.beginPath(); p.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      if(!done){                                     // точка старта с номером
+        const r=Math.min(cw,ch)*0.045;
+        ctx.beginPath(); ctx.arc(p[0][0],p[0][1],r,0,7);
+        ctx.fillStyle = now?ACC:"#FFFFFF"; ctx.fill();
+        ctx.strokeStyle = now?ACC:"#CFCAC0"; ctx.lineWidth=3; ctx.stroke();
+        ctx.fillStyle = now?"#FFF":"#8C877D";
+        ctx.font="700 "+Math.round(r*1.25)+"px system-ui,sans-serif";
+        ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(String(k+1), p[0][0], p[0][1]+1);
+      }
+    }
+    ctx.strokeStyle=ACC; ctx.lineWidth=9; ctx.setLineDash([]);   // пройденное сейчас
+    if(idx>1){ ctx.beginPath();
+      pts.slice(0,idx).forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.stroke(); }
+  }
+  const move=e=>{
+    if(!down) return;
+    const r=cv.getBoundingClientRect();
+    const x=e.clientX-r.left, y=e.clientY-r.top;
+    if(idx===0 && Math.hypot(pts[0][0]-x,pts[0][1]-y) > TOL()*1.4) return;  // старт только от точки
+    while(idx<pts.length && Math.hypot(pts[idx][0]-x,pts[idx][1]-y)<TOL()) idx++;
+    paint();
+    if(idx>=pts.length){
+      down=false; doneStrokes.push(si); tone(520+si*60,.09,.06); buzz(14);
+      if(si+1 < set[list[li]].length){ si++; build(); paint(); return; }
+      li++; markDots(li); okSnd(); buzz(30);
+      if(li>=list.length){ finish(1100); return; }
+      si=0; doneStrokes=[]; build(); paint();
+    }
+  };
+  box.addEventListener("pointerdown",e=>{ e.preventDefault(); ac(); down=true; move(e); });
+  box.addEventListener("pointermove",move);
+  const up=()=>{ down=false; };
+  addEventListener("pointerup",up); addEventListener("pointercancel",up);
+  const refit=()=>{ const g=fitCanvas(cv); ctx=g.ctx; cw=g.w; ch=g.h; build(); paint(); };
+  onResize(cv,refit);
+  CLEAN.push(()=>{ removeEventListener("pointerup",up); removeEventListener("pointercancel",up); });
+  build(); paint();
+}
+
 /* ===== ПАУЧОК: шагаем двумя пальцами по камушкам =====
    Ни одна игра пока не тренировала попеременный шаг: передний палец
    стоит, задний переставляется вперёд. Это другая координация, чем
@@ -2801,20 +2967,15 @@ function micTest(){
   if(MICT){ clearInterval(MICT); MICT=null; box.hidden=true; $("#micTest").classList.remove("on"); return; }
   box.hidden=false; $("#micTest").classList.add("on");
   info.textContent="прошу доступ…";
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    info.textContent="Этот браузер не умеет слушать микрофон. Нужен Chrome или Safari."; return;
-  }
-  if(!window.isSecureContext){
-    info.textContent="Страница открыта не по https — браузер не даст микрофон."; return;
-  }
   initMic().then(okMic=>{
-    if(!okMic){ info.textContent="Доступ не дали или микрофон занят. Разрешите его для сайта в настройках браузера и нажмите ещё раз."; return; }
+    if(!okMic){ info.textContent="Не вышло: "+(MICERR||"причина неизвестна")+
+      ". Разрешите микрофон для сайта в настройках браузера и нажмите ещё раз."; return; }
     let peak=0;
     MICT=setInterval(()=>{
       peak=Math.max(peak*0.96, micLvl);
       bar.style.width=Math.min(100, Math.round(micLvl/0.25*100))+"%";
       info.textContent =
-        `громкость ${micLvl.toFixed(3)} · фон ${micBase.toFixed(3)} · порог ${Math.max(micBase*2.6,.012).toFixed(3)}`
+        `звук ${AC?AC.state:"нет"} · громкость ${micLvl.toFixed(3)} · фон ${micBase.toFixed(3)} · порог ${Math.max(micBase*2.6,.012).toFixed(3)}`
         + ` · голос ${MIC.voiced.toFixed(2)} · низкие ${MIC.lowr.toFixed(2)}`
         + (loud() ? " · СЛЫШУ" : " · тихо");
     },100);
