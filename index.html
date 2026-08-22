@@ -875,10 +875,27 @@ function pickVoice(){
 }
 if(window.speechSynthesis){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
 
-let CURA=null;
+/* Один проигрыватель на всё приложение, а не новый на каждую фразу.
+   Safari на планшете разрешает звук поштучно: разрешение выдаётся тому
+   элементу, которого коснулись, а свежесозданному — нет. Поэтому элемент
+   заводим один и «размораживаем» его первым же касанием экрана. */
+let CURA=null, AUDOK=false;
+function player(){
+  if(!CURA){ CURA=new Audio(); CURA.preload="auto"; }
+  return CURA;
+}
+function unlockAudio(){
+  if(AUDOK) return; AUDOK=true;
+  try{
+    const a=player();
+    a.src="data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA";
+    const p=a.play();
+    if(p&&p.catch) p.catch(()=>{});
+  }catch(e){}
+}
 function stopVoice(){
   try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
-  try{ if(CURA){ CURA.pause(); CURA=null; } }catch(e){}
+  try{ if(CURA){ CURA.pause(); } }catch(e){}
 }
 function say(t, force){
   if((!S.voice && !force) || !t) return;
@@ -888,7 +905,11 @@ function say(t, force){
      нейросетевой > синтез планшета, который хуже всех */
   const src = REC[k] ? REC[k] : (AUD[k] ? "audio/"+AUD[k]+".mp3" : null);
   if(src){
-    try{ CURA=new Audio(src); const p=CURA.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+    try{
+      const a=player();
+      a.src=src; a.currentTime=0;
+      const p=a.play(); if(p&&p.catch) p.catch(()=>{});
+    }catch(e){}
     return;
   }
   if(!window.speechSynthesis) return;
@@ -3157,5 +3178,5 @@ $("#swReset").onclick=()=>{
 };
 
 buildHome();
-document.addEventListener("pointerdown",()=>ac(),{once:true});
+document.addEventListener("pointerdown",()=>{ ac(); unlockAudio(); },{once:true});
 </script>
