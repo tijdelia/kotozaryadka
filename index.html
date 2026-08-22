@@ -341,6 +341,13 @@
   .sl.wig{animation:wig .5s ease}
   @keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) scale(1.09)}75%{transform:rotate(8deg) scale(1.09)}}
 
+  .editbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+           background:var(--card);border-radius:14px;padding:9px 12px;margin-bottom:4px}
+  .editbar span{font-size:13px;font-weight:700;color:var(--accent);flex:1}
+  .editbar button{font-size:13px;font-weight:700;padding:7px 12px;border-radius:10px;
+                  background:var(--paper);color:var(--ink)}
+  .editbar button[data-done]{background:var(--ink);color:#fff}
+
   .pages{display:flex;gap:9px;justify-content:center;padding:4px}
   .pages button{width:9px;height:9px;border-radius:50%;background:var(--line);padding:0}
   .pages button.on{background:var(--ink)}
@@ -513,8 +520,8 @@
     <p class="quiet">Микрофон работает не во всех браузерах. Если доступ не дали — просто держим кольцо пальцем, пока ребёнок дует.</p>
     <p class="quiet" id="stats"></p>
     <button class="row" id="swReset">Снять галочки за сегодня</button>
-    <button class="row" id="swAlbumReset">Открыть первые наборы заново</button>
-    <p class="quiet">Стирает собранное в наборах «Зверята» и «Джунгли», чтобы их можно было собрать снова. Звёздочки и остальные наборы остаются. Всего наборов десять.</p>
+    <button class="row" id="swEdit">Править альбом</button>
+    <p class="quiet">Открывает альбом, где нажатие на наклейку помечает её собранной или наоборот. Так можно обнулить набор, оставить в нём одну-две штуки или выдать всё разом. Звёздочки при этом не меняются.</p>
     <p class="quiet">Звёздочки и наклейки при этом не пропадают — снимаются только отметки на плитках. Они и так снимаются сами каждое утро.</p>
 
     <h3>Новое домашнее задание</h3>
@@ -932,8 +939,14 @@ function say(t, force){
    Всё считается прямо в браузере: ни модели, ни сервера, ни интернета. */
 let micLvl=0, micOn=false, micBase=.01;
 const MIC = {voiced:0, f0:0, cen:0, lowr:0};
-let MICERR="";                       // почему не вышло — видно в проверке микрофона
+let MICERR="", MICBUSY=null;         // почему не вышло — видно в проверке микрофона
 async function initMic(){
+  if(micOn) return true;
+  if(MICBUSY) return MICBUSY;        // два запроса разом Safari отклоняет
+  MICBUSY = (async()=>{ try{ return await initMicOnce(); } finally { MICBUSY=null; } })();
+  return MICBUSY;
+}
+async function initMicOnce(){
   if(micOn) return true;
   MICERR="";
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
@@ -941,17 +954,18 @@ async function initMic(){
   if(!window.isSecureContext){
     MICERR="страница не по https — браузер не даст микрофон"; return false; }
   try{
-    let st=null;
-    /* Отключать обработку полезно — она душит тихий фрикативный звук. Но
-       часть устройств такие настройки отвергает совсем, поэтому если не
-       вышло, берём микрофон как есть. */
+    /* Просим самый простой микрофон — и делаем это первым же действием,
+       без единого ожидания перед ним. Safari разрешает доступ только внутри
+       касания, а любое await это касание «теряет»: повторный запрос из
+       запасной ветки он уже отклоняет, и выходит, что нажатие не работает.
+       Обработку звука отключаем потом, отдельно: она душит тихий Ф, но
+       без неё можно жить, а без микрофона нельзя. */
+    const st = await navigator.mediaDevices.getUserMedia({audio:true});
     try{
-      st=await navigator.mediaDevices.getUserMedia(
-        {audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    }catch(e){
-      if(e && (e.name==="NotAllowedError"||e.name==="SecurityError")) throw e;
-      st=await navigator.mediaDevices.getUserMedia({audio:true});
-    }
+      const tr = st.getAudioTracks()[0];
+      if(tr && tr.applyConstraints)
+        await tr.applyConstraints({echoCancellation:false, noiseSuppression:false, autoGainControl:false});
+    }catch(e){}
     const c=ac();
     if(!c){ MICERR="не удалось запустить звук"; return false; }
     /* Контекст мог остаться спящим: пока он спит, анализатор отдаёт нули. */
@@ -1194,6 +1208,14 @@ function openAlbum(fresh){
   paintAlbum(fresh);
   show("album");
 }
+function albumEditBar(a, base){
+  return `<div class="editbar">
+      <span>Правка: нажми наклейку</span>
+      <button data-all="1">все</button>
+      <button data-all="0">никого</button>
+      <button data-done="1">готово</button>
+    </div>`;
+}
 function paintAlbum(fresh){
   const a=ALBUMS[PAGE], base=OFF[PAGE];
   const have=a.items.filter((_,i)=>owns(base+i)).length;
@@ -1201,6 +1223,7 @@ function paintAlbum(fresh){
   const next=ni>=0?ALL[ni]:null, need=stepFor(S.stars), lit=S.since;
   $("#albBody").innerHTML = `
     <div class="albhead"><h2>${a.name}</h2><span>${have} из ${a.items.length}</span></div>
+    ${EDIT?albumEditBar(a,base):""}
     <div class="stickgrid" id="sg">${a.items.map(([e,n],i)=>{
       const own = owns(base+i);
       const isNew = fresh && fresh.ai===PAGE && fresh.i===i;
@@ -1213,9 +1236,29 @@ function paintAlbum(fresh){
         ${Array.from({length:need},(_,i)=>`<b class="${i<lit?"on":""}">★</b>`).join("")}
         <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         <span class="ne">${next.e}</span></div>` : ""}`;
+  if(EDIT){
+    $("#albBody").querySelectorAll(".editbar button").forEach(btn=>{
+      btn.onclick=()=>{
+        if(btn.dataset.done){ EDIT=false; save(); buildHome(); paintAlbum(null); return; }
+        const on=btn.dataset.all==="1";
+        a.items.forEach((_,i)=>{
+          const g=base+i, has=owns(g);
+          if(on && !has) S.own.push(g);
+          if(!on && has) S.own.splice(S.own.indexOf(g),1);
+        });
+        S.own.sort((x,y)=>x-y); S.got=S.own.length; save(); paintAlbum(null);
+      };
+    });
+  }
   document.querySelectorAll("#sg .sl").forEach(b=>{
     b.onclick=()=>{
       ac();
+      if(EDIT){                                   // правка: переключаем наклейку
+        const g=base+ (+b.dataset.i), has=owns(g);
+        if(has) S.own.splice(S.own.indexOf(g),1); else S.own.push(g);
+        S.own.sort((x,y)=>x-y); S.got=S.own.length; save(); paintAlbum(null);
+        tapSnd(); return;
+      }
       if(b.classList.contains("locked")){ tone(300,.07,.035); return; }
       const n=a.items[+b.dataset.i][1];
       tapSnd(); buzz(10); say(n);
@@ -1232,7 +1275,7 @@ function flip(d){
   paintAlbum(null);
 }
 $("#toAlbum").onclick   = () => { tapSnd(); openAlbum(null); };
-$("#fromAlbum").onclick = () => { tapSnd(); goHome(); };
+$("#fromAlbum").onclick = () => { tapSnd(); if(EDIT){ EDIT=false; save(); } goHome(); };
 $("#albPrev").onclick   = () => flip(-1);
 $("#albNext").onclick   = () => flip(1);
 
@@ -1845,11 +1888,12 @@ function tVoice(t){
   let prog=0, rep=0, last=0, over=false, ok=false, spin=0, ready=false;
   /* Звук в браузере просыпается только от касания, а вкладка могла его
      усыпить. Поэтому любое касание сцены будит и переспрашивает микрофон. */
-  $("#est").textContent="нажми на картинку";
+  $("#est").textContent="слушаю…";
   const gate=micGate($("#scene"), g=>{
     if(my!==TICK) return;
     ready=g;
-    $("#est").textContent = g ? "скажи в-в-в" : "микрофон не дали — держи картинку пальцем";
+    $("#est").textContent = g ? "скажи в-в-в"
+      : (MICERR ? MICERR + " — нажми на картинку" : "нажми на картинку");
     if(!g){                                   // без микрофона играем пальцем
       const sc=$("#scene");
       const d=()=>ok=true, u=()=>ok=false;
@@ -1857,7 +1901,9 @@ function tVoice(t){
       addEventListener("pointerup",u); CLEAN.push(()=>removeEventListener("pointerup",u));
     }
   });
-  later(()=>{ if(!micOn) gate(); }, 400);      // пробуем и сами: вдруг доступ уже дан
+  /* Если доступ уже дан, микрофон включится сам и трогать ничего не надо.
+     Кнопка нужна только при первом разрешении. */
+  gate();
   const id=setInterval(()=>{
     if(my!==TICK) return;
     const now=performance.now(), dt=now-(last||now); last=now;
@@ -1912,10 +1958,11 @@ function tPair(t){
     ${dotsHTML(t.reps)}
     ${earHTML()}`;
   let rep=0, on=false, acc={v:0,c:0,l:0,n:0}, t0=0, cool=0, ready=false;
-  $("#est").textContent="нажми на букву";
+  $("#est").textContent="слушаю…";
   const gate=micGate($("#pair0"), g=>{ if(my!==TICK) return; ready=g;
-    $("#est").textContent = g ? `скажи ${t.a}` : "микрофон не дали — дайте доступ в настройках браузера"; });
-  later(()=>{ if(!micOn) gate(); }, 400);
+    $("#est").textContent = g ? `скажи ${t.a}`
+      : (MICERR ? MICERR + " — нажми на букву" : "нажми на букву"); });
+  gate();
   const light=(i)=>{
     const c=$("#c"+i); if(!c) return;
     c.classList.add("lit"); later(()=>c.classList.remove("lit"),900);
@@ -3161,15 +3208,11 @@ function releaseMic(){
   if(MSTREAM){ try{ MSTREAM.getTracks().forEach(t=>t.stop()); }catch(e){} MSTREAM=null; }
 }
 
-$("#swAlbumReset").onclick=()=>{
-  let ok=true;
-  try{ ok=confirm("Открыть «Зверят» и «Джунгли» заново? Их наклейки нужно будет собрать снова."); }catch(e){}
-  if(!ok) return;
-  const upto=OFF[2];                                  // первые два набора
-  S.own=S.own.filter(i=>i>=upto); S.got=S.own.length;
-  save(); paintCal(); buildHome();
-  alert("Готово. В альбоме снова пусто на первых двух страницах.");
-};
+/* Собранное живёт в памяти планшета, поэтому раздать или отобрать наклейки
+   можно только отсюда. Правка — в самом альбоме: нажал наклейку, она
+   переключилась. */
+let EDIT=false;
+$("#swEdit").onclick=()=>{ EDIT=true; openAlbum(null); };
 
 $("#swReset").onclick=()=>{
   let ok=true;
