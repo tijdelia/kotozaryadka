@@ -497,7 +497,8 @@
     </div>
 
     <h3 id="j-voice">Голос приложения</h3>
-    <p>Все 118 фраз — похвала, гласные, слоги, слова и названия наклеек — <b>заранее озвучены нейросетью Silero</b> и лежат в папке <code>audio</code>. Это не синтезатор планшета: он читает по буквам и звучит роботом. Здесь один и тот же живой голос на любом устройстве, и работает без интернета.</p>
+    <p>Все 230 фраз — похвала, гласные, слоги, слова, чистоговорки и названия наклеек — <b>звучат вашим голосом</b> и лежат в папке <code>audio</code>. Часть записана вами напрямую, остальное синтезировано моделью F5-TTS, склонировавшей ваш голос с вашей же записи. Синтезатор планшета не звучит нигде: он читает по буквам и выходит робот.</p>
+    <p><a href="poslushat.html">Послушать 113 новых фраз &rarr;</a> Слоги вроде «ыф-фы» распознаватель проверить не может — таких слов в русском нет. Их отметил как сомнительные: послушайте и скажите, что переделать или записать вашим живым голосом.</p>
     <p>Тянущиеся звуки «а-а-а-а», «у-у-у-у», «и-и-и-и» тоже настоящие: гласная синтезирована и растянута до четырёх секунд по периодам голоса, поэтому она тянется ровно, как живая. Синтезатор планшета так не умеет вовсе.</p>
     <p><a href="golosa.html">Послушать все пять голосов и выбрать другой →</a></p>
     <p><b>Свой голос лучше любого синтеза.</b> Нажмите ● и скажите фразу — приложение будет говорить ею вместо готовой. Особенно это стоит сделать для «в-в-в-в»: этот звук пока не озвучен, потому что тянущийся согласный без живого голоса выходит неубедительно.</p>
@@ -824,30 +825,48 @@ function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){}
 /* Готовая озвучка (Silero TTS, голос xenia): фраза → файл в папке audio.
    Пересобрать другим голосом можно скриптом из README. */
 const AUD={
-  "а":"a","а-а-а-а":"a-a-a-a","ава":"ava","автобус":"avtobus","акула":"akula","арбуз":"arbuz","банан":"banan",
-  "в-в-в-в":"v-v-v-v","ва":"va","ва-ва-ва, вот высокая трава":"va-va-va-vot-vysokaya-trava","ванна":"vanna",
-  "велосипед":"velosiped","вертолёт":"vertolyot","ветер":"veter","вилка":"vilka","виноград":"vinograd",
-  "вишня":"vishnya","во":"vo","вода":"voda","волк":"volk","волна":"volna","вот так!":"vot-tak","вот это да!":"vot-eto-da",
-  "ву":"vu","вы":"vy","горилла":"gorilla","грузовик":"gruzovik","дельфин":"delfin","динозавр":"dinozavr",
-  "жираф":"zhiraf","зайка":"zayka","звезда":"zvezda","здорово!":"zdorovo","зебра":"zebra","земля":"zemlya",
-  "змея":"zmeya","и":"i","и-и-и-и":"i-i-i-i","как здорово вышло!":"kak-zdorovo-vyshlo","кит":"kit",
-  "клубника":"klubnika","коала":"koala","комета":"kometa","корова":"korova","кошка":"koshka","краб":"krab",
-  "крокодил":"krokodil","лев":"lev","леденец":"ledenec","лиса":"lisa","луна":"luna","машина":"mashina",
-  "мишка":"mishka","молодец!":"molodec","молодец, что попробовал!":"molodec-chto-poproboval","морковка":"morkovka",
-  "мороженое":"morozhenoe","ничего, слушай ещё разок":"nichego-slushay-eschyo-razok","носорог":"nosorog",
-  "о":"o","обезьянка":"obezyanka","ово":"ovo","олень":"olen","осьминог":"osminog","панда":"panda",
-  "паровоз":"parovoz","парусник":"parusnik","печенье":"pechene","пингвин":"pingvin","пожарная":"pozharnaya",
+  "а":"a","а-а-а-а":"a-a-a-a","ав-ву":"av-vu","ав-вы":"av-vy","ав-вэ":"av-ve","ава":"ava","автобус":"avtobus",
+  "акула":"akula","арбуз":"arbuz","ас":"as","аса":"asa","аф-фа":"af-fa","афа":"afa","бабочка":"babochka",
+  "банан":"banan","божья коровка":"bozhya-korovka","буфет":"bufet","в буфете фундук и конфеты":"v-bufete-funduk-i-konfety",
+  "в ванной комнате фонтан":"v-vannoy-komnate-fontan","в магнитофоне фон":"v-magnitofone-fon","ва":"va",
+  "ванна":"vanna","вата":"vata","ватный кафтан":"vatnyy-kaftan","велосипед":"velosiped","веник":"venik",
+  "вертолёт":"vertolyot","ветер":"veter","вид":"vid","вилка":"vilka","виноград":"vinograd","винт":"vint",
+  "винт ввинтим и вывинтим":"vint-vvintim-i-vyvintim","вихрь":"vihr","вишня":"vishnya","во":"vo",
+  "вода":"voda","волк":"volk","волна":"volna","вот кофта, вот муфта":"vot-kofta-vot-mufta","вот так!":"vot-tak",
+  "вот это да!":"vot-eto-da","ву":"vu","вув":"vuv","вы":"vy","выв":"vyv","вэ":"ve","вэв":"vev","гнездо":"gnezdo",
+  "голубь":"golub","горилла":"gorilla","градусник":"gradusnik","гроза":"groza","грузовик":"gruzovik",
+  "гусеница":"gusenica","дверь":"dver","дельфин":"delfin","динозавр":"dinozavr","дождик":"dozhdik",
+  "дом":"dom","душ":"dush","жираф":"zhiraf","жук":"zhuk","зайка":"zayka","звезда":"zvezda","здорово!":"zdorovo",
+  "зебра":"zebra","земля":"zemlya","змея":"zmeya","и":"i","и-и-и-и":"i-i-i-i","индюк":"indyuk","как здорово вышло!":"kak-zdorovo-vyshlo",
+  "капля":"kaplya","кит":"kit","клубника":"klubnika","книжки":"knizhki","коала":"koala","комета":"kometa",
+  "конфета":"konfeta","корова":"korova","коса":"kosa","кофе":"kofe","кошка":"koshka","краб":"krab",
+  "кровать":"krovat","крокодил":"krokodil","кузнечик":"kuznechik","курица":"kurica","лебедь":"lebed",
+  "лев":"lev","леденец":"ledenec","лиса":"lisa","луна":"luna","машина":"mashina","мишка":"mishka",
+  "мишка-игрушка":"mishka-igrushka","молодец!":"molodec","молодец, что попробовал!":"molodec-chto-poproboval",
+  "морковка":"morkovka","мороженое":"morozhenoe","муравей":"muravey","ничего, слушай ещё разок":"nichego-slushay-eschyo-razok",
+  "нос":"nos","носки":"noski","носорог":"nosorog","о":"o","обезьянка":"obezyanka","облако":"oblako",
+  "ово":"ovo","огонь":"ogon","окно":"okno","олень":"olen","орёл":"oryol","ос":"os","осо":"oso","осьминог":"osminog",
+  "оф-фо":"of-fo","офо":"ofo","павлин":"pavlin","панда":"panda","паровоз":"parovoz","парусник":"parusnik",
+  "паук":"pauk","паутина":"pautina","петух":"petuh","печенье":"pechene","пингвин":"pingvin","пожарная":"pozharnaya",
   "полиция":"policiya","получилось!":"poluchilos","попугай":"popugay","поросёнок":"porosyonok","пришелец":"prishelec",
-  "радуга":"raduga","рак":"rak","ракета":"raketa","ракушка":"rakushka","робот":"robot","рыба-шар":"ryba-shar",
-  "рыбка":"rybka","с каждым разом всё лучше!":"s-kazhdym-razom-vsyo-luchshe","самолёт":"samolyot",
-  "сатурн":"saturn","скорая":"skoraya","слон":"slon","смотри, как ты можешь!":"smotri-kak-ty-mozhesh",
-  "собака":"sobaka","сова":"sova","солнце":"solnce","так держать!":"tak-derzhat","тарелка":"tarelka",
+  "птичка":"ptichka","пчела":"pchela","пёс":"pyos","радуга":"raduga","рак":"rak","ракета":"raketa",
+  "ракушка":"rakushka","робот":"robot","рыба-шар":"ryba-shar","рыбка":"rybka","с каждым разом всё лучше!":"s-kazhdym-razom-vsyo-luchshe",
+  "са":"sa","са-са-са, вот летит оса":"sa-sa-sa-vot-letit-osa","са-со":"sa-so","самолёт":"samolyot",
+  "санки":"sanki","сатурн":"saturn","скорая":"skoraya","скорпион":"skorpion","слон":"slon","смотри, как ты можешь!":"smotri-kak-ty-mozhesh",
+  "снеговик":"snegovik","снежинка":"snezhinka","со":"so","собака":"sobaka","сова":"sova","сок":"sok",
+  "солнце":"solnce","солнышко":"solnyshko","сосна":"sosna","стул":"stul","су":"su","су-сы":"su-sy",
+  "сумка":"sumka","суп":"sup","сы":"sy","сэ":"se","так держать!":"tak-derzhat","тарелка":"tarelka",
   "телескоп":"teleskop","тигр":"tigr","тираннозавр":"tirannozavr","тортик":"tortik","трактор":"traktor",
-  "ты не сдался — и вышло!":"ty-ne-sdalsya-i-vyshlo","ты постарался!":"ty-postaralsya","ты сделал всё!":"ty-sdelal-vsyo",
-  "ты сегодня хорошо старался!":"ty-segodnya-horosho-staralsya","ты смог!":"ty-smog","ты справился!":"ty-spravilsya",
-  "у":"u","у тебя получается!":"u-tebya-poluchaetsya","у-у-у-у":"u-u-u-u","уву":"uvu","уже лучше!":"uzhe-luchshe",
-  "фламинго":"flamingo","хорошо поработал!":"horosho-porabotal","хорошо!":"horosho","черепаха":"cherepaha",
-  "шоколадка":"shokoladka","ы":"y","ывы":"yvy","э":"e","я горжусь тобой!":"ya-gorzhus-toboy","яблоко":"yabloko",
+  "туман":"tuman","ты не сдался — и вышло!":"ty-ne-sdalsya-i-vyshlo","ты постарался!":"ty-postaralsya",
+  "ты сделал всё!":"ty-sdelal-vsyo","ты сегодня хорошо старался!":"ty-segodnya-horosho-staralsya",
+  "ты смог!":"ty-smog","ты справился!":"ty-spravilsya","у":"u","у тебя получается!":"u-tebya-poluchaetsya",
+  "у-у-у-у":"u-u-u-u","уву":"uvu","уже лучше!":"uzhe-luchshe","улитка":"ulitka","ус":"us","усу":"usu",
+  "утка":"utka","уф-фу":"uf-fu","уфу":"ufu","фа":"fa","фа-афа":"fa-afa","фант":"fant","фата":"fata",
+  "фен":"fen","филин":"filin","флаг":"flag","фламинго":"flamingo","фо":"fo","фо-офо":"fo-ofo","фон":"fon",
+  "фонтан":"fontan","фото":"foto","фу":"fu","фундук":"funduk","фы":"fy","фэ":"fe","хорошо поработал!":"horosho-porabotal",
+  "хорошо!":"horosho","цыплёнок":"cyplyonok","часы":"chasy","червяк":"chervyak","черепаха":"cherepaha",
+  "шоколадка":"shokoladka","щётка":"schyotka","ы":"y","ывы":"yvy","ыс":"ys","ысы":"ysy","ыф-фы":"yf-fy",
+  "ыфы":"yfy","э":"e","я горжусь тобой!":"ya-gorzhus-toboy","яблоко":"yabloko"
 };
 
 const VKEY = "kotozaryadka-voice";
