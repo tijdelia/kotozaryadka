@@ -548,7 +548,7 @@
 
     <h3 id="j-voice">Голос приложения</h3>
     <p>Все 230 фраз — похвала, гласные, слоги, слова, чистоговорки и названия наклеек — <b>звучат вашим голосом</b> и лежат в папке <code>audio</code>. Часть записана вами напрямую, остальное синтезировано моделью F5-TTS, склонировавшей ваш голос с вашей же записи. Синтезатор планшета не звучит нигде: он читает по буквам и выходит робот.</p>
-    <p><a href="poslushat-bp.html">Послушать Б и П парами &rarr;</a> Для этой пары ваш живой голос лучше синтеза: Б от П отличается тем, что связки включаются до взрыва, и машина проверить это не может — ухо надёжнее. <a href="zapis-&#1073;&#1087;.html">Лист для записи Б и П &rarr;</a> — 60 фраз, минуты три.</p>
+    <p><a href="poslushat-pary.html">Послушать пары звуков &rarr;</a> Б/П и С/З устроены одинаково: глухой и звонкий. Надёжно проверить их машиной не вышло — у Б и П согласный длится миллисекунды, у С и З разрыв есть, но замер цепляет гласную. Ухо надёжнее. Листы для записи своим голосом: <a href="zapis-&#1073;&#1087;.html">Б и П &rarr;</a> (60 фраз), <a href="zapis-&#1079;.html">З &rarr;</a> (25 фраз).</p>
     <p><a href="poslushat.html">Послушать 113 новых фраз &rarr;</a> Слоги вроде «ыф-фы» распознаватель проверить не может — таких слов в русском нет. Их отметил как сомнительные: послушайте и скажите, что переделать или записать вашим живым голосом.</p>
     <p>Тянущиеся звуки «а-а-а-а», «у-у-у-у», «и-и-и-и» тоже настоящие: гласная синтезирована и растянута до четырёх секунд по периодам голоса, поэтому она тянется ровно, как живая. Синтезатор планшета так не умеет вовсе.</p>
     <p><a href="golosa.html">Послушать все пять голосов и выбрать другой →</a></p>
@@ -702,7 +702,9 @@ const GLYPH = {
   bsound:'<span class="ltr">Б</span>',
   psound:'<span class="ltr">П</span>',
   bp    :'<span class="ltr">Б/П</span>',
-  ssound:'<span class="ltr">С</span>'
+  ssound:'<span class="ltr">С</span>',
+  zsound:'<span class="ltr">З</span>',
+  sz    :'<span class="ltr">С/З</span>'
 };
 
 const PLAN = {
@@ -886,6 +888,43 @@ const PLAN = {
       ["🌲","СОСНА"],["🚌","АВТОБУС"],["🐕","ПЁС"],["⭐","ЗВЕЗДА"]
     ]},
     {type:"reps", title:"Чистоговорка", reps:3, say:"Са-са-са, вот летит оса", tip:"Повторяем три раза, не торопясь."}
+  ]},
+  /* З — звонкая пара к С, устроена как В к Ф и Б к П. Одна тонкость:
+     на конце слова З в русском оглушается, «аз» звучит как «ас». Поэтому
+     закрытых слогов здесь нет вовсе — они учили бы ровно тому, от чего
+     мы уходим. По той же причине нет слов вроде «мороз». */
+  zsound:{ name:"Звук З", tasks:[
+    {type:"wait", title:"Заборчик с голосом", sec:4, reps:2,
+     tip:"Та же позиция, что у С: зубы заборчиком, язык внизу, — но горло дрожит. Ладошку ребёнка себе на шею: на С тихо, на З гудит."},
+    {type:"buzz", title:"Комар", sec:2.5, reps:3, hintOn:"тяни з-з-з", voiced:true,
+     tip:"Комар летит, пока тянется звонкое «ззз». Замолчал голос — комар садится: без голоса это уже С."},
+    {type:"mimic", title:"Повтори — передразнят", n:8,
+     tip:"Ребёнок говорит слог, зверушка повторяет его же голосом.",
+     items:["ЗА","ЗО","ЗУ","ЗЫ","ЗЭ","АЗА","ОЗО","УЗУ","ЫЗЫ","ЗА-ЗО","ЗУ-ЗЫ","ЗО-ЗУ"]},
+    {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
+      ["\u{1F430}","ЗАЯЦ"],["\u{1F9B7}","ЗУБЫ"],["\u{2602}","ЗОНТ"],["\u{1F514}","ЗВОНОК"],
+      ["\u{2744}","ЗИМА"],["\u{1F993}","ЗЕБРА"],["\u{1F3FA}","ВАЗА"],["\u{1F410}","КОЗА"],
+      ["\u{1F339}","РОЗА"],["\u{1F440}","ГЛАЗА"],["\u{2B50}","ЗВЕЗДА"],["\u{1FAB9}","ГНЕЗДО"]
+    ]},
+    {type:"reps", title:"Чистоговорка", reps:3, say:"За-за-за, вот идёт коза", tip:"Повторяем три раза, не торопясь."},
+    {type:"reps", title:"Ещё одна", reps:3, say:"Зу-зу-зу, мы ведём козу", tip:"Медленно, тяня каждое «зу»."}
+  ]},
+
+  /* Различение С и З */
+  sz:{ name:"С или З", tasks:[
+    {type:"guess", title:"Кто позвал?", a:"с", b:"з", rounds:8,
+     tip:"Звучит слог — ребёнок выбирает, чей он: Слона Стёпы или Зебры Зои. Приложение знает ответ само и ошибиться в оценке не может.",
+     items:[["СА",0],["ЗА",1],["СО",0],["ЗО",1],["СУ",0],["ЗУ",1],["СЫ",0],["ЗЫ",1],
+            ["АСА",0],["АЗА",1],["ОСО",0],["ОЗО",1]]},
+    {type:"pair", title:"Скажи и посмотри", a:"с", b:"з", reps:6,
+     tip:"Ребёнок говорит звук — отзывается тот, который он на самом деле произнёс. Ладошку на горло: на З дрожит, на С нет."},
+    {type:"guess", title:"А теперь слова", a:"с", b:"з", rounds:8,
+     tip:"То же на словах: звук спрятан внутри знакомого слова, различить труднее.",
+     items:[["СОК",0],["ЗОНТ",1],["САНКИ",0],["ЗАЯЦ",1],["СУМКА",0],["ЗУБЫ",1],
+            ["СОВА",0],["ЗВОНОК",1],["СУП",0],["ЗИМА",1],["СОСНА",0],["ЗВЕЗДА",1]]},
+    {type:"reps", title:"Вместе", reps:3, say:"Роса и роза, коса и коза",
+     tip:"Здесь пары отличаются одним звуком — самое трудное и самое полезное."},
+    {type:"reps", title:"И ещё", reps:3, say:"У Зои зонт, а у Сони сок", tip:"Медленно, выделяя З и С."}
   ]}
 };
 
@@ -942,30 +981,34 @@ function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){}
    Пересобрать другим голосом можно скриптом из README. */
 const AUD={
   "а":"a","а-а-а-а":"a-a-a-a","аб":"ab","аба":"aba","ав-ву":"av-vu","ав-вы":"av-vy","ав-вэ":"av-ve",
-  "ава":"ava","автобус":"avtobus","акула":"akula","ап":"ap","апа":"apa","арбуз":"arbuz","ас":"as",
-  "аса":"asa","аф-фа":"af-fa","афа":"afa","ба":"ba","ба-бо":"ba-bo","бабочка":"babochka","бабушка полина пекла пироги":"babushka-polina-pekla-pirogi",
-  "балка":"balka","банан":"banan","бант":"bant","батон":"baton","белка":"belka","бо":"bo","божья коровка":"bozhya-korovka",
-  "ботинки":"botinki","бочка":"bochka","бу":"bu","бу-бу-бу, сидит белка на дубу":"bu-bu-bu-sidit-belka-na-dubu",
-  "бу-бы":"bu-by","бубен":"buben","бусы":"busy","буфет":"bufet","бух":"buh","бы":"by","бы-бы-бы, в лесу растут грибы":"by-by-by-v-lesu-rastut-griby",
+  "ава":"ava","автобус":"avtobus","аза":"aza","акула":"akula","ап":"ap","апа":"apa","арбуз":"arbuz",
+  "ас":"as","аса":"asa","аф-фа":"af-fa","афа":"afa","ба":"ba","ба-бо":"ba-bo","бабочка":"babochka",
+  "бабушка полина пекла пироги":"babushka-polina-pekla-pirogi","балка":"balka","банан":"banan","бант":"bant",
+  "батон":"baton","белка":"belka","бо":"bo","божья коровка":"bozhya-korovka","ботинки":"botinki",
+  "бочка":"bochka","бу":"bu","бу-бу-бу, сидит белка на дубу":"bu-bu-bu-sidit-belka-na-dubu","бу-бы":"bu-by",
+  "бубен":"buben","бусы":"busy","буфет":"bufet","бух":"buh","бы":"by","бы-бы-бы, в лесу растут грибы":"by-by-by-v-lesu-rastut-griby",
   "бэ":"be","в буфете фундук и конфеты":"v-bufete-funduk-i-konfety","в ванной комнате фонтан":"v-vannoy-komnate-fontan",
-  "в магнитофоне фон":"v-magnitofone-fon","ва":"va","ванна":"vanna","вата":"vata","ватный кафтан":"vatnyy-kaftan",
-  "велосипед":"velosiped","веник":"venik","вертолёт":"vertolyot","ветер":"veter","вид":"vid","вилка":"vilka",
-  "виноград":"vinograd","винт":"vint","винт ввинтим и вывинтим":"vint-vvintim-i-vyvintim","вихрь":"vihr",
-  "вишня":"vishnya","во":"vo","вода":"voda","волк":"volk","волна":"volna","вот кофта, вот муфта":"vot-kofta-vot-mufta",
+  "в магнитофоне фон":"v-magnitofone-fon","ва":"va","ваза":"vaza","ванна":"vanna","вата":"vata",
+  "ватный кафтан":"vatnyy-kaftan","велосипед":"velosiped","веник":"venik","вертолёт":"vertolyot",
+  "ветер":"veter","вид":"vid","вилка":"vilka","виноград":"vinograd","винт":"vint","винт ввинтим и вывинтим":"vint-vvintim-i-vyvintim",
+  "вихрь":"vihr","вишня":"vishnya","во":"vo","вода":"voda","волк":"volk","волна":"volna","вот кофта, вот муфта":"vot-kofta-vot-mufta",
   "вот так!":"vot-tak","вот это да!":"vot-eto-da","ву":"vu","вув":"vuv","вы":"vy","выв":"vyv","вэ":"ve",
-  "вэв":"vev","гнездо":"gnezdo","голубь":"golub","горилла":"gorilla","градусник":"gradusnik","гроза":"groza",
-  "грузовик":"gruzovik","губы":"guby","гусеница":"gusenica","дверь":"dver","дельфин":"delfin","динозавр":"dinozavr",
-  "дождик":"dozhdik","дом":"dom","душ":"dush","жираф":"zhiraf","жук":"zhuk","забор":"zabor","зайка":"zayka",
-  "звезда":"zvezda","здорово!":"zdorovo","зебра":"zebra","земля":"zemlya","змея":"zmeya","и":"i",
-  "и-и-и-и":"i-i-i-i","индюк":"indyuk","как здорово вышло!":"kak-zdorovo-vyshlo","капля":"kaplya",
-  "кит":"kit","клубника":"klubnika","книжки":"knizhki","коала":"koala","комета":"kometa","конфета":"konfeta",
-  "корова":"korova","коса":"kosa","кофе":"kofe","кошка":"koshka","краб":"krab","кровать":"krovat",
-  "крокодил":"krokodil","кузнечик":"kuznechik","курица":"kurica","лапа":"lapa","лебедь":"lebed",
-  "лев":"lev","леденец":"ledenec","лиса":"lisa","луна":"luna","машина":"mashina","мишка":"mishka",
-  "мишка-игрушка":"mishka-igrushka","молодец!":"molodec","молодец, что попробовал!":"molodec-chto-poproboval",
+  "вэв":"vev","глаза":"glaza","гнездо":"gnezdo","голубь":"golub","горилла":"gorilla","градусник":"gradusnik",
+  "гроза":"groza","грузовик":"gruzovik","губы":"guby","гусеница":"gusenica","дверь":"dver","дельфин":"delfin",
+  "динозавр":"dinozavr","дождик":"dozhdik","дом":"dom","душ":"dush","жираф":"zhiraf","жук":"zhuk",
+  "за":"za","за-за-за, вот идёт коза":"za-za-za-vot-idyot-koza","за-зо":"za-zo","забор":"zabor",
+  "зайка":"zayka","заяц":"zayac","звезда":"zvezda","звонок":"zvonok","здорово!":"zdorovo","зебра":"zebra",
+  "земля":"zemlya","зима":"zima","змея":"zmeya","зо":"zo","зо-зу":"zo-zu","зонт":"zont","зу":"zu",
+  "зу-зу-зу, мы ведём козу":"zu-zu-zu-my-vedyom-kozu","зу-зы":"zu-zy","зубы":"zuby","зы":"zy","зэ":"ze",
+  "и":"i","и-и-и-и":"i-i-i-i","индюк":"indyuk","как здорово вышло!":"kak-zdorovo-vyshlo","капля":"kaplya",
+  "кит":"kit","клубника":"klubnika","книжки":"knizhki","коала":"koala","коза":"koza","комета":"kometa",
+  "конфета":"konfeta","корова":"korova","коса":"kosa","кофе":"kofe","кошка":"koshka","краб":"krab",
+  "кровать":"krovat","крокодил":"krokodil","кузнечик":"kuznechik","курица":"kurica","лапа":"lapa",
+  "лебедь":"lebed","лев":"lev","леденец":"ledenec","лиса":"lisa","луна":"luna","машина":"mashina",
+  "мишка":"mishka","мишка-игрушка":"mishka-igrushka","молодец!":"molodec","молодец, что попробовал!":"molodec-chto-poproboval",
   "морковка":"morkovka","мороженое":"morozhenoe","муравей":"muravey","ничего, слушай ещё разок":"nichego-slushay-eschyo-razok",
   "нос":"nos","носки":"noski","носорог":"nosorog","о":"o","об":"ob","обезьянка":"obezyanka","облако":"oblako",
-  "обо":"obo","ово":"ovo","огонь":"ogon","окно":"okno","олень":"olen","оп":"op","оп-оп-оп, ты ладошками хлоп":"op-op-op-ty-ladoshkami-hlop",
+  "обо":"obo","ово":"ovo","огонь":"ogon","озо":"ozo","окно":"okno","олень":"olen","оп":"op","оп-оп-оп, ты ладошками хлоп":"op-op-op-ty-ladoshkami-hlop",
   "опо":"opo","орёл":"oryol","ос":"os","осо":"oso","осьминог":"osminog","оф-фо":"of-fo","офо":"ofo",
   "па":"pa","па-па-па, на столе крупа":"pa-pa-pa-na-stole-krupa","па-по":"pa-po","павлин":"pavlin",
   "пакет":"paket","палка":"palka","панда":"panda","папа":"papa","паровоз":"parovoz","парусник":"parusnik",
@@ -974,7 +1017,8 @@ const AUD={
   "полка":"polka","получилось!":"poluchilos","попугай":"popugay","поросёнок":"porosyonok","почка":"pochka",
   "пришелец":"prishelec","птичка":"ptichka","пу":"pu","пу-пы":"pu-py","пух":"puh","пчела":"pchela",
   "пы":"py","пэ":"pe","пёс":"pyos","радуга":"raduga","рак":"rak","ракета":"raketa","ракушка":"rakushka",
-  "робот":"robot","рыба":"ryba","рыба-шар":"ryba-shar","рыбка":"rybka","с каждым разом всё лучше!":"s-kazhdym-razom-vsyo-luchshe",
+  "робот":"robot","роза":"roza","роса и роза, коса и коза":"rosa-i-roza-kosa-i-koza","рыба":"ryba",
+  "рыба-шар":"ryba-shar","рыбка":"rybka","с каждым разом всё лучше!":"s-kazhdym-razom-vsyo-luchshe",
   "са":"sa","са-са-са, вот летит оса":"sa-sa-sa-vot-letit-osa","са-со":"sa-so","самолёт":"samolyot",
   "санки":"sanki","сатурн":"saturn","скорая":"skoraya","скорпион":"skorpion","слон":"slon","смотри, как ты можешь!":"smotri-kak-ty-mozhesh",
   "снеговик":"snegovik","снежинка":"snezhinka","со":"so","собака":"sobaka","сова":"sova","сок":"sok",
@@ -984,13 +1028,14 @@ const AUD={
   "туман":"tuman","ты не сдался — и вышло!":"ty-ne-sdalsya-i-vyshlo","ты постарался!":"ty-postaralsya",
   "ты сделал всё!":"ty-sdelal-vsyo","ты сегодня хорошо старался!":"ty-segodnya-horosho-staralsya",
   "ты смог!":"ty-smog","ты справился!":"ty-spravilsya","у":"u","у бори барабан, а у пети пирог":"u-bori-baraban-a-u-peti-pirog",
-  "у тебя получается!":"u-tebya-poluchaetsya","у-у-у-у":"u-u-u-u","уб":"ub","убу":"ubu","уву":"uvu",
-  "уже лучше!":"uzhe-luchshe","улитка":"ulitka","уп":"up","упу":"upu","ус":"us","усу":"usu","утка":"utka",
-  "уф-фу":"uf-fu","уфу":"ufu","фа":"fa","фа-афа":"fa-afa","фант":"fant","фата":"fata","фен":"fen",
-  "филин":"filin","флаг":"flag","фламинго":"flamingo","фо":"fo","фо-офо":"fo-ofo","фон":"fon","фонтан":"fontan",
-  "фото":"foto","фу":"fu","фундук":"funduk","фы":"fy","фэ":"fe","хорошо поработал!":"horosho-porabotal",
-  "хорошо!":"horosho","цыплёнок":"cyplyonok","часы":"chasy","червяк":"chervyak","черепаха":"cherepaha",
-  "шапка":"shapka","шоколадка":"shokoladka","щётка":"schyotka","ы":"y","ыб":"yb","ыбы":"yby","ывы":"yvy",
+  "у зои зонт, а у сони сок":"u-zoi-zont-a-u-soni-sok","у тебя получается!":"u-tebya-poluchaetsya",
+  "у-у-у-у":"u-u-u-u","уб":"ub","убу":"ubu","уву":"uvu","уже лучше!":"uzhe-luchshe","узу":"uzu",
+  "улитка":"ulitka","уп":"up","упу":"upu","ус":"us","усу":"usu","утка":"utka","уф-фу":"uf-fu","уфу":"ufu",
+  "фа":"fa","фа-афа":"fa-afa","фант":"fant","фата":"fata","фен":"fen","филин":"filin","флаг":"flag",
+  "фламинго":"flamingo","фо":"fo","фо-офо":"fo-ofo","фон":"fon","фонтан":"fontan","фото":"foto",
+  "фу":"fu","фундук":"funduk","фы":"fy","фэ":"fe","хорошо поработал!":"horosho-porabotal","хорошо!":"horosho",
+  "цыплёнок":"cyplyonok","часы":"chasy","червяк":"chervyak","черепаха":"cherepaha","шапка":"shapka",
+  "шоколадка":"shokoladka","щётка":"schyotka","ы":"y","ыб":"yb","ыбы":"yby","ывы":"yvy","ызы":"yzy",
   "ып":"yp","ыпы":"ypy","ыс":"ys","ысы":"ysy","ыф-фы":"yf-fy","ыфы":"yfy","э":"e","я горжусь тобой!":"ya-gorzhus-toboy",
   "яблоко":"yabloko"
 };
@@ -2066,7 +2111,7 @@ function runTask(){
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
     pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
     voice:tVoice, pair:tPair, guess:tGuess, path:tPath, boom:tBoom, puff:tPuff,
-    mimic:tMimic, fan:tFan, pump:tPump,
+    mimic:tMimic, fan:tFan, pump:tPump, buzz:tBuzz,
     spider:tSpider, wave:tWave, snail:tSnail, sort:tSort,
     letter:tLetter})[t.type](t);
 }
@@ -2388,12 +2433,17 @@ function tStream(t, drawKind){
     if(my!==TICK) return;
     const now=performance.now(), dt=Math.min(0.1,(now-last)/1000); last=now;
     if(ready) earPaint();
-    const air = ready ? (loud() && !isVoiced()) : held;
-    if(ready && loud() && isVoiced()) voiced=now;
+    /* У Ф и С нужен воздух без голоса, у З — тот же воздух с голосом.
+       Признак один и тот же, знак разный. */
+    const want = !!t.voiced;
+    const air = ready ? (loud() && isVoiced()===want) : held;
+    if(ready && loud() && isVoiced()!==want) voiced=now;
     if(air){ prog=Math.min(1, prog+dt/need); spin+=dt*(6+micLvl*40); }
     else   { prog=Math.max(0, prog-dt/(need*2.2)); spin+=dt*0.6; }
     if(ready){
-      if(voiced && now-voiced<1300) $("#est").textContent="это с голосом — нужен только воздух";
+      if(voiced && now-voiced<1300)
+        $("#est").textContent = t.voiced ? "голос выключился — нужен гудящий звук"
+                                         : "это с голосом — нужен только воздух";
       else $("#est").textContent = t.hintOn||"тяни звук";
     }
     if(prog>=1){
@@ -2463,6 +2513,37 @@ function ring(ctx,cx,cy,R,p){
     ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.stroke(); }
   ctx.restore();
 }
+/* комар: летает по кругу, пока тянется звонкое «ззз» */
+function mosqDraw(ctx,w,h,p,spin,now,cel){
+  const cx=w/2, cy=h*0.5, R=Math.min(w*0.3,h*0.32);
+  const fly = cel && now-cel<900 ? (now-cel)/900 : 0;
+  ctx.save(); ctx.strokeStyle="rgba(25,23,19,.16)"; ctx.lineWidth=2;
+  ctx.setLineDash([6,8]); ctx.beginPath(); ctx.ellipse(cx,cy,R,R*0.55,0,0,7); ctx.stroke();
+  ctx.restore();
+  const a=spin*0.8;
+  const x=cx+Math.cos(a)*R*(1+fly*0.9), y=cy+Math.sin(a)*R*0.55-fly*h*0.4;
+  ctx.save(); ctx.globalAlpha=1-fly*0.85;
+  ctx.translate(x,y); ctx.rotate(Math.sin(now/90)*0.12);
+  const s=Math.min(w*0.12,66);
+  ctx.fillStyle="rgba(143,190,232,.62)";               // крылышки дрожат
+  const wg=Math.abs(Math.sin(now/28))*0.5+0.6;
+  ctx.beginPath(); ctx.ellipse(-s*0.1,-s*0.7*wg,s*0.5,s*0.24,-0.5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( s*0.1,-s*0.7*wg,s*0.5,s*0.24, 0.5,0,7); ctx.fill();
+  ctx.fillStyle=INK; ctx.beginPath(); ctx.ellipse(0,0,s*0.28,s*0.5,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(0,-s*0.55,s*0.24,0,7); ctx.fill();
+  ctx.strokeStyle=INK; ctx.lineWidth=Math.max(2,s*0.06); ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(0,-s*0.74); ctx.lineTo(0,-s*1.2); ctx.stroke();   // хоботок
+  ctx.beginPath(); ctx.moveTo(-s*0.12,-s*0.78); ctx.lineTo(-s*0.34,-s*1.14);
+  ctx.moveTo( s*0.12,-s*0.78); ctx.lineTo( s*0.34,-s*1.14); ctx.stroke();       // усики
+  ctx.beginPath();
+  ctx.moveTo(-s*0.2,s*0.28); ctx.lineTo(-s*0.5,s*0.62);
+  ctx.moveTo( s*0.2,s*0.28); ctx.lineTo( s*0.5,s*0.62);
+  ctx.moveTo(-s*0.16,s*0.42); ctx.lineTo(-s*0.42,s*0.86);
+  ctx.moveTo( s*0.16,s*0.42); ctx.lineTo( s*0.42,s*0.86); ctx.stroke();          // лапки
+  ctx.restore();
+  ring(ctx,w-Math.min(w*0.13,64),h*0.86,Math.min(w*0.09,32),p);
+}
+const tBuzz = t => tStream(t, mosqDraw);
 const tFan  = t => tStream(t, fanDraw);
 const tPump = t => tStream(t, pumpDraw);
 
@@ -2482,6 +2563,7 @@ const CHARS = {
   "в":{e:"\u{1F43A}", n:"Вова",  c:"#8FBEE8", food:"\u{1F356}"},
   "ф":{e:"\u{1F989}", n:"Федя",  c:"#FFC46B", food:"\u{1F347}"},
   "с":{e:"\u{1F418}", n:"Стёпа", c:"#8FD3A8", food:"\u{1F34E}"},
+  "з":{e:"\u{1F993}", n:"Зоя",   c:"#C9A3E8", food:"\u{1F33F}"},
 };
 
 /* Звучит слог — ребёнок выбирает, чей он. Приложение знает ответ само,
