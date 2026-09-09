@@ -262,6 +262,16 @@
   .route{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   .route polyline{fill:none;stroke:rgba(255,255,255,.8);stroke-width:3;
     stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:7 9}
+  /* Передразнилки: слог крупно, под ним зверь, который его повторит */
+  .mim{display:flex;flex-direction:column;align-items:center;gap:clamp(6px,2vh,18px);
+    width:min(96vw,720px)}
+  .msyl{font-size:min(24vw,17dvh,140px);font-weight:800;letter-spacing:-.04em;line-height:1;
+    white-space:nowrap;transition:color .2s}
+  .msyl.hot{color:var(--accent)}
+  .mchar{font-size:min(17vw,13dvh,104px);line-height:1;transition:transform .18s ease}
+  .mchar.talk{animation:mtalk .45s ease infinite}
+  @keyframes mtalk{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.14) rotate(4deg)}}
+  .mname{font-size:15px;font-weight:700;color:var(--muted);text-align:center;min-height:1.3em}
   .pair{display:flex;gap:clamp(14px,4vw,32px);width:min(96vw, calc(58dvh * 2))}
   .pcard{
     flex:1;aspect-ratio:1;border-radius:26px;background:var(--card);
@@ -764,7 +774,8 @@ const PLAN = {
     {type:"wait", title:"Губка", sec:5, reps:2, tip:"Верхние зубы прикусывают нижнюю губу. Это и есть позиция звука В."},
     {type:"voice", title:"Заведи вертолёт", sec:3, reps:3,
      tip:"Вертолёт взлетает, пока работает голос. Приложение слушает не «правильно ли», а включены ли голосовые связки — это единственное, чем В отличается от Ф."},
-    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+    {type:"mimic", title:"Повтори — передразнят", n:8,
+     tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["ВА","ВО","ВУ","ВЫ","ВЭ","АВА","ОВО","УВУ","ЫВЫ","ВУВ","ВЫВ","ВЭВ","АВ-ВУ","АВ-ВЫ","АВ-ВЭ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["💧","ВОДА"],["💨","ВЕТЕР"],["🐺","ВОЛК"],["🍴","ВИЛКА"],
@@ -778,7 +789,10 @@ const PLAN = {
   fsound:{ name:"Звук Ф", tasks:[
     {type:"wait", title:"Губка без голоса", sec:5, reps:2,
      tip:"Та же позиция, что у В, но голос выключен: горло не дрожит. Дайте потрогать своё горло на В и на Ф."},
-    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+    {type:"fan", title:"Вертушка", sec:2.5, reps:3, hintOn:"тяни ф-ф-ф",
+     tip:"Ф — ровная струя воздуха без голоса. Вертушка крутится, пока струя идёт, и встаёт, если включился голос: тогда это уже В. Поднесите ладошку ко рту — на Ф её обдаёт."},
+    {type:"mimic", title:"Повтори — передразнят", n:8,
+     tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["ФА","ФО","ФУ","ФЫ","ФЭ","АФА","ОФО","УФУ","ЫФЫ","АФ-ФА","ОФ-ФО","УФ-ФУ","ЫФ-ФЫ","ФА-АФА","ФО-ОФО"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["📷","ФОТО"],["🔊","ФОН"],["🌰","ФУНДУК"],["🍬","КОНФЕТА"],
@@ -811,7 +825,8 @@ const PLAN = {
      tip:"Губы сомкнуты, воздух копится за ними, потом взрыв — «б». Положите ладошку ребёнка себе на горло: на Б оно дрожит."},
     {type:"boom", title:"Барабан", reps:5,
      tip:"Ребёнок говорит «БА» — барабан бьёт и будит зверят. Приложение слушает голос: у Б работают связки, поэтому на П барабан промолчит."},
-    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+    {type:"mimic", title:"Повтори — передразнят", n:8,
+     tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["БА","БО","БУ","БЫ","БЭ","АБА","ОБО","УБУ","ЫБЫ","АБ","ОБ","УБ","ЫБ","БА-БО","БУ-БЫ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["\u{1F380}","БАНТ"],["\u{1F4FF}","БУСЫ"],["\u{1F956}","БАТОН"],["\u{1F6E2}","БОЧКА"],
@@ -827,7 +842,8 @@ const PLAN = {
      tip:"Та же позиция, что у Б, но горло молчит — только воздух. Поднесите ладошку ко рту: на П её толкает струйка."},
     {type:"puff", title:"Задуй свечки", n:5,
      tip:"«П» — это взрыв воздуха, поэтому им можно тушить свечи. Ровно то, чего нет у В и Ф: там воздух течёт, а здесь бьёт."},
-    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+    {type:"mimic", title:"Повтори — передразнят", n:8,
+     tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["ПА","ПО","ПУ","ПЫ","ПЭ","АПА","ОПО","УПУ","ЫПЫ","АП","ОП","УП","ЫП","ПА-ПО","ПУ-ПЫ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["\u{1F468}","ПАПА"],["\u{1F577}","ПАУК"],["\u{1FA9A}","ПИЛА"],["\u{1F967}","ПИРОГ"],
@@ -859,7 +875,10 @@ const PLAN = {
      tip:"Зубы сомкнуты заборчиком, губы в улыбке, язык внизу за нижними зубами. Воздух идёт по желобку посередине языка."},
     {type:"hold", toy:"candle", title:"Ветерок", sec:2, reps:3,
      tip:"Долгий плавный выдох через желобок — тот же, что нужен для С. Ладонь ко рту: струя должна быть холодной и узкой."},
-    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+    {type:"pump", title:"Насос", sec:2.5, reps:3, hintOn:"тяни с-с-с",
+     tip:"Насос качает, пока тянется ровное «ссс» без голоса. Загудел голосом — качать перестанет: голосом мяч не надуешь."},
+    {type:"mimic", title:"Повтори — передразнят", n:8,
+     tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["СА","СО","СУ","СЫ","СЭ","АСА","ОСО","УСУ","ЫСЫ","АС","ОС","УС","ЫС","СА-СО","СУ-СЫ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["🧃","СОК"],["🍲","СУП"],["🦉","СОВА"],["🛷","САНКИ"],
@@ -1077,6 +1096,41 @@ function say(t, force){
 let micLvl=0, micOn=false, micBase=.01;
 const MIC = {voiced:0, f0:0, cen:0, lowr:0};
 let MICERR="", MICBUSY=null;         // почему не вышло — видно в проверке микрофона
+let MICBUF=null;                     // последние секунды голоса, для «передразнилок»
+
+/* Достаём из кольца последние ms миллисекунд и обрезаем тишину по краям. */
+function micTake(ms){
+  const B=MICBUF; if(!B||!B.n) return null;
+  const need=Math.min(Math.floor(B.sr*ms/1000), B.data.length, B.n);
+  if(need<400) return null;
+  const out=new Float32Array(need);
+  let r=B.w-need; while(r<0) r+=B.data.length;
+  for(let i=0;i<need;i++){ out[i]=B.data[r]; r=r+1<B.data.length?r+1:0; }
+  let pk=0; for(let i=0;i<need;i++){ const v=Math.abs(out[i]); if(v>pk) pk=v; }
+  if(pk<0.004) return null;
+  const thr=pk*0.12;
+  let a=0, b=need-1;
+  while(a<b && Math.abs(out[a])<thr) a++;
+  while(b>a && Math.abs(out[b])<thr) b--;
+  a=Math.max(0,a-Math.floor(B.sr*0.04)); b=Math.min(need-1,b+Math.floor(B.sr*0.06));
+  if(b-a<Math.floor(B.sr*0.12)) return null;
+  return {pcm:out.subarray(a,b+1), sr:B.sr};
+}
+
+/* Проигрываем записанное чужим голосом: быстрее — мышь, медленнее — медведь.
+   Громкость поднимаем: ребёнок говорит тише, чем звучит запись мамы. */
+function playFunny(rec, rate){
+  const c=ac(); if(!c||!rec) return 0;
+  try{
+    const buf=c.createBuffer(1, rec.pcm.length, rec.sr);
+    if(buf.copyToChannel) buf.copyToChannel(rec.pcm,0);
+    else buf.getChannelData(0).set(rec.pcm);
+    const src=c.createBufferSource(); src.buffer=buf; src.playbackRate.value=rate;
+    const g=c.createGain(); g.gain.value=2.4;
+    src.connect(g); g.connect(c.destination); src.start();
+    return rec.pcm.length/rec.sr/rate;
+  }catch(e){ return 0; }
+}
 async function initMic(){
   if(micOn) return true;
   if(MICBUSY) return MICBUSY;        // два запроса разом Safari отклоняет
@@ -1118,6 +1172,23 @@ async function initMicOnce(){
        выход через нулевую громкость: слышно ничего, а граф живой. */
     const sink=c.createGain(); sink.gain.value=0;
     an.connect(sink); sink.connect(c.destination);
+    /* Последние три секунды звука держим в кольцевом буфере. Нужны они
+       ровно для одной игры — «передразнилок», где зверушка повторяет за
+       ребёнком его же голосом, только писклявым. Ради этого стоит: сказать
+       слог, чтобы услышать себя мышью, пятилетка готов сколько угодно, а
+       просто «повтори за мной» он пропускает. */
+    try{
+      const RB=Math.ceil(SRr*3);
+      MICBUF={data:new Float32Array(RB), w:0, n:0, sr:SRr};
+      const sp=c.createScriptProcessor(4096,1,1);
+      sp.onaudioprocess=e=>{
+        const inp=e.inputBuffer.getChannelData(0), b=MICBUF.data;
+        let w=MICBUF.w;
+        for(let i=0;i<inp.length;i++){ b[w]=inp[i]; w=w+1<b.length?w+1:0; }
+        MICBUF.w=w; MICBUF.n+=inp.length;
+      };
+      an.connect(sp); sp.connect(sink);              // без выхода Safari узел не считает
+    }catch(e){ MICBUF=null; }
     const buf=new Float32Array(an.fftSize);
     const spec=new Float32Array(an.frequencyBinCount);
     const SRr=c.sampleRate, D=4;                       // прореживаем вчетверо: для голоса хватает
@@ -1995,6 +2066,7 @@ function runTask(){
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
     pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
     voice:tVoice, pair:tPair, guess:tGuess, path:tPath, boom:tBoom, puff:tPuff,
+    mimic:tMimic, fan:tFan, pump:tPump,
     spider:tSpider, wave:tWave, snail:tSnail, sort:tSort,
     letter:tLetter})[t.type](t);
 }
@@ -2110,9 +2182,11 @@ function heli(ctx,w,h,p,on,spin){
 function tPair(t){
   const my=TICK;
   stage().innerHTML=`<div class="title">${t.title}</div>
-    <div class="pair" id="pair0">
-      <div class="pcard v" id="c0"><b>${t.a.toUpperCase()}</b><small>голос</small></div>
-      <div class="pcard f" id="c1"><b>${t.b.toUpperCase()}</b><small>ветерок</small></div>
+    <div class="pair" id="pair0">${[t.a,t.b].map((L,i)=>{
+      const c=CHARS[L]||CHARS["в"];
+      return `<div class="pcard gc ${i?"f":"v"}" id="c${i}">
+        <span class="ge">${c.e}</span><span class="gn">${c.n}</span>
+        <small>${L.toUpperCase()}</small></div>`;}).join("")}
     </div>
     ${dotsHTML(t.reps)}
     ${earHTML()}`;
@@ -2120,7 +2194,7 @@ function tPair(t){
   $("#est").textContent="слушаю…";
   const gate=micGate($("#pair0"), g=>{ if(my!==TICK) return; ready=g;
     $("#est").textContent = g ? `скажи ${t.a}`
-      : (MICERR ? MICERR + " — нажми на букву" : "нажми на букву"); });
+      : (MICERR ? MICERR + " — нажми на зверя" : "нажми на зверя"); });
   gate();
   const light=(i)=>{
     const c=$("#c"+i); if(!c) return;
@@ -2192,6 +2266,205 @@ function tSort(t){
   });
   ask();
 }
+
+/* Зверушки, которые передразнивают. Скорость проигрывания — это и есть
+   «чужой голос»: быстрее выходит мышь, медленнее медведь. */
+const MIMICS=[
+  {e:"\u{1F42D}", n:"Мышка повторит тоненько", rate:1.62},
+  {e:"\u{1F43B}", n:"Мишка повторит толстым голосом", rate:0.66},
+  {e:"\u{1F99C}", n:"Попугай передразнит", rate:1.3},
+];
+
+/* Слоги ребёнок пропускал, и справедливо: «нажми и повтори» пятнадцать раз —
+   это не занятие, а повинность. Здесь у повторения появляется причина:
+   зверушка передразнивает его собственным голосом, только писклявым или
+   басом. Ради того, чтобы услышать себя мышью, слог говорят охотно и не
+   по одному разу. Приложение при этом ничего не оценивает — оно просто
+   возвращает ребёнку его же голос, и это честно. */
+function tMimic(t){
+  const my=TICK;
+  const all=t.items.slice();
+  const N=Math.min(t.n||8, all.length);
+  const pool=all.map((v,i)=>[v,Math.random()]).sort((a,b)=>a[1]-b[1]).slice(0,N).map(x=>x[0]);
+  let k=0, who=MIMICS[0], phase="ask", t0=0, lastLoud=0, until=0, ready=false;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="mim" id="mim">
+      <div class="msyl" id="msyl">${pool[0]}</div>
+      <div class="mchar" id="mchar">${who.e}</div>
+      <div class="mname" id="mname">Слушай…</div>
+    </div>
+    ${dotsHTML(N)}
+    ${earHTML()}`;
+  const setWho=()=>{ who=MIMICS[k%MIMICS.length];
+    const c=$("#mchar"); if(c) c.textContent=who.e; };
+  const ask=()=>{
+    if(k>=N){ finish(800); return; }
+    setWho();
+    const sy=$("#msyl"); if(sy) sy.textContent=pool[k];
+    $("#mname").textContent=who.n;
+    say(pool[k]);
+    phase="ask"; until=performance.now()+1500;
+  };
+  const done=(rec)=>{
+    const c=$("#mchar"); if(c) c.classList.add("talk");
+    const d = rec ? playFunny(rec, who.rate) : 0;
+    if(!d){ say(pool[k]); }                        // не расслышали — просто повторим сами
+    k++; markDots(k); buzz(20);
+    phase="play"; until=performance.now()+Math.max(700, d*1000+320);
+  };
+  /* Без микрофона играем нажатием: зверь повторит голосом мамы, ускоренным
+     или замедленным. Не так весело, как своим, но игра не ломается. */
+  const tapRound=()=>{
+    if(phase==="play") return;
+    const c=$("#mchar"); if(c) c.classList.add("talk");
+    const a=player();
+    try{ a.playbackRate=who.rate; }catch(e){}
+    say(pool[k]);
+    later(()=>{ try{ player().playbackRate=1; }catch(e){} }, 1400);
+    k++; markDots(k); phase="play"; until=performance.now()+1500;
+  };
+  let swap=false;
+  $("#est").textContent="слушаю…";
+  const gate=micGate($("#mim"), g=>{ if(my!==TICK) return; ready=g;
+    if(!g) swap=true; else $("#est").textContent="скажи слог"; });
+  gate();
+  $("#mim").addEventListener("pointerdown",()=>{ if(!ready && !swap) tapRound(); });
+  const id=setInterval(()=>{
+    if(my!==TICK) return;
+    if(swap){ clearInterval(id); tPath(t); return; }
+    const now=performance.now();
+    if(ready) earPaint();
+    const sy=$("#msyl"); if(sy) sy.classList.toggle("hot", ready && loud());
+    if(phase==="play"){
+      if(now>until){ $("#mchar").classList.remove("talk"); if(k>=N){ finish(800); phase="over"; } else ask(); }
+      return;
+    }
+    if(!ready) return;
+    if(phase==="ask"){
+      if(now>until){ phase="wait"; $("#est").textContent="теперь ты!"; }
+      return;
+    }
+    if(phase==="wait"){
+      if(loud()){ phase="rec"; t0=now; lastLoud=now; }
+      return;
+    }
+    if(phase==="rec"){
+      if(loud()) lastLoud=now;
+      const len=now-t0;
+      if((now-lastLoud>320 && len>380) || len>5000){
+        $("#est").textContent="слушай, что вышло";
+        done(micTake(Math.min(2600, len+260)));
+      }
+    }
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+  ask();
+}
+
+/* Ф и С — щелевые: воздух идёт ровной струёй и голос при этом молчит.
+   Это ровно то, что микрофон умеет проверить честно, поэтому у обоих
+   звуков появляется своя игрушка, которую можно двигать только правильным
+   звуком. Загудел голосом — вертушка встанет. */
+function tStream(t, drawKind){
+  const my=TICK, reps=t.reps||3, need=(t.sec||2.5)*(S.blow||1);
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(reps)}
+    ${earHTML()}`;
+  const cv=$("#cv"); let g=fitCanvas(cv);
+  onResize(cv,()=>{ g=fitCanvas(cv); });
+  let prog=0, rep=0, ready=false, spin=0, last=performance.now(), voiced=0, cel=0;
+  $("#est").textContent="слушаю…";
+  const gate=micGate($("#scene"), ok=>{ if(my!==TICK) return; ready=ok;
+    $("#est").textContent = ok ? (t.hintOn||"тяни звук")
+      : (MICERR ? MICERR+" — держи пальцем" : "держи пальцем"); });
+  gate();
+  let held=false;
+  const dn=e=>{ if(e) e.preventDefault(); held=true; };
+  const up=()=>{ held=false; };
+  $("#scene").addEventListener("pointerdown",dn);
+  addEventListener("pointerup",up); CLEAN.push(()=>removeEventListener("pointerup",up));
+  const id=setInterval(()=>{
+    if(my!==TICK) return;
+    const now=performance.now(), dt=Math.min(0.1,(now-last)/1000); last=now;
+    if(ready) earPaint();
+    const air = ready ? (loud() && !isVoiced()) : held;
+    if(ready && loud() && isVoiced()) voiced=now;
+    if(air){ prog=Math.min(1, prog+dt/need); spin+=dt*(6+micLvl*40); }
+    else   { prog=Math.max(0, prog-dt/(need*2.2)); spin+=dt*0.6; }
+    if(ready){
+      if(voiced && now-voiced<1300) $("#est").textContent="это с голосом — нужен только воздух";
+      else $("#est").textContent = t.hintOn||"тяни звук";
+    }
+    if(prog>=1){
+      rep++; markDots(rep); prog=0; cel=now; okSnd(); buzz(30);
+      if(rep>=reps){ later(()=>finish(800),900); clearInterval(id); }
+    }
+    const {ctx,w,h}=g; ctx.clearRect(0,0,w,h);
+    drawKind(ctx,w,h,prog,spin,now,cel);
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+
+/* вертушка: крутится, пока идёт ровная струя без голоса */
+function fanDraw(ctx,w,h,p,spin,now,cel){
+  const cx=w/2, cy=h*0.42, R=Math.min(w*0.22,h*0.26);
+  ctx.strokeStyle="#9A7B54"; ctx.lineWidth=Math.max(5,R*0.11); ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,h*0.92); ctx.stroke();
+  const cols=["#FF4D6D","#FFB020","#12A06A","#8FBEE8"];
+  const fly = cel && now-cel<900 ? (now-cel)/900 : 0;
+  ctx.save(); ctx.translate(cx,cy-fly*h*0.25); ctx.rotate(spin+fly*8);
+  for(let i=0;i<4;i++){
+    ctx.save(); ctx.rotate(i*Math.PI/2);
+    ctx.fillStyle=cols[i]; ctx.globalAlpha=1-fly*0.7;
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(R*0.85,-R*0.28, R,R*0.22);
+    ctx.quadraticCurveTo(R*0.45,R*0.34, 0,0); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle=INK; ctx.beginPath(); ctx.arc(0,0,Math.max(4,R*0.09),0,7); ctx.fill();
+  ctx.restore();
+  ring(ctx,w-Math.min(w*0.13,64),h*0.84,Math.min(w*0.09,32),p);
+}
+
+/* насос: ровное «ссс» надувает мяч */
+function pumpDraw(ctx,w,h,p,spin,now,cel){
+  const cx=w*0.64, R=Math.min(w*0.24,h*0.3);
+  const fly = cel && now-cel<900 ? (now-cel)/900 : 0;
+  const r=R*(0.42+0.58*p)*(1+fly*0.4);
+  const cy=h*0.82-r;                       // мяч лежит на земле и растёт вверх
+  ctx.save(); ctx.globalAlpha=1-fly*0.85;
+  const gg=ctx.createRadialGradient(cx-r*0.3,cy-r*0.35-fly*h*0.3,r*0.1,cx,cy-fly*h*0.3,r);
+  gg.addColorStop(0,"#FF8FA3"); gg.addColorStop(1,"#FF4D6D");
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(cx,cy-fly*h*0.3,r,0,7); ctx.fill();
+  ctx.strokeStyle=INK; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.restore();
+  /* насос: цилиндр с ручкой, ручка опускается по мере накачивания */
+  const px=w*0.22, ground=h*0.82, bh=R*1.15, bw=R*0.46;
+  ctx.strokeStyle=INK; ctx.lineWidth=3; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(w*0.08,ground); ctx.lineTo(w*0.94,ground); ctx.stroke();
+  const hy=ground-bh-R*0.5*(1-p);
+  ctx.beginPath(); ctx.moveTo(px,ground-bh*0.9); ctx.lineTo(px,hy); ctx.stroke();
+  ctx.lineWidth=Math.max(5,R*0.11);
+  ctx.beginPath(); ctx.moveTo(px-R*0.26,hy); ctx.lineTo(px+R*0.26,hy); ctx.stroke();
+  ctx.lineWidth=3;
+  ctx.fillStyle="#8FBEE8"; rrect(ctx,px-bw/2,ground-bh,bw,bh,bw*0.22); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px+bw/2,ground-bh*0.22);
+  ctx.quadraticCurveTo((px+cx)/2,ground+R*0.12, cx-r*0.92, cy-fly*h*0.3+r*0.4); ctx.stroke();
+  ring(ctx,w-Math.min(w*0.13,64),h*0.9,Math.min(w*0.09,32),p);
+}
+
+/* общий индикатор набранного — такое же кольцо, как в дыхании */
+function ring(ctx,cx,cy,R,p){
+  ctx.save(); ctx.lineWidth=Math.max(5,R*0.26); ctx.lineCap="round";
+  ctx.strokeStyle="rgba(25,23,19,.12)";
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke();
+  if(p>0){ ctx.strokeStyle=ACC; ctx.beginPath();
+    ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+p*Math.PI*2); ctx.stroke(); }
+  ctx.restore();
+}
+const tFan  = t => tStream(t, fanDraw);
+const tPump = t => tStream(t, pumpDraw);
 
 /* ===================== Б, П И РАЗЛИЧЕНИЕ =====================
    Б и П устроены как В и Ф — звонкий против глухого, — но взрывные:
