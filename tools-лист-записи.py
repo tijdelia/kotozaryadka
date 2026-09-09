@@ -55,6 +55,8 @@ def main():
     ap.add_argument("--похвала", action="store_true", dest="praise")
     ap.add_argument("--часть", type=int, default=0, dest="part",
                     help="номер части: список режется по 35 фраз")
+    ap.add_argument("--список", default="", dest="only",
+                    help="файл со списком фраз: в лист попадут только они")
     a = ap.parse_args()
 
     if a.praise:
@@ -63,6 +65,15 @@ def main():
     else:
         groups, gdef = collect(), GROUPS
         list_name, page_name, title = "звуки-для-записи.txt", "zapis.html", "Запись голоса"
+
+    if a.only:
+        keep = {l.strip().lower() for l in open(a.only, encoding="utf-8")
+                if l.strip() and not l.startswith("#")}
+        groups = [[t for t in g if t.strip().lower() in keep] for g in groups]
+        stem = os.path.splitext(os.path.basename(a.only))[0]
+        list_name = stem + "-порядок.txt"
+        page_name = "zapis-" + stem + ".html"
+        title = "Запись: " + stem.replace("-", " ")
 
     flat = [t for g in groups for t in g]
 
@@ -87,6 +98,8 @@ def main():
 
     rows, n = [], 0
     for (gt, how, tag), g in zip(gdef, groups):
+        if not g:                       # пустой раздел на странице только путает
+            continue
         rows.append(f'<h2>{gt}</h2><p class="how">{how}</p>')
         for t in g:
             n += 1

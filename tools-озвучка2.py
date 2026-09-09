@@ -81,6 +81,10 @@ def phrases_from_app(path="index.html"):
     for m in re.finditer(r'voice:"([^"]+)"', plan): add(m.group(1), "slow")
     for m in re.finditer(r'say:"([^"]+)"', plan):   add(m.group(1), "slow")
     for p in re.finditer(r'\["[^"]*","([^"]+)"\]', plan): add(p.group(1), "slow")
+    # слова игры «кто позвал» лежат парами со ссылкой на персонажа —
+    # ["БОЧКА",0]. Без этого правила они остаются без голоса, и часть из них
+    # больше нигде не встречается
+    for p in re.finditer(r'\["([^"]+)",\s*[01]\]', plan): add(p.group(1), "slow")
     for m in re.finditer(r'items:\[([^\[\]]+)\]', plan):
         for p in re.finditer(r'"([^"]+)"', m.group(1)): add(p.group(1), "slow")
     for v in re.findall(r'"([АОУИЭЫ])"', s[s.index("const VOW"):s.index("const VOW")+120]):

@@ -222,6 +222,46 @@
   /* «В или Ф»: загорается та буква, которую ребёнок на самом деле сказал */
   .bigplay{width:78px;height:78px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
   .bigplay svg{width:32px;height:32px}
+  /* «Кто позвал» — вместо двух серых букв два зверя с именами. Ребёнок не
+     читает, и «В» от «Ф» он на карточке не отличит; а вот что Волка зовут
+     Вова, а Филина Федя — понятно сразу и держится в памяти само. Буква
+     остаётся мелко внизу: она запомнится за компанию, а не вместо. */
+  .grow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+  .basket{display:flex;gap:3px;font-size:min(4.4vh,24px);min-height:1.3em;
+    flex-wrap:wrap;max-width:min(58vw,340px)}
+  .basket i{font-style:normal;animation:foodpop .38s cubic-bezier(.34,1.5,.5,1)}
+  @keyframes foodpop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
+  .gc{flex-direction:column;gap:2px;display:flex;align-items:center;justify-content:center}
+  .gc .ge{font-size:min(27vw,19dvh,134px);line-height:1.05}
+  .gc .gn{font-size:clamp(14px,3.4vw,20px);font-weight:800;letter-spacing:-.02em}
+  .gc.win{background:var(--gc);transform:scale(1.06)}
+  .gc.win .gn{color:#fff}
+  .gc.no{animation:noshake .34s ease}
+  @keyframes noshake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+  /* Слоги были плитками: нажал — посерела. Теперь это переправа через
+     речку: видно, сколько камешков осталось до того берега. */
+  .river{position:relative;width:min(96vw,900px);flex:1 1 auto;
+    min-height:min(34dvh,300px);max-height:min(54dvh,460px);
+    border-radius:26px;overflow:hidden;
+    background:linear-gradient(180deg,#E3EFF8 0%,#C9DFF1 60%,#BCD6EC 100%)}
+  .stone{position:absolute;transform:translate(-50%,-50%);
+    min-width:clamp(46px,11vw,78px);padding:9px 11px;border-radius:16px;background:var(--card);
+    font-size:clamp(14px,3.2vw,22px);font-weight:800;letter-spacing:-.02em;color:var(--ink);
+    white-space:nowrap;
+    box-shadow:0 4px 11px rgba(25,23,19,.14);
+    transition:transform .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease}
+  .stone.done{background:#12A06A;color:#fff;box-shadow:0 3px 9px rgba(18,160,106,.3)}
+  .stone.now{box-shadow:0 0 0 4px var(--accent),0 6px 14px rgba(25,23,19,.16);transform:translate(-50%,-50%) scale(1.08)}
+  .hopper{position:absolute;font-size:min(8vh,46px);line-height:1;z-index:3;
+    transform:translate(-50%,-50%);pointer-events:none;
+    transition:left .36s cubic-bezier(.34,1.45,.5,1),top .36s cubic-bezier(.34,1.45,.5,1)}
+  .bank{position:absolute;right:3%;bottom:6%;font-size:min(7vh,40px);opacity:.55}
+  /* Тропинка между камешками: без неё пятнадцать слогов читаются как
+     таблица, а с ней сразу видно, что это путь и где он кончается. */
+  .route{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .route polyline{fill:none;stroke:rgba(255,255,255,.8);stroke-width:3;
+    stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:7 9}
   .pair{display:flex;gap:clamp(14px,4vw,32px);width:min(96vw, calc(58dvh * 2))}
   .pcard{
     flex:1;aspect-ratio:1;border-radius:26px;background:var(--card);
@@ -498,6 +538,7 @@
 
     <h3 id="j-voice">Голос приложения</h3>
     <p>Все 230 фраз — похвала, гласные, слоги, слова, чистоговорки и названия наклеек — <b>звучат вашим голосом</b> и лежат в папке <code>audio</code>. Часть записана вами напрямую, остальное синтезировано моделью F5-TTS, склонировавшей ваш голос с вашей же записи. Синтезатор планшета не звучит нигде: он читает по буквам и выходит робот.</p>
+    <p><a href="poslushat-bp.html">Послушать Б и П парами &rarr;</a> Для этой пары ваш живой голос лучше синтеза: Б от П отличается тем, что связки включаются до взрыва, и машина проверить это не может — ухо надёжнее. <a href="zapis-&#1073;&#1087;.html">Лист для записи Б и П &rarr;</a> — 60 фраз, минуты три.</p>
     <p><a href="poslushat.html">Послушать 113 новых фраз &rarr;</a> Слоги вроде «ыф-фы» распознаватель проверить не может — таких слов в русском нет. Их отметил как сомнительные: послушайте и скажите, что переделать или записать вашим живым голосом.</p>
     <p>Тянущиеся звуки «а-а-а-а», «у-у-у-у», «и-и-и-и» тоже настоящие: гласная синтезирована и растянута до четырёх секунд по периодам голоса, поэтому она тянется ровно, как живая. Синтезатор планшета так не умеет вовсе.</p>
     <p><a href="golosa.html">Послушать все пять голосов и выбрать другой →</a></p>
@@ -648,6 +689,9 @@ const GLYPH = {
   sound :'<span class="ltr">В</span>',
   fsound:'<span class="ltr">Ф</span>',
   vf    :'<span class="ltr">В/Ф</span>',
+  bsound:'<span class="ltr">Б</span>',
+  psound:'<span class="ltr">П</span>',
+  bp    :'<span class="ltr">Б/П</span>',
   ssound:'<span class="ltr">С</span>'
 };
 
@@ -720,7 +764,7 @@ const PLAN = {
     {type:"wait", title:"Губка", sec:5, reps:2, tip:"Верхние зубы прикусывают нижнюю губу. Это и есть позиция звука В."},
     {type:"voice", title:"Заведи вертолёт", sec:3, reps:3,
      tip:"Вертолёт взлетает, пока работает голос. Приложение слушает не «правильно ли», а включены ли голосовые связки — это единственное, чем В отличается от Ф."},
-    {type:"tiles", title:"Слоги", cols:5, tip:"Нажал — повторил вслух за голосом.",
+    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
      items:["ВА","ВО","ВУ","ВЫ","ВЭ","АВА","ОВО","УВУ","ЫВЫ","ВУВ","ВЫВ","ВЭВ","АВ-ВУ","АВ-ВЫ","АВ-ВЭ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["💧","ВОДА"],["💨","ВЕТЕР"],["🐺","ВОЛК"],["🍴","ВИЛКА"],
@@ -734,7 +778,7 @@ const PLAN = {
   fsound:{ name:"Звук Ф", tasks:[
     {type:"wait", title:"Губка без голоса", sec:5, reps:2,
      tip:"Та же позиция, что у В, но голос выключен: горло не дрожит. Дайте потрогать своё горло на В и на Ф."},
-    {type:"tiles", title:"Слоги", cols:5, tip:"Нажал — повторил вслух.",
+    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
      items:["ФА","ФО","ФУ","ФЫ","ФЭ","АФА","ОФО","УФУ","ЫФЫ","АФ-ФА","ОФ-ФО","УФ-ФУ","ЫФ-ФЫ","ФА-АФА","ФО-ОФО"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["📷","ФОТО"],["🔊","ФОН"],["🌰","ФУНДУК"],["🍬","КОНФЕТА"],
@@ -749,7 +793,7 @@ const PLAN = {
   vf:{ name:"В или Ф", tasks:[
     {type:"pair", title:"Скажи и посмотри", a:"в", b:"ф", reps:6,
      tip:"Ребёнок говорит звук — загорается та буква, которую он на самом деле произнёс. Положите его ладонь себе на горло: на В оно дрожит, на Ф нет."},
-    {type:"sort", title:"Куда положить", a:"в", b:"ф", rounds:8, tip:
+    {type:"guess", title:"Кто позвал?", a:"в", b:"ф", rounds:8, tip:
      "Звучит слово — ребёнок выбирает букву, с которой оно начинается. Здесь приложение ничего не угадывает: оно само знает ответ, поэтому ошибиться не может. Это тренировка слуха, а не произношения.",
      items:[["ВОДА",0],["ФОТО",1],["ВАТА",0],["ФОН",1],["ВОЛК",0],["ФУНДУК",1],
             ["ВЕНИК",0],["ФЕН",1],["ВИНТ",0],["ФАТА",1],["ВАННА",0],["КОФЕ",1]]},
@@ -757,12 +801,65 @@ const PLAN = {
     {type:"reps", title:"И ещё", reps:3, say:"В ванной комнате фонтан", tip:"Из тетради."}
   ]},
 
+  /* Б и П — вторая пара «звонкий/глухой», устроенная как В и Ф, но
+     взрывная: губы смыкаются, воздух копится и вырывается. Поэтому здесь
+     работают два разных микрофонных признака. Б звонкий — его слышно по
+     работе связок, ровно как В. П глухой, но у него есть то, чего нет у
+     В и Ф: настоящий толчок воздуха, которым можно задуть свечу. */
+  bsound:{ name:"Звук Б", tasks:[
+    {type:"wait", title:"Губки-замочек", sec:4, reps:2,
+     tip:"Губы сомкнуты, воздух копится за ними, потом взрыв — «б». Положите ладошку ребёнка себе на горло: на Б оно дрожит."},
+    {type:"boom", title:"Барабан", reps:5,
+     tip:"Ребёнок говорит «БА» — барабан бьёт и будит зверят. Приложение слушает голос: у Б работают связки, поэтому на П барабан промолчит."},
+    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+     items:["БА","БО","БУ","БЫ","БЭ","АБА","ОБО","УБУ","ЫБЫ","АБ","ОБ","УБ","ЫБ","БА-БО","БУ-БЫ"]},
+    {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
+      ["\u{1F380}","БАНТ"],["\u{1F4FF}","БУСЫ"],["\u{1F956}","БАТОН"],["\u{1F6E2}","БОЧКА"],
+      ["\u{1F43F}","БЕЛКА"],["\u{1F941}","БУБЕН"],["\u{1F98B}","БАБОЧКА"],["\u{1F462}","БОТИНКИ"],
+      ["\u{1F41F}","РЫБА"],["\u{1F6A7}","ЗАБОР"],["\u{1F444}","ГУБЫ"],["\u{1F34C}","БАНАН"]
+    ]},
+    {type:"reps", title:"Чистоговорка", reps:3, say:"Бы-бы-бы, в лесу растут грибы", tip:"Повторяем три раза, не торопясь."},
+    {type:"reps", title:"Ещё одна", reps:3, say:"Бу-бу-бу, сидит белка на дубу", tip:"Медленно, с ударом на каждом «бу»."}
+  ]},
+
+  psound:{ name:"Звук П", tasks:[
+    {type:"wait", title:"Губки без голоса", sec:4, reps:2,
+     tip:"Та же позиция, что у Б, но горло молчит — только воздух. Поднесите ладошку ко рту: на П её толкает струйка."},
+    {type:"puff", title:"Задуй свечки", n:5,
+     tip:"«П» — это взрыв воздуха, поэтому им можно тушить свечи. Ровно то, чего нет у В и Ф: там воздух течёт, а здесь бьёт."},
+    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
+     items:["ПА","ПО","ПУ","ПЫ","ПЭ","АПА","ОПО","УПУ","ЫПЫ","АП","ОП","УП","ЫП","ПА-ПО","ПУ-ПЫ"]},
+    {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
+      ["\u{1F468}","ПАПА"],["\u{1F577}","ПАУК"],["\u{1FA9A}","ПИЛА"],["\u{1F967}","ПИРОГ"],
+      ["\u{1F682}","ПОЕЗД"],["\u{1F9E2}","ШАПКА"],["\u{1F43E}","ЛАПА"],["\u{1FAB5}","ПАЛКА"],
+      ["\u{1F4E6}","ПАКЕТ"],["\u{1F333}","ПЕНЬ"],["\u{1F4DA}","ПОЛКА"],["\u{1F372}","СУП"]
+    ]},
+    {type:"reps", title:"Чистоговорка", reps:3, say:"Па-па-па, на столе крупа", tip:"Повторяем три раза, не торопясь."},
+    {type:"reps", title:"Ещё одна", reps:3, say:"Оп-оп-оп, ты ладошками хлоп", tip:"На «хлоп» хлопаем в ладоши вместе."}
+  ]},
+
+  /* Различение Б и П — то, ради чего оба звука и ставились */
+  bp:{ name:"Б или П", tasks:[
+    {type:"guess", title:"Кто позвал?", a:"б", b:"п", rounds:8,
+     tip:"Звучит слог — ребёнок выбирает, чей он: Бобра или Пингвина. Приложение знает ответ само и ошибиться в оценке не может. Это фонематический слух: различить на слух надо раньше, чем выговорить.",
+     items:[["БА",0],["ПА",1],["БО",0],["ПО",1],["БУ",0],["ПУ",1],["БЫ",0],["ПЫ",1],
+            ["АБ",0],["АП",1],["ОБ",0],["ОП",1]]},
+    {type:"pair", title:"Скажи и посмотри", a:"б", b:"п", reps:6,
+     tip:"Ребёнок говорит звук — отзывается тот, который он на самом деле произнёс. Ладошку на горло: на Б дрожит, на П нет."},
+    {type:"guess", title:"А теперь слова", a:"б", b:"п", rounds:8,
+     tip:"То же самое на словах: различить их труднее, чем слоги, потому что звук спрятан внутри знакомого слова.",
+     items:[["БОЧКА",0],["ПОЧКА",1],["БАЛКА",0],["ПАЛКА",1],["БУХ",0],["ПУХ",1],
+            ["БАНТ",0],["ПАПА",1],["БУСЫ",0],["ПИЛА",1],["БЕЛКА",0],["ПАУК",1]]},
+    {type:"reps", title:"Вместе", reps:3, say:"У Бори барабан, а у Пети пирог", tip:"Оба звука рядом — самое трудное."},
+    {type:"reps", title:"И ещё", reps:3, say:"Бабушка Полина пекла пироги", tip:"Медленно, выделяя каждое Б и каждое П."}
+  ]},
+
   ssound:{ name:"Звук С", tasks:[
     {type:"wait", title:"Заборчик", sec:5, reps:2,
      tip:"Зубы сомкнуты заборчиком, губы в улыбке, язык внизу за нижними зубами. Воздух идёт по желобку посередине языка."},
     {type:"hold", toy:"candle", title:"Ветерок", sec:2, reps:3,
      tip:"Долгий плавный выдох через желобок — тот же, что нужен для С. Ладонь ко рту: струя должна быть холодной и узкой."},
-    {type:"tiles", title:"Слоги", cols:5, tip:"Нажал — повторил вслух.",
+    {type:"path", title:"Слоги", tip:"Наступил на камешек — повторил слог вслух.",
      items:["СА","СО","СУ","СЫ","СЭ","АСА","ОСО","УСУ","ЫСЫ","АС","ОС","УС","ЫС","СА-СО","СУ-СЫ"]},
     {type:"words", title:"Слова", cols:4, tip:"Нажал картинку — назвал слово три раза.", items:[
       ["🧃","СОК"],["🍲","СУП"],["🦉","СОВА"],["🛷","САНКИ"],
@@ -825,32 +922,40 @@ function buzz(ms){ if(navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){}
 /* Готовая озвучка (Silero TTS, голос xenia): фраза → файл в папке audio.
    Пересобрать другим голосом можно скриптом из README. */
 const AUD={
-  "а":"a","а-а-а-а":"a-a-a-a","ав-ву":"av-vu","ав-вы":"av-vy","ав-вэ":"av-ve","ава":"ava","автобус":"avtobus",
-  "акула":"akula","арбуз":"arbuz","ас":"as","аса":"asa","аф-фа":"af-fa","афа":"afa","бабочка":"babochka",
-  "банан":"banan","божья коровка":"bozhya-korovka","буфет":"bufet","в буфете фундук и конфеты":"v-bufete-funduk-i-konfety",
-  "в ванной комнате фонтан":"v-vannoy-komnate-fontan","в магнитофоне фон":"v-magnitofone-fon","ва":"va",
-  "ванна":"vanna","вата":"vata","ватный кафтан":"vatnyy-kaftan","велосипед":"velosiped","веник":"venik",
-  "вертолёт":"vertolyot","ветер":"veter","вид":"vid","вилка":"vilka","виноград":"vinograd","винт":"vint",
-  "винт ввинтим и вывинтим":"vint-vvintim-i-vyvintim","вихрь":"vihr","вишня":"vishnya","во":"vo",
-  "вода":"voda","волк":"volk","волна":"volna","вот кофта, вот муфта":"vot-kofta-vot-mufta","вот так!":"vot-tak",
-  "вот это да!":"vot-eto-da","ву":"vu","вув":"vuv","вы":"vy","выв":"vyv","вэ":"ve","вэв":"vev","гнездо":"gnezdo",
-  "голубь":"golub","горилла":"gorilla","градусник":"gradusnik","гроза":"groza","грузовик":"gruzovik",
-  "гусеница":"gusenica","дверь":"dver","дельфин":"delfin","динозавр":"dinozavr","дождик":"dozhdik",
-  "дом":"dom","душ":"dush","жираф":"zhiraf","жук":"zhuk","зайка":"zayka","звезда":"zvezda","здорово!":"zdorovo",
-  "зебра":"zebra","земля":"zemlya","змея":"zmeya","и":"i","и-и-и-и":"i-i-i-i","индюк":"indyuk","как здорово вышло!":"kak-zdorovo-vyshlo",
-  "капля":"kaplya","кит":"kit","клубника":"klubnika","книжки":"knizhki","коала":"koala","комета":"kometa",
-  "конфета":"konfeta","корова":"korova","коса":"kosa","кофе":"kofe","кошка":"koshka","краб":"krab",
-  "кровать":"krovat","крокодил":"krokodil","кузнечик":"kuznechik","курица":"kurica","лебедь":"lebed",
+  "а":"a","а-а-а-а":"a-a-a-a","аб":"ab","аба":"aba","ав-ву":"av-vu","ав-вы":"av-vy","ав-вэ":"av-ve",
+  "ава":"ava","автобус":"avtobus","акула":"akula","ап":"ap","апа":"apa","арбуз":"arbuz","ас":"as",
+  "аса":"asa","аф-фа":"af-fa","афа":"afa","ба":"ba","ба-бо":"ba-bo","бабочка":"babochka","бабушка полина пекла пироги":"babushka-polina-pekla-pirogi",
+  "балка":"balka","банан":"banan","бант":"bant","батон":"baton","белка":"belka","бо":"bo","божья коровка":"bozhya-korovka",
+  "ботинки":"botinki","бочка":"bochka","бу":"bu","бу-бу-бу, сидит белка на дубу":"bu-bu-bu-sidit-belka-na-dubu",
+  "бу-бы":"bu-by","бубен":"buben","бусы":"busy","буфет":"bufet","бух":"buh","бы":"by","бы-бы-бы, в лесу растут грибы":"by-by-by-v-lesu-rastut-griby",
+  "бэ":"be","в буфете фундук и конфеты":"v-bufete-funduk-i-konfety","в ванной комнате фонтан":"v-vannoy-komnate-fontan",
+  "в магнитофоне фон":"v-magnitofone-fon","ва":"va","ванна":"vanna","вата":"vata","ватный кафтан":"vatnyy-kaftan",
+  "велосипед":"velosiped","веник":"venik","вертолёт":"vertolyot","ветер":"veter","вид":"vid","вилка":"vilka",
+  "виноград":"vinograd","винт":"vint","винт ввинтим и вывинтим":"vint-vvintim-i-vyvintim","вихрь":"vihr",
+  "вишня":"vishnya","во":"vo","вода":"voda","волк":"volk","волна":"volna","вот кофта, вот муфта":"vot-kofta-vot-mufta",
+  "вот так!":"vot-tak","вот это да!":"vot-eto-da","ву":"vu","вув":"vuv","вы":"vy","выв":"vyv","вэ":"ve",
+  "вэв":"vev","гнездо":"gnezdo","голубь":"golub","горилла":"gorilla","градусник":"gradusnik","гроза":"groza",
+  "грузовик":"gruzovik","губы":"guby","гусеница":"gusenica","дверь":"dver","дельфин":"delfin","динозавр":"dinozavr",
+  "дождик":"dozhdik","дом":"dom","душ":"dush","жираф":"zhiraf","жук":"zhuk","забор":"zabor","зайка":"zayka",
+  "звезда":"zvezda","здорово!":"zdorovo","зебра":"zebra","земля":"zemlya","змея":"zmeya","и":"i",
+  "и-и-и-и":"i-i-i-i","индюк":"indyuk","как здорово вышло!":"kak-zdorovo-vyshlo","капля":"kaplya",
+  "кит":"kit","клубника":"klubnika","книжки":"knizhki","коала":"koala","комета":"kometa","конфета":"konfeta",
+  "корова":"korova","коса":"kosa","кофе":"kofe","кошка":"koshka","краб":"krab","кровать":"krovat",
+  "крокодил":"krokodil","кузнечик":"kuznechik","курица":"kurica","лапа":"lapa","лебедь":"lebed",
   "лев":"lev","леденец":"ledenec","лиса":"lisa","луна":"luna","машина":"mashina","мишка":"mishka",
   "мишка-игрушка":"mishka-igrushka","молодец!":"molodec","молодец, что попробовал!":"molodec-chto-poproboval",
   "морковка":"morkovka","мороженое":"morozhenoe","муравей":"muravey","ничего, слушай ещё разок":"nichego-slushay-eschyo-razok",
-  "нос":"nos","носки":"noski","носорог":"nosorog","о":"o","обезьянка":"obezyanka","облако":"oblako",
-  "ово":"ovo","огонь":"ogon","окно":"okno","олень":"olen","орёл":"oryol","ос":"os","осо":"oso","осьминог":"osminog",
-  "оф-фо":"of-fo","офо":"ofo","павлин":"pavlin","панда":"panda","паровоз":"parovoz","парусник":"parusnik",
-  "паук":"pauk","паутина":"pautina","петух":"petuh","печенье":"pechene","пингвин":"pingvin","пожарная":"pozharnaya",
-  "полиция":"policiya","получилось!":"poluchilos","попугай":"popugay","поросёнок":"porosyonok","пришелец":"prishelec",
-  "птичка":"ptichka","пчела":"pchela","пёс":"pyos","радуга":"raduga","рак":"rak","ракета":"raketa",
-  "ракушка":"rakushka","робот":"robot","рыба-шар":"ryba-shar","рыбка":"rybka","с каждым разом всё лучше!":"s-kazhdym-razom-vsyo-luchshe",
+  "нос":"nos","носки":"noski","носорог":"nosorog","о":"o","об":"ob","обезьянка":"obezyanka","облако":"oblako",
+  "обо":"obo","ово":"ovo","огонь":"ogon","окно":"okno","олень":"olen","оп":"op","оп-оп-оп, ты ладошками хлоп":"op-op-op-ty-ladoshkami-hlop",
+  "опо":"opo","орёл":"oryol","ос":"os","осо":"oso","осьминог":"osminog","оф-фо":"of-fo","офо":"ofo",
+  "па":"pa","па-па-па, на столе крупа":"pa-pa-pa-na-stole-krupa","па-по":"pa-po","павлин":"pavlin",
+  "пакет":"paket","палка":"palka","панда":"panda","папа":"papa","паровоз":"parovoz","парусник":"parusnik",
+  "паук":"pauk","паутина":"pautina","пень":"pen","петух":"petuh","печенье":"pechene","пила":"pila",
+  "пингвин":"pingvin","пирог":"pirog","по":"po","поезд":"poezd","пожарная":"pozharnaya","полиция":"policiya",
+  "полка":"polka","получилось!":"poluchilos","попугай":"popugay","поросёнок":"porosyonok","почка":"pochka",
+  "пришелец":"prishelec","птичка":"ptichka","пу":"pu","пу-пы":"pu-py","пух":"puh","пчела":"pchela",
+  "пы":"py","пэ":"pe","пёс":"pyos","радуга":"raduga","рак":"rak","ракета":"raketa","ракушка":"rakushka",
+  "робот":"robot","рыба":"ryba","рыба-шар":"ryba-shar","рыбка":"rybka","с каждым разом всё лучше!":"s-kazhdym-razom-vsyo-luchshe",
   "са":"sa","са-са-са, вот летит оса":"sa-sa-sa-vot-letit-osa","са-со":"sa-so","самолёт":"samolyot",
   "санки":"sanki","сатурн":"saturn","скорая":"skoraya","скорпион":"skorpion","слон":"slon","смотри, как ты можешь!":"smotri-kak-ty-mozhesh",
   "снеговик":"snegovik","снежинка":"snezhinka","со":"so","собака":"sobaka","сова":"sova","сок":"sok",
@@ -859,14 +964,16 @@ const AUD={
   "телескоп":"teleskop","тигр":"tigr","тираннозавр":"tirannozavr","тортик":"tortik","трактор":"traktor",
   "туман":"tuman","ты не сдался — и вышло!":"ty-ne-sdalsya-i-vyshlo","ты постарался!":"ty-postaralsya",
   "ты сделал всё!":"ty-sdelal-vsyo","ты сегодня хорошо старался!":"ty-segodnya-horosho-staralsya",
-  "ты смог!":"ty-smog","ты справился!":"ty-spravilsya","у":"u","у тебя получается!":"u-tebya-poluchaetsya",
-  "у-у-у-у":"u-u-u-u","уву":"uvu","уже лучше!":"uzhe-luchshe","улитка":"ulitka","ус":"us","усу":"usu",
-  "утка":"utka","уф-фу":"uf-fu","уфу":"ufu","фа":"fa","фа-афа":"fa-afa","фант":"fant","фата":"fata",
-  "фен":"fen","филин":"filin","флаг":"flag","фламинго":"flamingo","фо":"fo","фо-офо":"fo-ofo","фон":"fon",
-  "фонтан":"fontan","фото":"foto","фу":"fu","фундук":"funduk","фы":"fy","фэ":"fe","хорошо поработал!":"horosho-porabotal",
+  "ты смог!":"ty-smog","ты справился!":"ty-spravilsya","у":"u","у бори барабан, а у пети пирог":"u-bori-baraban-a-u-peti-pirog",
+  "у тебя получается!":"u-tebya-poluchaetsya","у-у-у-у":"u-u-u-u","уб":"ub","убу":"ubu","уву":"uvu",
+  "уже лучше!":"uzhe-luchshe","улитка":"ulitka","уп":"up","упу":"upu","ус":"us","усу":"usu","утка":"utka",
+  "уф-фу":"uf-fu","уфу":"ufu","фа":"fa","фа-афа":"fa-afa","фант":"fant","фата":"fata","фен":"fen",
+  "филин":"filin","флаг":"flag","фламинго":"flamingo","фо":"fo","фо-офо":"fo-ofo","фон":"fon","фонтан":"fontan",
+  "фото":"foto","фу":"fu","фундук":"funduk","фы":"fy","фэ":"fe","хорошо поработал!":"horosho-porabotal",
   "хорошо!":"horosho","цыплёнок":"cyplyonok","часы":"chasy","червяк":"chervyak","черепаха":"cherepaha",
-  "шоколадка":"shokoladka","щётка":"schyotka","ы":"y","ывы":"yvy","ыс":"ys","ысы":"ysy","ыф-фы":"yf-fy",
-  "ыфы":"yfy","э":"e","я горжусь тобой!":"ya-gorzhus-toboy","яблоко":"yabloko"
+  "шапка":"shapka","шоколадка":"shokoladka","щётка":"schyotka","ы":"y","ыб":"yb","ыбы":"yby","ывы":"yvy",
+  "ып":"yp","ыпы":"ypy","ыс":"ys","ысы":"ysy","ыф-фы":"yf-fy","ыфы":"yfy","э":"e","я горжусь тобой!":"ya-gorzhus-toboy",
+  "яблоко":"yabloko"
 };
 
 const VKEY = "kotozaryadka-voice";
@@ -1887,7 +1994,7 @@ function runTask(){
   ({hold:tHold, wait:tWait, reps:tReps, rhyme:tRhyme, echo:tEcho, tiles:tTiles,
     words:tWords, follow:tFollow, popit:tPopit, trace:tTrace, hand:tHand,
     pinch:tPinch, twist:tTwist, drum:tDrum, lift:tLift,
-    voice:tVoice, pair:tPair,
+    voice:tVoice, pair:tPair, guess:tGuess, path:tPath, boom:tBoom, puff:tPuff,
     spider:tSpider, wave:tWave, snail:tSnail, sort:tSort,
     letter:tLetter})[t.type](t);
 }
@@ -2084,6 +2191,301 @@ function tSort(t){
     };
   });
   ask();
+}
+
+/* ===================== Б, П И РАЗЛИЧЕНИЕ =====================
+   Б и П устроены как В и Ф — звонкий против глухого, — но взрывные:
+   губы смыкаются, воздух копится и вырывается. Отсюда две разные игры.
+   Б звонкий, его выдают связки, и он бьёт в барабан. У П голоса нет,
+   зато есть настоящий толчок воздуха — им тушат свечи. Это не выдумка
+   для красоты: именно так их и различают на занятии, ладонью у рта.
+   ============================================================== */
+
+/* Зверь с именем вместо буквы. Ребёнок не читает, и «В» от «Ф» на
+   карточке он не отличит — а что Волка зовут Вова, понятно сразу. */
+const CHARS = {
+  "б":{e:"\u{1F9AB}", n:"Боря",  c:"#8FBEE8", food:"\u{1F330}"},
+  "п":{e:"\u{1F427}", n:"Петя",  c:"#FFC46B", food:"\u{1F41F}"},
+  "в":{e:"\u{1F43A}", n:"Вова",  c:"#8FBEE8", food:"\u{1F356}"},
+  "ф":{e:"\u{1F989}", n:"Федя",  c:"#FFC46B", food:"\u{1F347}"},
+  "с":{e:"\u{1F418}", n:"Стёпа", c:"#8FD3A8", food:"\u{1F34E}"},
+};
+
+/* Звучит слог — ребёнок выбирает, чей он. Приложение знает ответ само,
+   поэтому ошибиться в оценке не может: это чистая тренировка слуха, а
+   не проверка произношения. Различить на слух надо раньше, чем выговорить. */
+function tGuess(t){
+  const A=CHARS[t.a]||CHARS["в"], B=CHARS[t.b]||CHARS["ф"];
+  const pool=t.items.slice().sort(()=>Math.random()-.5).slice(0,t.rounds||8);
+  let n=0, lock=false, cur=null;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="grow">
+      <button class="bigplay" id="again" aria-label="Повторить">${IC_PLAY}</button>
+      <div class="basket" id="bk"></div>
+    </div>
+    <div class="pair" id="gp">${[A,B].map((c,i)=>
+      `<button class="pcard gc" id="g${i}" style="--gc:${c.c}">
+         <span class="ge">${c.e}</span><span class="gn">${c.n}</span>
+         <small>${(i?t.b:t.a).toUpperCase()}</small></button>`).join("")}</div>
+    <div class="hint" id="gh">Послушай, кто позвал</div>`;
+  const ask=()=>{
+    cur=pool[n];
+    $("#gh").textContent="Послушай, кто позвал";
+    later(()=>{ if(cur) say(cur[0]); },260);
+  };
+  $("#again").onclick=()=>{ ac(); if(cur) say(cur[0]); };
+  [0,1].forEach(i=>{
+    const who=i?B:A;
+    $("#g"+i).onclick=()=>{
+      if(lock||!cur) return;
+      const card=$("#g"+i);
+      ac(); lock=true;
+      if(cur[1]===i){
+        card.classList.add("win");
+        $("#bk").insertAdjacentHTML("beforeend",`<i>${who.food}</i>`);
+        n++; okSnd(); buzz(30);
+        $("#gh").textContent=who.n+" говорит спасибо";
+        later(()=>{ card.classList.remove("win"); lock=false;
+          if(n>=pool.length) finish(700); else ask(); },820);
+      }else{
+        /* Не «неправильно», а «послушай ещё»: ошибка здесь — это просто
+           повод услышать слово второй раз, помедленнее. */
+        card.classList.add("no"); tone(360,.12,.045);
+        $("#gh").textContent="Послушай ещё разок";
+        later(()=>{ card.classList.remove("no"); lock=false; if(cur) say(cur[0]); },620);
+      }
+    };
+  });
+  ask();
+}
+
+/* Переправа: камешки от берега до берега, лягушонок прыгает по ним.
+   Нажатие то же, что было у плиток, но теперь у него есть направление
+   и виден конец — а без видимого конца пятнадцать слогов бесконечны. */
+function tPath(t){
+  const items=t.items.slice();
+  let i=0;
+  const cols=Math.min(5, Math.max(3, Math.ceil(Math.sqrt(items.length*1.6))));
+  const rows=Math.ceil(items.length/cols);
+  const pos=k=>{
+    const r=Math.floor(k/cols), c0=k%cols;
+    const c=(r%2) ? cols-1-c0 : c0;                 // змейкой: путь, а не таблица
+    return {x:(c+0.5)/cols*100, y:13+(r+0.5)/rows*64};
+  };
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="river" id="rv">
+      <svg class="route" id="rt"><polyline/></svg>
+      ${items.map((s,k)=>{const p=pos(k);
+        return `<button class="stone" data-k="${k}" style="left:${p.x}%;top:${p.y}%">${s}</button>`;}).join("")}
+      <span class="hopper" id="hp">\u{1F438}</span>
+      <span class="bank">\u{1F337}</span>
+    </div>
+    ${dotsHTML(items.length)}`;
+  const route=()=>{
+    const rv=$("#rv"), sv=$("#rt"); if(!rv||!sv) return;
+    const r=rv.getBoundingClientRect();
+    sv.setAttribute("viewBox",`0 0 ${Math.round(r.width)} ${Math.round(r.height)}`);
+    sv.querySelector("polyline").setAttribute("points",
+      items.map((_,k)=>pos(k)).concat([{x:93,y:90}])
+        .map(p=>(p.x/100*r.width).toFixed(1)+","+(p.y/100*r.height).toFixed(1)).join(" "));
+  };
+  onResize($("#rv"), route);
+  const hop=()=>{
+    const hp=$("#hp"); if(!hp) return;
+    const p = i<items.length ? pos(i) : {x:93,y:90};
+    hp.style.left=p.x+"%"; hp.style.top=(p.y-8)+"%";
+    document.querySelectorAll("#rv .stone").forEach((el,k)=>{
+      el.classList.toggle("done", k<i);
+      el.classList.toggle("now", k===i);
+    });
+  };
+  document.querySelectorAll("#rv .stone").forEach(el=>{
+    el.onclick=()=>{
+      const k=+el.dataset.k;
+      if(k!==i) { tone(300,.07,.03); return; }      // прыгаем по порядку, чтобы был путь
+      ac(); say(items[k]); tapSnd(); buzz(12);
+      i++; markDots(i); hop();
+      if(i>=items.length) later(()=>finish(800),700);
+    };
+  });
+  hop(); route();
+}
+
+/* Барабан отзывается на голос. На П он молчит — и это не придирка:
+   у П голоса нет вовсе, связки не работают. Ребёнок слышит разницу
+   не в оценке приложения, а в том, ударил барабан или нет. */
+function tBoom(t){
+  const my=TICK, n=t.reps||5;
+  const ZV=["\u{1F994}","\u{1F407}","\u{1F98A}","\u{1F99D}","\u{1F43F}"];
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(n)}
+    ${earHTML()}`;
+  const cv=$("#cv"); let g=fitCanvas(cv);
+  onResize(cv,()=>{ g=fitCanvas(cv); });
+  let hits=0, ready=false, on=false, cool=0, boom=0, rings=[], wrong=0;
+  $("#est").textContent="слушаю…";
+  const gate=micGate($("#scene"), ok=>{ if(my!==TICK) return; ready=ok;
+    $("#est").textContent = ok ? "скажи БА!"
+      : (MICERR ? MICERR+" — нажми на барабан" : "нажми на барабан"); });
+  gate();
+  const hit=now=>{
+    if(hits>=n) return;
+    hits++; markDots(hits); boom=now; rings.push(now); okSnd(); buzz(26);
+    if(hits>=n) later(()=>finish(800),900);
+  };
+  $("#scene").addEventListener("pointerdown",()=>{ if(!ready) hit(performance.now()); });
+  const id=setInterval(()=>{
+    if(my!==TICK) return;
+    const now=performance.now();
+    if(ready){
+      earPaint();
+      if(loud() && now>cool){
+        if(!on){
+          on=true; cool=now+620;
+          if(isVoiced()) hit(now);
+          else { wrong=now; tone(300,.08,.035); }   // это П: воздух есть, голоса нет
+        }
+      }else if(!loud()) on=false;
+      if(wrong && now-wrong<1400) $("#est").textContent="это без голоса — а барабану нужен голос";
+      else if(wrong && now-wrong>=1400){ wrong=0; $("#est").textContent="скажи БА!"; }
+    }
+    const {ctx,w,h}=g;
+    ctx.clearRect(0,0,w,h);
+    const cx=w/2, cy=h*0.66, R=Math.min(w*0.2,h*0.22);
+    rings=rings.filter(t0=>now-t0<900);
+    rings.forEach(t0=>{
+      const k=(now-t0)/900;
+      ctx.strokeStyle="rgba(255,77,109,"+(0.45*(1-k))+")"; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.ellipse(cx,cy-R*0.55,R*(1+k*1.5),R*(0.4+k*0.6),0,0,7); ctx.stroke();
+    });
+    /* зверята просыпаются по одному — видно, ради чего стучим */
+    const gap=Math.min(w*0.17,92), sz=Math.round(Math.min(w*0.13,60));
+    ZV.forEach((e,k)=>{
+      const x=cx+(k-(ZV.length-1)/2)*gap, up=k<hits;
+      const y=h*0.22 + (up? -Math.abs(Math.sin(now/240+k))*9 : 6);
+      ctx.save(); ctx.globalAlpha=up?1:0.38;
+      ctx.font=sz+"px system-ui,sans-serif";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(e,x,y);
+      if(!up){ ctx.globalAlpha=.5; ctx.font=Math.round(sz*0.45)+"px system-ui,sans-serif";
+        ctx.fillText("\u{1F4A4}",x+sz*0.42,y-sz*0.4); }
+      ctx.restore();
+    });
+    const sq = boom && now-boom<220 ? 1-(now-boom)/220 : 0;
+    ctx.save(); ctx.translate(cx,cy); ctx.scale(1+sq*0.09, 1-sq*0.1);
+    ctx.fillStyle="#C24B3A"; rrect(ctx,-R,-R*0.55,R*2,R*1.1,R*0.22); ctx.fill();
+    ctx.fillStyle="#F3E7D2"; ctx.beginPath(); ctx.ellipse(0,-R*0.55,R,R*0.4,0,0,7); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=3; ctx.stroke();
+    /* шнуровка зигзагом — чтобы барабан читался барабаном, а не банкой */
+    ctx.lineWidth=2.2; ctx.strokeStyle="rgba(255,255,255,.6)";
+    const NL=7, x0=-R*0.9, sp=R*1.8/(NL-1);
+    ctx.beginPath();
+    for(let k=0;k<NL-1;k++){
+      ctx.moveTo(x0+sp*k, -R*0.22);
+      ctx.lineTo(x0+sp*(k+0.5), R*0.42);
+      ctx.lineTo(x0+sp*(k+1), -R*0.22);
+    }
+    ctx.stroke();
+    ctx.restore();
+    /* палочки: на удар опускаются, между ударами подняты */
+    const stick=(dir)=>{
+      const lift=(1-sq)*R*0.5;
+      ctx.save(); ctx.strokeStyle="#8A6A45"; ctx.lineWidth=Math.max(4,R*0.09); ctx.lineCap="round";
+      ctx.beginPath();
+      ctx.moveTo(cx+dir*R*1.32, cy-R*0.98-lift);
+      ctx.lineTo(cx+dir*R*0.40, cy-R*0.58-lift*0.3);
+      ctx.stroke(); ctx.restore();
+    };
+    stick(-1); stick(1);
+  },33);
+  CLEAN.push(()=>clearInterval(id));
+}
+
+/* Свечи тушатся звуком П: у него есть настоящий толчок воздуха, которого
+   нет ни у В, ни у Ф — там воздух течёт, а здесь бьёт. Если прозвучало Б,
+   пламя только качнётся: голос свечу не гасит. */
+function tPuff(t){
+  const my=TICK, n=t.n||5;
+  stage().innerHTML=`<div class="title">${t.title}</div>
+    <div class="scene" id="scene"><canvas id="cv"></canvas></div>
+    ${dotsHTML(n)}
+    ${earHTML()}`;
+  const cv=$("#cv"); let g=fitCanvas(cv);
+  onResize(cv,()=>{ g=fitCanvas(cv); });
+  let out=0, ready=false, on=false, cool=0, smoke=[], lean=0, tip=0;
+  $("#est").textContent="слушаю…";
+  const gate=micGate($("#scene"), ok=>{ if(my!==TICK) return; ready=ok;
+    $("#est").textContent = ok ? "скажи ПА!"
+      : (MICERR ? MICERR+" — нажми на свечку" : "нажми на свечку"); });
+  gate();
+  const blow=now=>{
+    if(out>=n) return;
+    smoke.push({i:out, t:now}); out++; markDots(out); okSnd(); buzz(26);
+    if(out>=n) later(()=>finish(800),900);
+  };
+  $("#scene").addEventListener("pointerdown",()=>{ if(!ready) blow(performance.now()); });
+  const id=setInterval(()=>{
+    if(my!==TICK) return;
+    const now=performance.now();
+    if(ready){
+      earPaint();
+      if(loud() && now>cool){
+        if(!on){
+          on=true; cool=now+620;
+          if(isVoiced()){ lean=now; tip=now; tone(300,.08,.035); }  // это Б: голос свечу не гасит
+          else blow(now);
+        }
+      }else if(!loud()) on=false;
+      if(tip && now-tip<1400) $("#est").textContent="это с голосом — свечку тушит воздух";
+      else if(tip && now-tip>=1400){ tip=0; $("#est").textContent="скажи ПА!"; }
+    }
+    const {ctx,w,h}=g;
+    ctx.clearRect(0,0,w,h);
+    smoke=smoke.filter(s=>now-s.t<1100);
+    const gap=Math.min(w/(n+1.2), w*0.17);
+    const ch=Math.min(h*0.22, gap*1.7), bw=Math.min(gap*0.34, ch*0.26);
+    const cakeW=Math.min(w*0.84, n*gap+gap*1.1), cakeH=Math.min(h*0.2, cakeW*0.3);
+    const base=h*0.55+cakeH*0.1;                 // верх торта: свечи стоят на нём
+    const swaying = lean && now-lean<600 ? 1-(now-lean)/600 : 0;
+    /* Торт, а не пять свечей в пустоте: пятилетке сразу понятно, что делать. */
+    ctx.save();
+    ctx.fillStyle="#E9C79A"; rrect(ctx,w/2-cakeW/2,base+cakeH*0.22,cakeW,cakeH,cakeH*0.22); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=3; ctx.stroke();
+    ctx.fillStyle="#FFF3E4"; rrect(ctx,w/2-cakeW/2,base-cakeH*0.06,cakeW,cakeH*0.42,cakeH*0.2); ctx.fill();
+    ctx.strokeStyle=INK; ctx.lineWidth=2.6; ctx.stroke();
+    const berry=["#FF4D6D","#12A06A","#FFB020"];
+    for(let k=0;k<7;k++){
+      ctx.fillStyle=berry[k%3]; ctx.beginPath();
+      ctx.arc(w/2-cakeW*0.42+cakeW*0.14*k, base+cakeH*0.62, Math.max(3,cakeH*0.07),0,7); ctx.fill();
+    }
+    ctx.restore();
+    for(let k=0;k<n;k++){
+      const cx=w/2+(k-(n-1)/2)*gap, top=base-ch;
+      ctx.fillStyle="#FFFCF6"; rrect(ctx,cx-bw/2,top,bw,ch,bw*0.3); ctx.fill();
+      ctx.strokeStyle=INK; ctx.lineWidth=2.5; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,top); ctx.lineTo(cx,top-7); ctx.stroke();
+      if(k<out){
+        const s=smoke.find(x=>x.i===k);
+        if(s){ const q=(now-s.t)/1100;
+          ctx.strokeStyle="rgba(25,23,19,"+(0.34*(1-q))+")"; ctx.lineWidth=3;
+          ctx.beginPath(); ctx.moveTo(cx,top-8);
+          ctx.bezierCurveTo(cx-13,top-34-q*26, cx+13,top-58-q*34, cx-5,top-84-q*44);
+          ctx.stroke(); }
+        continue;
+      }
+      const sw=Math.sin(now/95+k)*2.5 + swaying*Math.sin(now/45)*13;
+      const fh=Math.max(22, ch*0.46)+Math.sin(now/130+k)*4;
+      const bx=cx, by=top-8, tx=cx-sw, ty=by-fh;
+      const fg=ctx.createLinearGradient(0,ty,0,by);
+      fg.addColorStop(0,"#FFEFB8"); fg.addColorStop(.45,"#FFB020"); fg.addColorStop(1,"#FF6A2C");
+      ctx.fillStyle=fg; ctx.beginPath(); ctx.moveTo(tx,ty);
+      ctx.bezierCurveTo(tx+11,ty+fh*0.42, bx+9,by-fh*0.2, bx,by);
+      ctx.bezierCurveTo(bx-9,by-fh*0.2, tx-11,ty+fh*0.42, tx,ty);
+      ctx.fill();
+    }
+  },33);
+  CLEAN.push(()=>clearInterval(id));
 }
 
 function tPopit(t){
