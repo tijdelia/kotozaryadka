@@ -237,6 +237,9 @@
   .gc.win{background:var(--gc);transform:scale(1.06)}
   .gc.win .gn{color:#fff}
   .gc.no{animation:noshake .34s ease}
+  .gc.tip{box-shadow:inset 0 0 0 4px var(--accent)}
+  .bigplay.on{animation:pulse .6s ease infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
   @keyframes noshake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 
   /* Слоги были плитками: нажал — посерела. Теперь это переправа через
@@ -826,7 +829,7 @@ const PLAN = {
     {type:"wait", title:"Губки-замочек", sec:4, reps:2,
      tip:"Губы сомкнуты, воздух копится за ними, потом взрыв — «б». Положите ладошку ребёнка себе на горло: на Б оно дрожит."},
     {type:"boom", title:"Барабан", reps:5,
-     tip:"Ребёнок говорит «БА» — барабан бьёт и будит зверят. Приложение слушает голос: у Б работают связки, поэтому на П барабан промолчит."},
+     tip:"Ребёнок говорит «БА» — барабан бьёт и будит зверят. Барабан отзывается на любой громкий звук: отличить Б от П микрофоном нельзя, у них вся разница в первых миллисекундах, а дальше и там и там звонкая гласная. Различать учим в блоке «Б или П», на слух."},
     {type:"mimic", title:"Повтори — передразнят", n:8,
      tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["БА","БО","БУ","БЫ","БЭ","АБА","ОБО","УБУ","ЫБЫ","АБ","ОБ","УБ","ЫБ","БА-БО","БУ-БЫ"]},
@@ -843,7 +846,7 @@ const PLAN = {
     {type:"wait", title:"Губки без голоса", sec:4, reps:2,
      tip:"Та же позиция, что у Б, но горло молчит — только воздух. Поднесите ладошку ко рту: на П её толкает струйка."},
     {type:"puff", title:"Задуй свечки", n:5,
-     tip:"«П» — это взрыв воздуха, поэтому им можно тушить свечи. Ровно то, чего нет у В и Ф: там воздух течёт, а здесь бьёт."},
+     tip:"«П» — это взрыв воздуха: поднесите ладошку ко рту, её толкает струйка. Свечи гаснут от любого громкого звука — измерить этот толчок микрофоном нельзя, и приложение не изображает, будто может."},
     {type:"mimic", title:"Повтори — передразнят", n:8,
      tip:"Ребёнок говорит слог, и зверушка повторяет его же голосом — мышь тоненько, мишка басом. Приложение ничего не оценивает: оно возвращает ребёнку его собственную запись. Смысл в том, чтобы слог хотелось сказать — ради «послушать себя мышью» повторяют охотно и не по разу. Без микрофона игра сама превращается в переправу по камешкам.",
      items:["ПА","ПО","ПУ","ПЫ","ПЭ","АПА","ОПО","УПУ","ЫПЫ","АП","ОП","УП","ЫП","ПА-ПО","ПУ-ПЫ"]},
@@ -862,8 +865,8 @@ const PLAN = {
      tip:"Звучит слог — ребёнок выбирает, чей он: Бо или Пита. Приложение знает ответ само и ошибиться в оценке не может. Это фонематический слух: различить на слух надо раньше, чем выговорить.",
      items:[["БА",0],["ПА",1],["БО",0],["ПО",1],["БУ",0],["ПУ",1],["БЫ",0],["ПЫ",1],
             ["АБ",0],["АП",1],["ОБ",0],["ОП",1]]},
-    {type:"pair", title:"Скажи и посмотри", a:"б", b:"п", reps:6,
-     tip:"Ребёнок говорит звук — отзывается тот, который он на самом деле произнёс. Ладошку на горло: на Б дрожит, на П нет."},
+    {type:"boom", title:"Барабан ещё раз", reps:4,
+     tip:"Между двумя слушаниями — что-то весёлое и без напряжения. Ребёнок к пятому упражнению устаёт, и подряд идущие задания на слух он бросает."},
     {type:"guess", title:"А теперь слова", a:"б", b:"п", rounds:8,
      tip:"То же самое на словах: различить их труднее, чем слоги, потому что звук спрятан внутри знакомого слова.",
      items:[["БОЧКА",0],["ПОЧКА",1],["БАЛКА",0],["ПАЛКА",1],["БУХ",0],["ПУХ",1],
@@ -2240,12 +2243,26 @@ function tPair(t){
   $("#est").textContent="слушаю…";
   const gate=micGate($("#pair0"), g=>{ if(my!==TICK) return; ready=g;
     $("#est").textContent = g ? `скажи ${t.a}`
-      : (MICERR ? MICERR + " — нажми на зверя" : "нажми на зверя"); });
+      : (MICERR ? MICERR + " — нажимайте на зверя вместо микрофона" : "нажимайте на зверя вместо микрофона"); });
   gate();
   const light=(i)=>{
     const c=$("#c"+i); if(!c) return;
     c.classList.add("lit"); later(()=>c.classList.remove("lit"),900);
   };
+  /* Без микрофона приложение не знает, какой звук прозвучал, — и решает
+     взрослый: ребёнок сказал, взрослый нажал на того зверя, чей звук
+     услышал. Раньше здесь было написано «нажми на зверя», а нажатие
+     ничего не делало: игра просто вставала намертво. */
+  [0,1].forEach(i=>{
+    const c=$("#c"+i); if(!c) return;
+    c.addEventListener("pointerdown",e=>{
+      if(ready) return;                       // с микрофоном решает микрофон
+      e.preventDefault(); ac(); light(i);
+      if(i===0){ rep++; markDots(rep); okSnd(); buzz(30);
+        if(rep>=t.reps) later(()=>finish(900),700);
+      } else tone(360,.1,.04);
+    });
+  });
   const id=setInterval(()=>{
     if(my!==TICK || !ready) return;
     const now=performance.now();
@@ -2333,6 +2350,7 @@ function tMimic(t){
   const N=Math.min(t.n||8, all.length);
   const pool=all.map((v,i)=>[v,Math.random()]).sort((a,b)=>a[1]-b[1]).slice(0,N).map(x=>x[0]);
   let k=0, who=MIMICS[0], phase="ask", t0=0, lastLoud=0, until=0, ready=false;
+  let askAt=0, waitT=0, nudges=0, tries=0;
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="mim" id="mim">
       <div class="msyl" id="msyl">${pool[0]}</div>
@@ -2349,7 +2367,7 @@ function tMimic(t){
     const sy=$("#msyl"); if(sy) sy.textContent=pool[k];
     $("#mname").textContent=who.n;
     say(pool[k]);
-    phase="ask"; until=performance.now()+1500;
+    phase="ask"; askAt=performance.now(); until=askAt+2600;
   };
   const done=(rec)=>{
     const c=$("#mchar"); if(c) c.classList.add("talk");
@@ -2358,26 +2376,24 @@ function tMimic(t){
     k++; markDots(k); buzz(20);
     phase="play"; until=performance.now()+Math.max(700, d*1000+320);
   };
-  /* Без микрофона играем нажатием: зверь повторит голосом мамы, ускоренным
-     или замедленным. Не так весело, как своим, но игра не ломается. */
-  const tapRound=()=>{
-    if(phase==="play") return;
-    const c=$("#mchar"); if(c) c.classList.add("talk");
-    const a=player();
-    try{ a.playbackRate=who.rate; }catch(e){}
-    say(pool[k]);
-    later(()=>{ try{ player().playbackRate=1; }catch(e){} }, 1400);
-    k++; markDots(k); phase="play"; until=performance.now()+1500;
-  };
+  /* Первая попытка включить микрофон уходит без касания, и Safari её
+     отклоняет всегда: разрешение он даёт только внутри касания. Поэтому
+     на первый отказ мы не сдаёмся, а просим коснуться, и лишь если не
+     вышло и после касания — уходим на переправу. Раньше игра сваливалась
+     туда сразу, и передразнилок ребёнок не видел вовсе. */
   let swap=false;
   $("#est").textContent="слушаю…";
-  const gate=micGate($("#mim"), g=>{ if(my!==TICK) return; ready=g;
-    if(!g) swap=true; else $("#est").textContent="скажи слог"; });
+  const gate=micGate($("#mim"), g=>{
+    if(my!==TICK) return;
+    ready=g;
+    if(g){ $("#est").textContent="скажи слог"; return; }
+    if(tries===0){ tries=1; $("#est").textContent=(MICERR?MICERR+" — ":"")+"нажми на зверушку"; }
+    else swap=true;
+  });
   gate();
-  $("#mim").addEventListener("pointerdown",()=>{ if(!ready && !swap) tapRound(); });
   const id=setInterval(()=>{
     if(my!==TICK) return;
-    if(swap){ clearInterval(id); tPath(t); return; }
+    if(swap){ clearInterval(id); tPath(Object.assign({},t,{title:"Перейди речку"})); return; }
     const now=performance.now();
     if(ready) earPaint();
     const sy=$("#msyl"); if(sy) sy.classList.toggle("hot", ready && loud());
@@ -2387,11 +2403,24 @@ function tMimic(t){
     }
     if(!ready) return;
     if(phase==="ask"){
-      if(now>until){ phase="wait"; $("#est").textContent="теперь ты!"; }
+      /* Ждём, пока голос мамы договорит, а не отмеряем время на глаз:
+         «АВ-ВУ» звучит вдвое дольше «ВА», и на фиксированной паузе
+         «теперь ты!» перебивало запись. */
+      const a=player();
+      if((a && a.ended && now-askAt>400) || now>until){
+        phase="wait"; waitT=now; nudges=0; $("#est").textContent="теперь ты!";
+      }
       return;
     }
     if(phase==="wait"){
-      if(loud()){ phase="rec"; t0=now; lastLoud=now; }
+      if(loud()){ phase="rec"; t0=now; lastLoud=now; return; }
+      /* Ребёнок может просто молчать. Тогда напоминаем слог, а на третий
+         раз идём дальше: висеть на одном слоге бесконечно — верный способ
+         бросить игру. */
+      if(now-waitT>6500){
+        if(nudges<2){ nudges++; say(pool[k]); waitT=now+1500; }
+        else { $("#est").textContent="слушай, что вышло"; done(null); }
+      }
       return;
     }
     if(phase==="rec"){
@@ -2549,11 +2578,17 @@ const tFan  = t => tStream(t, fanDraw);
 const tPump = t => tStream(t, pumpDraw);
 
 /* ===================== Б, П И РАЗЛИЧЕНИЕ =====================
-   Б и П устроены как В и Ф — звонкий против глухого, — но взрывные:
-   губы смыкаются, воздух копится и вырывается. Отсюда две разные игры.
-   Б звонкий, его выдают связки, и он бьёт в барабан. У П голоса нет,
-   зато есть настоящий толчок воздуха — им тушат свечи. Это не выдумка
-   для красоты: именно так их и различают на занятии, ладонью у рта.
+   Б и П — звонкий и глухой, как В и Ф. Но, в отличие от В и Ф,
+   МИКРОФОНОМ ИХ НЕ РАЗЛИЧИТЬ, и делать вид, что различаем, нельзя.
+   В и Ф щелевые: они тянутся, и все сто миллисекунд звучит сам
+   согласный — связки работают или нет, видно честно. Б и П взрывные:
+   смычка, взрыв — и сразу гласная. Гласная звонкая всегда, и в «ба»,
+   и в «па», а анализатор берёт окно в сорок миллисекунд и видит уже
+   её. Первая версия этих игр решала по одному кадру на взрыве и
+   поэтому не срабатывала вовсе: барабан молчал и на Б, и на П.
+   Теперь барабан и свечи отзываются на любой громкий звук — это
+   честно и работает. Различение Б и П осталось там, где оно
+   настоящее: в «Кто позвал», где ответ приложению известен заранее.
    ============================================================== */
 
 /* Зверь с именем вместо буквы. Ребёнок не читает, и «В» от «Ф» на
@@ -2576,7 +2611,7 @@ const CHARS = {
 function tGuess(t){
   const A=CHARS[t.a]||CHARS["в"], B=CHARS[t.b]||CHARS["ф"];
   const pool=t.items.slice().sort(()=>Math.random()-.5).slice(0,t.rounds||8);
-  let n=0, lock=false, cur=null;
+  let n=0, lock=false, cur=null, wrongs=0;
   stage().innerHTML=`<div class="title">${t.title}</div>
     <div class="grow">
       <button class="bigplay" id="again" aria-label="Повторить">${IC_PLAY}</button>
@@ -2587,12 +2622,22 @@ function tGuess(t){
          <span class="ge">${c.e}</span><span class="gn">${c.n}</span>
          <small>${(i?t.b:t.a).toUpperCase()}</small></button>`).join("")}</div>
     <div class="hint" id="gh">Послушай, кто позвал</div>`;
-  const ask=()=>{
-    cur=pool[n];
-    $("#gh").textContent="Послушай, кто позвал";
-    later(()=>{ if(cur) say(cur[0]); },260);
+  /* Пока звучит слово, кнопка пульсирует. Без этого ребёнок, который не
+     расслышал, видит двух молчащих зверей и не понимает, чего от него ждут. */
+  const speak=()=>{
+    if(!cur) return;
+    say(cur[0]);
+    const b=$("#again"); if(!b) return;
+    b.classList.add("on");
+    later(()=>{ const x=$("#again"); if(x) x.classList.remove("on"); }, 1200);
   };
-  $("#again").onclick=()=>{ ac(); if(cur) say(cur[0]); };
+  const ask=()=>{
+    cur=pool[n]; wrongs=0;
+    $("#gh").textContent="Послушай, кто позвал";
+    [0,1].forEach(i=>{ const c=$("#g"+i); if(c) c.classList.remove("tip"); });
+    later(speak,300);
+  };
+  $("#again").onclick=()=>{ ac(); speak(); };
   [0,1].forEach(i=>{
     const who=i?B:A;
     $("#g"+i).onclick=()=>{
@@ -2610,8 +2655,12 @@ function tGuess(t){
         /* Не «неправильно», а «послушай ещё»: ошибка здесь — это просто
            повод услышать слово второй раз, помедленнее. */
         card.classList.add("no"); tone(360,.12,.045);
-        $("#gh").textContent="Послушай ещё разок";
-        later(()=>{ card.classList.remove("no"); lock=false; if(cur) say(cur[0]); },620);
+        wrongs++;
+        /* После двух промахов подсвечиваем верного зверя. Сидеть на одном
+           слоге, пока не угадаешь, пятилетка не станет — он просто уйдёт. */
+        if(wrongs>=2){ $("#gh").textContent="Вот кто звал"; $("#g"+cur[1]).classList.add("tip"); }
+        else { $("#gh").textContent="Послушай ещё разок"; }
+        later(()=>{ card.classList.remove("no"); lock=false; speak(); },620);
       }
     };
   });
@@ -2654,25 +2703,33 @@ function tPath(t){
     const p = i<items.length ? pos(i) : {x:93,y:90};
     hp.style.left=p.x+"%"; hp.style.top=(p.y-8)+"%";
     document.querySelectorAll("#rv .stone").forEach((el,k)=>{
-      el.classList.toggle("done", k<i);
-      el.classList.toggle("now", k===i);
+      el.classList.toggle("now", k===i && !el.classList.contains("done"));
     });
   };
+  /* Раньше нажатие «не на тот» камешек только пищало, и ребёнок решал,
+     что игра сломана. Теперь лягушонок прыгает на любой непройденный
+     камешек: порядок подсказан подсветкой, но не навязан силой. */
   document.querySelectorAll("#rv .stone").forEach(el=>{
     el.onclick=()=>{
+      if(el.classList.contains("done")) return;
       const k=+el.dataset.k;
-      if(k!==i) { tone(300,.07,.03); return; }      // прыгаем по порядку, чтобы был путь
       ac(); say(items[k]); tapSnd(); buzz(12);
-      i++; markDots(i); hop();
-      if(i>=items.length) later(()=>finish(800),700);
+      el.classList.add("done");
+      i=Math.max(i, 0);
+      const left=[...document.querySelectorAll("#rv .stone")].filter(x=>!x.classList.contains("done"));
+      const doneN=items.length-left.length;
+      markDots(doneN);
+      i = left.length ? +left[0].dataset.k : items.length;
+      hop();
+      if(!left.length) later(()=>finish(800),700);
     };
   });
   hop(); route();
 }
 
-/* Барабан отзывается на голос. На П он молчит — и это не придирка:
-   у П голоса нет вовсе, связки не работают. Ребёнок слышит разницу
-   не в оценке приложения, а в том, ударил барабан или нет. */
+/* Барабан отзывается на любой громкий звук — и ни на что не
+   претендует. Его дело простое: ребёнок сказал «БА», барабан ударил,
+   зверёк проснулся. Оценивать, было ли это Б, приложение не берётся. */
 function tBoom(t){
   const my=TICK, n=t.reps||5;
   const ZV=["\u{1F994}","\u{1F407}","\u{1F98A}","\u{1F99D}","\u{1F43F}"];
@@ -2682,7 +2739,7 @@ function tBoom(t){
     ${earHTML()}`;
   const cv=$("#cv"); let g=fitCanvas(cv);
   onResize(cv,()=>{ g=fitCanvas(cv); });
-  let hits=0, ready=false, on=false, cool=0, boom=0, rings=[], wrong=0;
+  let hits=0, ready=false, on=false, cool=0, boom=0, rings=[];
   $("#est").textContent="слушаю…";
   const gate=micGate($("#scene"), ok=>{ if(my!==TICK) return; ready=ok;
     $("#est").textContent = ok ? "скажи БА!"
@@ -2699,15 +2756,8 @@ function tBoom(t){
     const now=performance.now();
     if(ready){
       earPaint();
-      if(loud() && now>cool){
-        if(!on){
-          on=true; cool=now+620;
-          if(isVoiced()) hit(now);
-          else { wrong=now; tone(300,.08,.035); }   // это П: воздух есть, голоса нет
-        }
-      }else if(!loud()) on=false;
-      if(wrong && now-wrong<1400) $("#est").textContent="это без голоса — а барабану нужен голос";
-      else if(wrong && now-wrong>=1400){ wrong=0; $("#est").textContent="скажи БА!"; }
+      if(loud() && now>cool){ if(!on){ on=true; cool=now+620; hit(now); } }
+      else if(!loud()) on=false;
     }
     const {ctx,w,h}=g;
     ctx.clearRect(0,0,w,h);
@@ -2761,9 +2811,9 @@ function tBoom(t){
   CLEAN.push(()=>clearInterval(id));
 }
 
-/* Свечи тушатся звуком П: у него есть настоящий толчок воздуха, которого
-   нет ни у В, ни у Ф — там воздух течёт, а здесь бьёт. Если прозвучало Б,
-   пламя только качнётся: голос свечу не гасит. */
+/* Свечи гаснут от любого громкого звука. Толчок воздуха у П настоящий,
+   и ладонью у рта его прекрасно чувствуешь — но микрофон отличить его
+   от Б не может, и приложение этого не изображает. */
 function tPuff(t){
   const my=TICK, n=t.n||5;
   stage().innerHTML=`<div class="title">${t.title}</div>
@@ -2772,7 +2822,7 @@ function tPuff(t){
     ${earHTML()}`;
   const cv=$("#cv"); let g=fitCanvas(cv);
   onResize(cv,()=>{ g=fitCanvas(cv); });
-  let out=0, ready=false, on=false, cool=0, smoke=[], lean=0, tip=0;
+  let out=0, ready=false, on=false, cool=0, smoke=[], lean=0;
   $("#est").textContent="слушаю…";
   const gate=micGate($("#scene"), ok=>{ if(my!==TICK) return; ready=ok;
     $("#est").textContent = ok ? "скажи ПА!"
@@ -2789,15 +2839,8 @@ function tPuff(t){
     const now=performance.now();
     if(ready){
       earPaint();
-      if(loud() && now>cool){
-        if(!on){
-          on=true; cool=now+620;
-          if(isVoiced()){ lean=now; tip=now; tone(300,.08,.035); }  // это Б: голос свечу не гасит
-          else blow(now);
-        }
-      }else if(!loud()) on=false;
-      if(tip && now-tip<1400) $("#est").textContent="это с голосом — свечку тушит воздух";
-      else if(tip && now-tip>=1400){ tip=0; $("#est").textContent="скажи ПА!"; }
+      if(loud() && now>cool){ if(!on){ on=true; cool=now+620; blow(now); } }
+      else if(!loud()) on=false;
     }
     const {ctx,w,h}=g;
     ctx.clearRect(0,0,w,h);
