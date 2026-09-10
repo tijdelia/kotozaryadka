@@ -90,6 +90,10 @@ def phrases_from_app(path="index.html"):
     for v in re.findall(r'"([АОУИЭЫ])"', s[s.index("const VOW"):s.index("const VOW")+120]):
         add(v, "slow")
 
+    # имена зверей звучат при знакомстве в «Кто позвал»
+    for m in re.finditer(r'n:"([^"]+)",\s*c:"#', s):
+        add(m.group(1), "name")
+
     # названия наклеек ребёнок тоже повторяет, но это награда, не урок
     for m in re.finditer(r'"[^"]+","([^"]+)"\]', s[s.index("const ALBUMS"):s.index("const ALL = []")]):
         add(m.group(1), "name")
