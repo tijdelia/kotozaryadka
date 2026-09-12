@@ -22,7 +22,13 @@ GROUPS = [
     ("Слоги",           "Медленно, разделяя звуки.", "медленно"),
     ("Слова",           "Медленно и раздельно, как показываете сыну на занятии, "
                         "а не как в обычной речи.", "медленно"),
-    ("Чистоговорка",    "Обычным темпом, как говорите всегда.", "обычно"),
+    ("Чистоговорки",    "Обычным темпом, как говорите всегда.", "обычно"),
+    ("Звери из игр",    "Это имена. Обычным голосом, приветливо — ими звери "
+                        "здороваются с ребёнком в играх «Кто позвал» и «Скажи и посмотри».", "обычно"),
+    ("Похвала",         "Тепло, как хвалите на самом деле. Не диктуйте — хвалите.", "обычно"),
+    ("Наклейки",        "Обычным голосом, по одному слову. Их приложение называет, когда "
+                        "ребёнок трогает наклейку в альбоме. Это награда, а не урок: если "
+                        "устали, эту часть можно записать в другой раз.", "обычно"),
 ]
 NOTE = {
     "в-в-в-в": "нижняя губа к верхним зубам, с голосом — горло дрожит",
@@ -39,6 +45,13 @@ def collect_praise():
 
 
 def collect():
+    """Всё, что приложение произносит вслух. Раньше лист брал только то, за
+    чем ребёнок повторяет: 178 фраз из 324. Имена зверей, похвала и названия
+    наклеек оставались синтезом, и это было незаметно."""
+    import re
+    src = open("index.html", encoding="utf-8").read()
+    chars = set(re.findall(r'n:"([^"]+)",\s*c:"#', src))
+
     items = gen.phrases_from_app()
     slow = [t for t, r in items if r == "slow"]
     hold  = [t for t in slow if t.lower() in gen.HOLD] + ["в-в-в-в"]
@@ -47,7 +60,11 @@ def collect():
     syl   = [t for t in slow if t.isupper() and (2 <= len(t) <= 3 or "-" in t)]
     words = [t for t in slow if t.isupper() and t not in syl and len(t) > 3]
     rest  = [t for t in slow if t not in hold + vow + syl + words]
-    return [hold, vow, syl, words, rest]
+
+    zveri  = [t for t, r in items if r == "name" and t in chars]
+    praise = [t for t, r in items if r == "norm"]
+    stick  = [t for t, r in items if r == "name" and t not in chars]
+    return [hold, vow, syl, words, rest, zveri, praise, stick]
 
 
 def main():
@@ -100,6 +117,10 @@ def main():
     for (gt, how, tag), g in zip(gdef, groups):
         if not g:                       # пустой раздел на странице только путает
             continue
+        if gt == "Наклейки":
+            rows.append('<div class="stop"><b>Здесь можно остановиться.</b> Всё, что нужно '
+                        'для занятий, уже записано — дальше только названия наклеек из '
+                        'альбома. Пришлите файл, а наклейки допишем другой записью.</div>')
         rows.append(f'<h2>{gt}</h2><p class="how">{how}</p>')
         for t in g:
             n += 1
@@ -144,6 +165,9 @@ HTML = """<!doctype html>
   .w.обычно{font-size:24px}
   .note{font-size:13px;font-weight:600;color:var(--muted);flex-basis:100%;
         padding-left:38px;line-height:1.4}
+  .stop{margin-top:34px;background:#FFF3E2;border-radius:18px;padding:16px 18px;
+        font-size:15px;line-height:1.6;font-weight:500;color:#3D3A34;
+        box-shadow:inset 0 0 0 2px #FFC46B}
   .end{margin-top:36px;background:var(--card);border-radius:18px;padding:18px}
   .end p{font-size:15px;line-height:1.6;font-weight:500;color:#3D3A34}
 </style>
