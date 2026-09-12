@@ -33,3 +33,6 @@ voice_mama_27-2.*
 ref_mama.wav
 *.wav
 audio_new3/
+zapis-golos.m4a
+*.m4a
+audio_golos/
