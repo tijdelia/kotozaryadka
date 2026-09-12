@@ -307,6 +307,10 @@
   .fhint span{font-size:15px;font-weight:700;color:var(--muted)}
 
   .dots{display:flex;gap:8px;justify-content:center}
+  .cnt{display:flex;gap:clamp(8px,2.4vw,14px)}
+  .cnt i{width:clamp(20px,5.5vw,32px);height:clamp(20px,5.5vw,32px);border-radius:50%;
+    background:var(--line);transition:background .25s ease,transform .25s ease}
+  .cnt i.on{background:var(--accent);transform:scale(1.12)}
   .dots i{width:16px;height:16px;border-radius:50%;background:var(--line);
     transition:background .2s ease,transform .2s ease}
   .dots i.on{background:var(--accent);transform:scale(1.15)}
@@ -789,7 +793,7 @@ const PLAN = {
   /* Материал по В и Ф — из тетради логопеда: слоги, слова и предложения
      со снимков. Сочетания идут от простого к трудному, как в тетради. */
   sound:{ name:"Звук В", tasks:[
-    {type:"wait", title:"Губка", sec:5, reps:2, tip:"Верхние зубы прикусывают нижнюю губу. Это и есть позиция звука В."},
+    {type:"wait", title:"Губка", sec:4, reps:2, demo:"в-в-в-в", tip:"Верхние зубы прикусывают нижнюю губу. Это и есть позиция звука В."},
     {type:"voice", title:"Заведи вертолёт", sec:2.5, reps:3, demo:"в-в-в-в",
      tip:"Вертолёт взлетает, пока работает голос. Приложение слушает не «правильно ли», а включены ли голосовые связки — это единственное, чем В отличается от Ф."},
     {type:"mimic", title:"Повтори — передразнят", n:6,
@@ -807,7 +811,7 @@ const PLAN = {
   ]},
 
   fsound:{ name:"Звук Ф", tasks:[
-    {type:"wait", title:"Губка без голоса", sec:5, reps:2,
+    {type:"wait", title:"Губка без голоса", sec:4, reps:2, demo:"ФА",
      tip:"Та же позиция, что у В, но голос выключен: горло не дрожит. Дайте потрогать своё горло на В и на Ф."},
     {type:"fan", title:"Вертушка", snd:"ф", sec:2, reps:3, hintOn:"тяни ф-ф-ф", demo:"ФА",
      tip:"Ф — ровная струя воздуха без голоса. Вертушка крутится, пока струя идёт, и встаёт, если включился голос: тогда это уже В. Поднесите ладошку ко рту — на Ф её обдаёт."},
@@ -841,7 +845,7 @@ const PLAN = {
      работе связок, ровно как В. П глухой, но у него есть то, чего нет у
      В и Ф: настоящий толчок воздуха, которым можно задуть свечу. */
   bsound:{ name:"Звук Б", tasks:[
-    {type:"wait", title:"Губки-замочек", sec:4, reps:2,
+    {type:"wait", title:"Губки-замочек", sec:4, reps:2, demo:"БА",
      tip:"Губы сомкнуты, воздух копится за ними, потом взрыв — «б». Положите ладошку ребёнка себе на горло: на Б оно дрожит."},
     {type:"boom", title:"Барабан", reps:5, demo:"БА",
      tip:"Ребёнок говорит «БА» — барабан бьёт и будит зверят. Барабан отзывается на любой громкий звук: отличить Б от П микрофоном нельзя, у них вся разница в первых миллисекундах, а дальше и там и там звонкая гласная. Различать учим в блоке «Б или П», на слух."},
@@ -859,7 +863,7 @@ const PLAN = {
   ]},
 
   psound:{ name:"Звук П", tasks:[
-    {type:"wait", title:"Губки без голоса", sec:4, reps:2,
+    {type:"wait", title:"Губки без голоса", sec:4, reps:2, demo:"ПА",
      tip:"Та же позиция, что у Б, но горло молчит — только воздух. Поднесите ладошку ко рту: на П её толкает струйка."},
     {type:"puff", title:"Задуй свечки", n:5, demo:"ПА",
      tip:"«П» — это взрыв воздуха: поднесите ладошку ко рту, её толкает струйка. Свечи гаснут от любого громкого звука — измерить этот толчок микрофоном нельзя, и приложение не изображает, будто может."},
@@ -894,7 +898,7 @@ const PLAN = {
   ]},
 
   ssound:{ name:"Звук С", tasks:[
-    {type:"wait", title:"Заборчик", sec:5, reps:2,
+    {type:"wait", title:"Заборчик", sec:4, reps:2, demo:"СА",
      tip:"Зубы сомкнуты заборчиком, губы в улыбке, язык внизу за нижними зубами. Воздух идёт по желобку посередине языка."},
     {type:"hold", toy:"candle", title:"Ветерок", sec:2, reps:3,
      tip:"Долгий плавный выдох через желобок — тот же, что нужен для С. Ладонь ко рту: струя должна быть холодной и узкой."},
@@ -915,7 +919,7 @@ const PLAN = {
      закрытых слогов здесь нет вовсе — они учили бы ровно тому, от чего
      мы уходим. По той же причине нет слов вроде «мороз». */
   zsound:{ name:"Звук З", tasks:[
-    {type:"wait", title:"Заборчик с голосом", sec:4, reps:2,
+    {type:"wait", title:"Заборчик с голосом", sec:4, reps:2, demo:"ЗА",
      tip:"Та же позиция, что у С: зубы заборчиком, язык внизу, — но горло дрожит. Ладошку ребёнка себе на шею: на С тихо, на З гудит."},
     {type:"buzz", title:"Комар", snd:"з", sec:2, reps:3, hintOn:"тяни з-з-з", voiced:true, demo:"ЗА",
      tip:"Комар летит, пока тянется звонкое «ззз». Замолчал голос — комар садится: без голоса это уже С."},
@@ -2767,7 +2771,7 @@ function tGuess(t){
   [0,1].forEach(i=>{
     const who=i?B:A;
     $("#g"+i).onclick=()=>{
-      if(lock||!cur) return;
+      if(lock||!cur){ tapSnd(); return; }   // жмёт во время паузы — пусть слышит, что нажалось
       const card=$("#g"+i);
       ac(); lock=true;
       if(cur[1]===i){
@@ -3844,31 +3848,50 @@ function tHold(t){
 }
 
 /* держать позу под счёт */
+/* Держим позу под счёт.
+
+   Раньше это был серый круг с цифрой, который ничего не делал, пока по
+   нему не нажмут, и не произносил ни звука. Ребёнок не читает ни цифру,
+   ни заголовок, и понять, что от него хотят и что надо куда-то нажать,
+   не мог вовсе. А это первое упражнение восьми блоков из тринадцати:
+   занятие начиналось с мёртвого экрана.
+
+   Теперь счёт идёт сам, вслух звучит образец звука, а вместо цифры
+   растут точки — их видно, не умея читать. */
 function tWait(t){
-  let rep=0, timer=null;
+  let rep=0, timer=null, left=t.sec;
   stage().innerHTML = `<div class="title">${t.title}</div>
     ${t.vid?videoBlock(t.vid):""}
-    ${dial(`<span class="val" id="val">${t.sec}</span>`)}
-    ${dotsHTML(t.reps)}`;
+    ${dial(`<span class="cnt" id="cnt"></span>`)}
+    ${dotsHTML(t.reps)}
+    <div class="hint" id="wh">Держи, пока круг не закрасится</div>`;
   if(t.vid) wireVideo(t.vid);
-  const val=$("#val");
-  CLEAN.push(()=>{ if(timer) clearInterval(timer); });
-  $("#dial").onclick=()=>{
-    if(timer) return;
-    ac(); let left=t.sec; setDial(0);
-    timer=setInterval(()=>{
-      left--;
-      setDial(1-left/t.sec);
-      val.textContent=Math.max(left,0);
-      if(left>0) tone(560,.05,.04);
-      if(left<=0){
-        clearInterval(timer); timer=null;
-        rep++; markDots(rep); okSnd(); buzz(30);
-        val.textContent=t.sec; setDial(0);
-        if(rep>=t.reps) finish();
-      }
-    },1000);
+  const paint=()=>{
+    const c=$("#cnt"); if(!c) return;
+    c.innerHTML = Array.from({length:t.sec},(_,i)=>
+      `<i class="${i < t.sec-left ? "on":""}"></i>`).join("");
   };
+  const tick=()=>{
+    left--; setDial(1-left/t.sec); paint();
+    if(left>0) tone(560,.05,.04);
+    if(left<=0){
+      clearInterval(timer); timer=null;
+      rep++; markDots(rep); okSnd(); buzz(30);
+      if(rep>=t.reps){ finish(); return; }
+      left=t.sec; setDial(0); paint();
+      later(start, 1400);                     // передышка между попытками
+    }
+  };
+  function start(){
+    if(timer) return;
+    ac(); left=t.sec; setDial(0); paint();
+    timer=setInterval(tick,1000);
+    CLEAN.push(()=>{ if(timer) clearInterval(timer); });
+  }
+  if(t.demo) later(()=>say(t.demo), 350);     // как это звучит — вслух
+  later(start, t.demo ? 1500 : 700);          // само, без нажатия
+  $("#dial").onclick=()=>{ if(!timer) start(); };
+  paint();
 }
 
 /* повторы по нажатию */
